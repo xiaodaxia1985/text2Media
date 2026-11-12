@@ -344,10 +344,42 @@ body { width: max-content; background: var(--sheet-bg, #9a9a96); }
 .c-figcard .c-fig-stat small { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
 
 /* ---------- Ratio tweaks ---------- */
+/* 9:16（540×960）：普通内容卡挂图表时，图被 .c-body > .c-fig{flex:1 1 0} 拉到 508×322，
+   卡还剩 500 多px，结论条又 margin-top:auto 沉底，中间就留出 411px 的整段空白。
+   9:16 下改成"标题+正文+图+结论"整簇居中、图不拉满、结论贴图——把空白均分到上下两头，
+   而不是凿在中间一块。 */
+/* 1:1 图证卡：540 高里放不下''标题+图+数字''三件套，原本把图整个省掉、只剩两个数字吊在半空。
+   把图压成 2:1 的横带，给标题和数字腾位置，三件套都留住。 */
+.r-1x1 .c-figcard .c-fig-box { aspect-ratio: 300 / 150; }
+.r-1x1 .c-figcard .c-fig-stats { gap: 14px; }
+.r-1x1 .c-figcard .c-fig-stat b { font-size: 30px; }
+
+/* 1:1 对比卡：4 行对照在 540 高里放不下，原本直接裁掉最后一行（文字被切断）。
+   方图先把字号与行距压下来，让 4 行都看得见。 */
+.r-1x1 .c-cmp-lead { font-size: 13.5px; line-height: 1.6; margin: 8px 0 12px; }
+.r-1x1 .c-cmp { margin: 12px 0 0; }
+.r-1x1 .c-cmp-head { padding-bottom: 8px; }
+.r-1x1 .c-cmp-th { font-size: 15px; }
+.r-1x1 .c-cmp-row { padding: 11px 0; }
+.r-1x1 .c-cmp-cell { font-size: 14.5px; line-height: 1.5; }
+.r-1x1 .c-cmp-note { font-size: 12.5px; line-height: 1.65; margin-top: 12px; }
+/* 1:1 清单卡：3 层步骤竖排在 540 高里只剩 2px 溢出，收行距和字号，不动内容。 */
+.r-1x1 .c-stage { padding: 10px 14px; }
+.r-1x1 .c-stage ul { gap: 4px; }
+.r-1x1 .c-stage li { font-size: 14px; padding: 2px 0; }
+.r-1x1 .c-body:has(.c-claim) { justify-content: center; }
+.r-1x1 .c-body:has(.c-claim) .c-take { margin-top: 22px; }
+.r-9x16 .c-body > .c-fig { flex: 0 0 auto; }
+/* 图不拉满后必须自带高度：canvas 是 absolute 定位，框不给 aspect-ratio 会塌成 0。 */
+.r-9x16 .c-fig-card { flex: none; }
+.r-9x16 .c-fig-box { height: auto; aspect-ratio: 300 / 190; }
+.r-9x16 .c-body:has(> .c-fig) { justify-content: center; gap: 18px; }
+.r-9x16 .c-body:has(> .c-fig) .c-take { margin-top: 8px; }
+
 .r-1x1 .c-cover .c-body { padding-top: 20px; }
 .r-1x1 .cv-title { font-size: calc(var(--cv-fs, 58px) * .8); margin-top: 10px; }
 .r-1x1 .cv-rule { margin: 16px 0 12px; }
-.r-1x1 .card .sec-h, .r-4x5 .card .sec-h { font-size: calc(var(--sec-fs, 29px) * .93); }
+.r-4x5 .card .sec-h { font-size: calc(var(--sec-fs, 29px) * .93); }
 .r-9x16 .cv-title { font-size: calc(var(--cv-fs, 58px) * 1.1); }
 .r-9x16 .c-cover .c-body { padding-top: 70px; }
 .r-9x16 .c-claim { font-size: calc(var(--claim-fs, 44px) * 1.3); }

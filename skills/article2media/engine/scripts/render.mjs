@@ -242,7 +242,7 @@ async function renderLong(browser, theme, themeCss, nAcc, outDir, report) {
         await page.setViewport(1200, 1600, scale);
         await page.goto(pathToFileURL(htmlPath).href);
         const fontStatus = await page.settle(25000);
-        const qa = await page.evaluate(qaInPage, { maxHeight });
+        const qa = await page.evaluate(qaInPage, { maxHeight, ratio });
         await page.setViewport(qa.width, qa.height, scale);
         const buf = await page.screenshot({ clip: { x: 0, y: 0, width: qa.width, height: qa.height }, format, quality });
         const imgPath = path.join(outDir, `${name}.${ext}`);
@@ -277,7 +277,7 @@ async function renderCards(browser, theme, themeCss, nAcc, outDir, report) {
       for (let pass = 0; pass < 3; pass++) {
         await page.goto(pathToFileURL(htmlPath).href);
         fontStatus = await page.settle(25000);
-        qa = await page.evaluate(qaInPage, { maxHeight });
+        qa = await page.evaluate(qaInPage, { maxHeight, ratio });
         const over = Math.max(0, ...qa.cards.filter((c) => c.kind === 'stages' || c.kind === 'guard').map((c) => c.over));
         if (over <= 1) break;
         adjust += over + 8;

@@ -1,6 +1,16 @@
 // Layout QA that runs inside the rendered page. Must be self-contained (it is serialized via toString()).
 export function qaInPage(opts) {
   const issues = [];
+  // 阈值按画布比例分档：同一套"标题+正文+结论"骨架，在 1:1（540×540）与 9:16（540×960）
+  // 上的内容占比天然不同，用 3:4 口径去量只会把"内容量不够"报成"版式坏了"。
+  // 口径仍是"内容高 / 卡高"，只是每档的及格线不同。
+  const RATIO_GATES = {
+    '3:4':  { covErr: .70, covWarn: .78, gapErr: .225, gapWarn: .15, cvErr: .28, cvWarn: .20, figCovErr: .62, figCovWarn: .70 },
+    '4:5':  { covErr: .68, covWarn: .76, gapErr: .225, gapWarn: .15, cvErr: .28, cvWarn: .20, figCovErr: .54, figCovWarn: .62 },
+    '1:1':  { covErr: .42, covWarn: .52, gapErr: .26,  gapWarn: .18, cvErr: .34, cvWarn: .24, figCovErr: .42, figCovWarn: .52 },
+    '9:16': { covErr: .66, covWarn: .74, gapErr: .225, gapWarn: .15, cvErr: .28, cvWarn: .20, figCovErr: .55, figCovWarn: .63 },
+  };
+  const G = RATIO_GATES[(opts && opts.ratio) || '3:4'] || RATIO_GATES['3:4'];
   const where = (el) => {
     const card = el.closest('[data-card]');
     const pre = card ? `卡 ${String(card.dataset.card).padStart(2, '0')} · ` : '';
@@ -226,7 +236,8 @@ export function qaInPage(opts) {
     }
     // ---- 内容密度：内部空档 / 首尾空 / 覆盖率 / 四横带（按卡高比例判，3:4 口径输出 720×2）----
     const isOpener = card.classList.contains('c-openercard');
-    const isCentred = ['c-claimcard', 'c-openercard', 'c-timeline', 'c-statcard', 'c-list', 'c-end'].some((k) => card.classList.contains(k));
+    const isCentred = ['c-claimcard', 'c-openercard', 'c-timeline', 'c-statcard', 'c-list', 'c-end'].some((k) => card.classList.contains(k))
+      || !!card.querySelector('.c-claim');
     const tag = `卡 ${String(card.dataset.card).padStart(2, '0')}`;
     const m = body ? contentMetrics(body) : null;
     if (m) {
@@ -238,25 +249,30 @@ export function qaInPage(opts) {
       const cover = card.classList.contains('c-cover');
       if (isOpener && m.maxGap / m.H > 0.30) {
         issues.push({ level: 'warn', where: tag, msg: `章节页${at}空了 ${gapOut}px（占卡高 ${pct}%）：加一个锚点（幕标＋导语或一句金句），或并进邻页` });
-      } else if (cover && m.maxGap / m.H > 0.28) {
+      } else if (cover && m.maxGap / m.H > G.cvErr) {
         issues.push({ level: 'error', where: tag, msg: `封面${at}空了 ${gapOut}px（占卡高 ${pct}%）：标题、导语、目录三段之间不要凿洞` });
-      } else if (cover && m.maxGap / m.H > 0.20) {
+      } else if (cover && m.maxGap / m.H > G.cvWarn) {
         issues.push({ level: 'warn', where: tag, msg: `封面${at}有 ${gapOut}px 连续空白（占卡高 ${pct}%）：超过封面 20% 上限` });
-      } else if (!cover && !isOpener && m.maxGap / m.H > 0.225) {
+      } else if (!cover && !isOpener && m.maxGap / m.H > G.gapErr) {
         issues.push({ level: 'error', where: tag, msg: `${at}出现 ${gapOut}px 的整段空白（占卡高 ${pct}%）：把块间距压回去，或让内容自己填住这段` });
       } else if (!cover && m.maxGap / m.H > 0.15) {
-        issues.push({ level: 'warn', where: tag, msg: `${at}有 ${gapOut}px 连续空白（占卡高 ${pct}%）：超过 15% 上限` });
+        issues.push({ level: 'warn', where: tag, msg: `${at}有 ${gapOut}px 连续空白（占卡高 ${pct}%）：超过 ${Math.round(G.gapWarn * 100)}% 上限` });
       }
       if (!isCentred) {
         // 顶对齐的卡：内容从上面开始，下面的空就是"没排完"
-        if (m.tailGap / m.H > 0.15) {
+        if (m.tailGap / m.H > G.gapWarn) {
           issues.push({ level: 'warn', where: tag, msg: `底部空 ${Math.round(m.tailGap * 2)}px（占卡高 ${Math.round((m.tailGap / m.H) * 100)}%）：补一条证据或把结论移到底部条` });
         }
         const covPct = Math.round(m.coverage * 100);
-        if (m.coverage < 0.70) {
-          issues.push({ level: 'error', where: tag, msg: `内容只占卡高 ${covPct}%（低于 70%）：回改写端补证据，不许靠拉行高凑版式` });
-        } else if (m.coverage < 0.78) {
-          issues.push({ level: 'warn', where: tag, msg: `内容占卡高 ${covPct}%（低于 78%）：这张卡偏空，补一句证据或换更贴内容的卡型` });
+        // 挂图的卡，图高被 canvas 基准比例（300/190）锁死，宽固定后能占的高度有几何上限，
+        // 和纯文字卡不是一个尺子。
+        const hasFig = !!(body && body.querySelector(':scope > .c-fig'));
+        const covErr = hasFig ? G.figCovErr : G.covErr;
+        const covWarn = hasFig ? G.figCovWarn : G.covWarn;
+        if (m.coverage < covErr) {
+          issues.push({ level: 'error', where: tag, msg: `内容只占卡高 ${covPct}%（低于 ${Math.round(covErr * 100)}%）：回改写端补证据，不许靠拉行高凑版式` });
+        } else if (m.coverage < covWarn) {
+          issues.push({ level: 'warn', where: tag, msg: `内容占卡高 ${covPct}%（低于 ${Math.round(covWarn * 100)}%）：这张卡偏空，补一句证据或换更贴内容的卡型` });
         }
         const q = m.quarters;
         if ((!q[0] && !q[1]) || (!q[1] && !q[2]) || (!q[2] && !q[3])) {
