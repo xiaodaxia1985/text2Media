@@ -33,9 +33,9 @@
 - **验收**：每种产出都自动检查，不合格就报错。
 - **依赖**：只需要 Node.js 22 和 Chrome。
 
-![同一篇文章的七种产出，以及 21 套主题](docs/showcase.jpg)
+![同一篇文章的七种产出，以及 7 套主题](docs/showcase.jpg)
 
-<p align="center"><sub>示例：Dan Koe 的 X 长文《The most lucrative AI business to start in 2027》。七种产出各用了一套主题，口播视频用的是「资讯播报男声」。<a href="docs/samples/dan-koe-video.mp4">看示例视频</a> · <a href="#随包音色">听 6 款音色</a></sub></p>
+<p align="center"><sub>示例：Dan Koe 的 X 长文《The most lucrative AI business to start in 2027》。七种产出各用了一套主题，口播视频用的是「资讯播报男声」。示例视频与音频样张不随仓库分发（成片用 <code>video.mjs make</code> 自己跑一遍即可）。</sub></p>
 
 ---
 
@@ -59,7 +59,7 @@ article2media 把这件事交给 AI。你给一个链接，流程分三步：
 | **原文、总结、翻译三条路** | 原文路径一字不改，逐块读回比对；总结路径重组结构、配图表；翻译路径全文不删，脚本检查结构是否逐块对应。三条路都能接到长图、卡片和公众号。 |
 | **文章和视频都能当原文** | 视频先转成逐字稿文章：人工字幕优先，其次平台的原语言自动字幕，都没有时用本地 Whisper 识别。繁体转简体、专有名词纠错、时间轴都会处理好，后面的流程和文章完全一样。 |
 | **先读懂，再排版** | 不是截图，也不是机械摘要。Claude 规划结构、改写标题、挑选图表、核对数字，产出只含内容的 `content.json`。版式和主题由脚本负责，换风格不用重写内容。 |
-| **一份内容，多种产出** | 一次改写，同时出长图、卡片（3:4 / 4:5 / 1:1 / 9:16）和公众号；口播视频、白板、漫画另有专门的脚本。21 套主题对所有图文产出通用，口播视频沿用主题的配色、字体和卡片样式。 |
+| **一份内容，多种产出** | 一次改写，同时出长图、卡片（3:4 / 4:5 / 1:1 / 9:16）和公众号；口播视频、白板、漫画另有专门的脚本。7 套主题对所有图文产出通用，口播视频沿用主题的配色、字体和卡片样式。 |
 | **每种产出都有验收** | 版面检查溢出、截断和重叠。原文长图、原文卡片、公众号排版都逐块读回比对，改一个字就失败。翻译检查块数、结构、漏译和数字。白板要求每段原文都有去向。视频审片检查首句时长、画面静止、语速、字幕闪断、成片逐帧的字幕丢帧和响度。不合格就以非零码退出。 |
 | **视频质量达到能发布的水准** | 本地 VoxCPM2 生成 48 kHz 配音，Whisper 逐字对齐，数字和要点在说到的那一刻出现。语速按从容讲解控制在约 4.5 字/秒。字幕不闪烁，样式跟随主题。 |
 | **版权与合规写进流程** | 随包 6 款音色全部只凭文字描述设计，不模仿任何真人。克隆音色只留在本机，使用时会提醒。成片首帧和 MP4 元数据都带 AI 生成标识，产出都署原文出处。 |
@@ -237,12 +237,12 @@ flowchart LR
 
 ## 主题
 
-21 套主题，同一份内容可以用任意主题渲染。没有指定时，Claude 依次按「明确偏好 → 题材 → 投放场景」选一个，规则见 [`references/styles.md`](skills/article2media/references/styles.md)。
+7 套主题，同一份内容可以用任意主题渲染。没有指定时，Claude 依次按「明确偏好 → 题材 → 投放场景」选一个，规则见 [`references/styles.md`](skills/article2media/references/styles.md)。
 
-![21 套主题的封面和第一张内容卡](docs/themes.jpg)
+![7 套主题的封面和第一张内容卡](docs/themes.jpg)
 
 <details>
-<summary><b>21 套主题一览</b></summary>
+<summary><b>7 套主题一览</b></summary>
 
 | 主题 | 气质 | 首选场景 |
 |---|---|---|
@@ -278,7 +278,7 @@ flowchart LR
 node skills/explainer-video/scripts/video.mjs make <目录>/video/video.json
 ```
 
-Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面、每一镜的口播和画面；脚本完成其余全部工作。[示例视频](docs/samples/dan-koe-video.mp4)用的是 `midnight` 主题和「资讯播报男声」。
+Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面、每一镜的口播和画面；脚本完成其余全部工作。
 
 **配音**
 - **三档后端**，按顺序选用：本地 VoxCPM2（Apple Silicon，48 kHz）、edge-tts（免费，需联网）、macOS 系统语音。
@@ -295,14 +295,16 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 6 款公开音色，全部由 VoxCPM2 只凭文字描述设计，不对应任何具体的人，参考语速都在 4.2–5 字/秒之间。试听里每款音色读的都是同一段话。
 
-| 音色 | ID | 适合 | 试听 |
-|---|---|---|---|
-| 甜美知性女声 | `sweet-woman` | 生活方式、情感成长、知识分享 | [mp3](docs/samples/voices/sweet-woman.mp3) |
-| 活力种草女声 | `lively-promo` | 好物种草、美食探店、带货 | [mp3](docs/samples/voices/lively-promo.mp3) |
-| 资讯播报男声（默认） | `news-man` | 资讯、财经、科技数码、自媒体干货 | [mp3](docs/samples/voices/news-man.mp3) |
-| 纪录片旁白男声 | `documentary-man` | 历史人文、深度解读 | [mp3](docs/samples/voices/documentary-man.mp3) |
-| 东北热情大哥 | `northeast-guy` | 搞笑、接地气、生活吐槽 | [mp3](docs/samples/voices/northeast-guy.mp3) |
-| 台湾口音温柔女声 | `gentle-tw-accent` | 情感、生活、轻松闲聊 | [mp3](docs/samples/voices/gentle-tw-accent.mp3) |
+| 音色 | ID | 适合 |
+|---|---|---|
+| 甜美知性女声 | `sweet-woman` | 生活方式、情感成长、知识分享 |
+| 活力种草女声 | `lively-promo` | 好物种草、美食探店、带货 |
+| 资讯播报男声（默认） | `news-man` | 资讯、财经、科技数码、自媒体干货 |
+| 纪录片旁白男声 | `documentary-man` | 历史人文、深度解读 |
+| 东北热情大哥 | `northeast-guy` | 搞笑、接地气、生活吐槽 |
+| 台湾口音温柔女声 | `gentle-tw-accent` | 情感、生活、轻松闲聊 |
+
+`node skills/explainer-video/scripts/video.mjs voices` 可以本地逐个试听并导出样音（音频样张不随仓库分发）。
 
 管理音色的命令：
 
@@ -316,9 +318,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 ### 字幕
 
-单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设分配给 21 套主题，关键词用主题色。
-
-![21 套主题的字幕样式](docs/caption-styles.jpg)
+单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设（pill / sticker / block / ink / marker / cinema / glass）分给 7 套主题，关键词用主题色，配置见 [`engine/themes/caption-styles.json`](skills/article2media/engine/themes/caption-styles.json)。
 
 ### 审片与交付
 
@@ -581,7 +581,7 @@ claude plugin validate .
 
 ## 路线图
 
-- [x] 杂志长图、卡片组、21 套主题、模型自动选主题
+- [x] 杂志长图、卡片组、7 套主题、模型自动选主题
 - [x] 公众号图文、AI 插画
 - [x] 口播视频：本地配音、逐字同步、语速与字幕质检
 - [x] 原文全文排版、白板论证、漫画

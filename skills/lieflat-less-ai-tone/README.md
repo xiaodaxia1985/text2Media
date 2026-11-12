@@ -2,7 +2,7 @@
 
 中文 | [English](README.en.md)
 
-![去 AI 味 Skill：约 520 万字、100+ 项指标、约 50 万次模型语义判断](assets/less-ai-tone-hero-zh.png)
+![去 AI 味 Skill：约 520 万字、100+ 项指标、约 50 万次模型语义判断](assets/less-ai-tone-hero-zh.jpg)
 
 **一个基于两轮实测语料（共 1,169 篇、约 520 万汉字、100+ 项指标、约 50 万次模型语义判断）的去 AI 味 skill：先交付有指标、研究参照、原文例句和改法的检测报告，用户回复后再改写和复测。**
 

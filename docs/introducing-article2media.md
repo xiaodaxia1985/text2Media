@@ -1,6 +1,6 @@
 ---
 title: "article2media：给它一篇文章或一条视频，拿回一整套能发的图文和视频"
-description: "article2media 是开源的 Claude Code / Codex Skill：把文章或抖音、B 站、YouTube 视频一键做成小红书图文、杂志长图、公众号排版和 AI 配音口播短视频，21 套主题，每种产出自动验收。"
+description: "article2media 是开源的 Claude Code / Codex Skill：把文章或抖音、B 站、YouTube 视频一键做成小红书图文、杂志长图、公众号排版和 AI 配音口播短视频，7 套主题，每种产出自动验收。"
 author: "LeiLiu"
 tags: [article2media, Claude Code, Skill, 小红书图文, 公众号排版, 口播视频, 文章转视频, 视频转图文, 视频转文字, 逐字稿, AI 配音, 开源]
 date: 2026-11-09
@@ -23,7 +23,7 @@ date: 2026-11-09
   - 视频：抖音、YouTube、B 站链接，本地视频或音频，先转成逐字稿文章。
 - **产出**：七种，包括杂志长图、小红书图文卡片、公众号排版、带 AI 配音和逐字字幕的口播短视频，以及原文排版、白板论证和漫画。
 - **验收**：交付前，它会自己检查一遍，不合格就报错。
-- **风格**：21 套主题，同一份内容可以随时换风格。
+- **风格**：7 套主题，同一份内容可以随时换风格。
 - **运行**：只需要 Node.js 22 和 Chrome，零 npm 依赖；本地配音和语音识别需要 Apple Silicon。
 - **开源**：MIT 许可，仓库在 [github.com/threerocks/article2media](https://github.com/threerocks/article2media)。
 
@@ -35,9 +35,9 @@ date: 2026-11-09
 
 一条命令，七种产出：
 
-![article2media 用同一篇 X 长文生成的七种产出：杂志长图、小红书卡片、公众号图文、口播视频、原文全文、白板论证、漫画，以及 21 套主题总览](https://raw.githubusercontent.com/threerocks/article2media/main/docs/showcase.jpg)
+![article2media 用同一篇 X 长文生成的七种产出：杂志长图、小红书卡片、公众号图文、口播视频、原文全文、白板论证、漫画，以及 7 套主题总览](showcase.jpg)
 
-上图是同一篇 X 长文的全部产出。原文是 Dan Koe 的[《The most lucrative AI business to start in 2027》](https://x.com/thedankoe/status/2117664712532123680)，是英文的，产出全部是中文。[示例视频](https://github.com/threerocks/article2media/blob/main/docs/samples/dan-koe-video.mp4)和 [6 款音色的试听](https://github.com/threerocks/article2media/tree/main/docs/samples/voices)都在仓库里。
+上图是同一篇 X 长文的全部产出。原文是 Dan Koe 的[《The most lucrative AI business to start in 2027》](https://x.com/thedankoe/status/2117664712532123680)，是英文的，产出全部是中文。示例视频和音色样张不随仓库分发，跑一遍 `video.mjs make` 就能得到同样的成片。
 
 为了展示不同风格，示例里每种产出各用了一套主题：
 - **长图**：商业杂志 editorial；
@@ -75,9 +75,9 @@ date: 2026-11-09
 /article2media ./访谈录音.m4a 公众号
 ```
 
-风格有 21 套：商业杂志、瑞士极简、深色科技、液态玻璃、多巴胺、新粗野、国潮、新中式、像素、电影感……不指定时，Claude 会按内容和投放平台挑一个，并告诉你为什么选它。
+风格有 7 套：商业杂志、瑞士极简、深色科技、液态玻璃、多巴胺、新粗野、国潮、新中式、像素、电影感……不指定时，Claude 会按内容和投放平台挑一个，并告诉你为什么选它。
 
-![同一份内容在 21 套主题下的封面和第一张内容卡](https://raw.githubusercontent.com/threerocks/article2media/main/docs/themes.jpg)
+![同一份内容在 7 套主题下的封面和第一张内容卡](themes.jpg)
 
 ---
 
@@ -104,7 +104,7 @@ Claude 的工作是理解和写作：规划结构，改写标题，决定哪一�
 
 这样分工带来两个好处：
 
-- **换风格不用重写。** 同一份内容可以渲染成 21 套主题中的任何一套，也可以同时出长图、卡片和公众号。
+- **换风格不用重写。** 同一份内容可以渲染成 7 套主题中的任何一套，也可以同时出长图、卡片和公众号。
 - **结果可复现。** 同样的输入得到同样的输出，方便检查，也方便修。
 
 ### 2. 图里不放一个字
@@ -146,7 +146,7 @@ AI 生成的东西最怕「看起来差不多」。所以每一种产出都有�
   ✓ 成片响度：-16.2 → -14 LUFS（48 kHz）
 ```
 
-自测矩阵覆盖 4 篇示例文章 × 6 种版式 × 21 套主题，共 504 次渲染，每次都要求 0 个版面错误。
+自测矩阵覆盖 4 篇示例文章 × 6 种版式 × 7 套主题，共 168 次渲染，每次都要求 0 个版面错误。
 
 ### 4. 视频不是「幻灯片加朗读」
 
@@ -287,9 +287,7 @@ article2media 从第一版到现在的 1.6.0，前后三天、八个版本。下
 
 字幕条数从 39 条减到 29 条，平均停留从 1.2 秒拉长到 2.2 秒以上，闪断 0 处。
 
-顺手，我们给 21 套主题各配了一套字幕样式：多巴胺用白字粗描边，国潮用朱红印章做关键词，电影感用宽银幕字幕。
-
-![article2media 口播视频的 21 套字幕样式：卡片、描边贴纸、硬框、无框墨字、荧光笔、电影字幕、毛玻璃](https://raw.githubusercontent.com/threerocks/article2media/main/docs/caption-styles.jpg)
+顺手，我们给每套主题各配了一套字幕样式：signal-swiss 用黑底硬框、关键词信号橘；hark-noir 用深底发光的卡片；paper-editorial 与 apple-flow 用无框墨字，关键词取主题色。配置都在 `engine/themes/caption-styles.json`。
 
 这些标准，包括语速、首句时长和字幕闪断，现在都写进了审片。下次谁再改代码，机器会替我们记住那句「太急了」。
 

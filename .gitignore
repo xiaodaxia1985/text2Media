@@ -1,5 +1,39 @@
+# 产物与本地工作目录
 article2media-out/
 examples-work/
-node_modules/
-.DS_Store
 experiments/
+output/
+
+# 依赖与构建
+node_modules/
+dist/
+__pycache__/
+*.py[cod]
+.venv/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# 日志与临时文件
+*.log
+*.tmp
+.tmp/
+
+# 大体积演示媒体：不随仓库分发（成片用 video.mjs make 自己跑一遍）
+docs/samples/
+*.mp4
+*.mov
+*.mp3
+*.wav
+
+# 例外：口播视频的音色参考是功能资源，必须留在仓库里
+!skills/article2media/engine/assets/voices/
+!skills/article2media/engine/assets/voices/*.wav
+!skills/article2media/engine/assets/voices/*.txt
+!skills/article2media/engine/assets/voices/*.json

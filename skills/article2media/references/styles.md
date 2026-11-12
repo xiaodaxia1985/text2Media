@@ -27,7 +27,14 @@ node <wechat-layout>/scripts/wechat.mjs article.md --theme apple-hark        # �
 | `paper-editorial` | 纸感编辑：暖白纸、华文中宋衬线标题、朱红单点、1px 线与编号建立秩序、左线引文替代胶囊 | 复盘、长文、经验总结、公众号与人物叙事；要"读完可信"而不是"刷到好看" |
 | `signal-swiss` | 瑞士信号：纯白 + 墨黑 + 单点信号橘、直角、黑块标签、通栏橙色信号条 | 强观点、数据结论、抖音首图；缩略图辨识度最高，信息流里最跳 |
 
-旧版 21 套主题（editorial、swiss、glass、bento 等）已归档到 `engine/themes/legacy/`：`--list` 不再列出，也不再作为默认或备选。确实要用的，把文件从 `legacy/` 复制回 `themes/` 即可恢复（文件本身没改，仍可用）。
+旧版 21 套主题（editorial、swiss、glass、bento、riso、y2k 等）已于 2026-11-12 从仓库移除（只做仓库瘦身，文件本身没坏）。
+要恢复某一套，从 git 历史取回即可：
+
+```bash
+git show 657774a:skills/article2media/engine/themes/legacy/editorial.css > skills/article2media/engine/themes/editorial.css
+```
+
+现在 `--list` 列出的是 7 套在册主题。新增主题仍按上文「新建主题」复制一套改名。
 
 ## 选择指南（用户没指定主题时，由你来选）
 

@@ -4,7 +4,7 @@ Guidance for Claude Code when working on this repository (not when using the ski
 
 ## Overview
 
-A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). Since 2.0 it holds **11 skills**: ten independent capabilities and one entry skill that chains them into recommended combos. Articles or videos → Chinese visual content (long images, fixed-ratio cards, 公众号, explainer video, whiteboard, comic) with 21 themes.
+A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). Since 2.0 it holds **11 skills**: ten independent capabilities and one entry skill that chains them into recommended combos. Articles or videos → Chinese visual content (long images, fixed-ratio cards, 公众号, explainer video, whiteboard, comic) with 7 themes.
 
 | skill | capability | input → output |
 |---|---|---|
@@ -33,7 +33,7 @@ article2media/
 │   │   └── engine/
 │   │       ├── scripts/         # Node 22 CLIs, zero npm deps: fetch, render, export, translate, illustrate, video, comic, doctor; lib/
 │   │       ├── layouts/         # structure CSS per layout (long, card, full, cards-article, wechat, wechat-article, whiteboard, comic, video)
-│   │       ├── themes/          # 21 themes (first-line comment = name | description); illustration-styles.json, caption-styles.json
+│   │       ├── themes/          # 7 themes (first-line comment = name | description); illustration-styles.json, caption-styles.json
 │   │       └── assets/voices/   # VoxCPM2 designed voices (catalog.json)
 │   └── <capability>/            # SKILL.md, agents/openai.yaml, references/, scripts/ (thin wrappers into the engine)
 │       └── …                    # article-rewrite/examples/: content.json fixtures used by tests and as model examples
