@@ -1,0 +1,66 @@
+/* apple-hark-warm | 苹果 Hark 暖纸：暖白纸底、焦糖棕品牌色、白卡与黑胶囊不变；适合人文随笔、商业叙事、生活方式、教育与出版 */
+/* 字体不走网络：Inter 由 engine/assets/fonts/inter-variable.woff2 内嵌（见 scripts/lib/fonts.mjs），Noto Sans SC 用系统字体 */
+:root {
+  --font-head: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --w-title: 800;
+  --w-h2: 800;
+  --h2-ink: #1D1D1F;
+
+  /* Background: warm paper with a soft top glow */
+  --bg: #F7F3EE;
+  --bg-image:
+    radial-gradient(58% 20% at 50% 0%, rgba(255, 255, 255, .75), transparent 70%),
+    linear-gradient(180deg, #FAF6F0 0%, #F4EDE5 30%, #F0E7DC 55%, #EDE4D9 82%, #EBE2D8 100%);
+  --bg-size: 100% 2400px;
+  --bg-repeat: repeat;
+
+  --ink: #292521;
+  --muted: #8A8178;
+  --rule: rgba(41, 37, 33, .10);
+  --rule-soft: rgba(41, 37, 33, .06);
+  --sec-rule: 1px solid rgba(41, 37, 33, .10);
+
+  --fig-bg: #FFFFFF;
+  --card: #FFFFFF;
+  --panel-fill: #FFFFFF;
+  --well-bg: rgba(41, 37, 33, .05);
+  --box-bg: rgba(41, 37, 33, .045);
+  --box-border: 0;
+  --radius: 28px;
+  --radius-sm: 15px;
+  --panel-mix: 6%;
+  --sheet-bg: #EAE4DC;
+  --card-shadow: 0 18px 44px -20px rgba(90, 70, 50, .20), 0 2px 6px -4px rgba(90, 70, 50, .08);
+
+  --pill-bg: #1D1D1F;
+  --pill-ink: #FFFFFF;
+  --pill-shadow: 0 14px 30px -14px rgba(60, 45, 30, .45);
+
+  --label-bg: rgba(255, 255, 255, .7);
+  --label-edge: inset 0 0 0 1px rgba(41, 37, 33, .08), 0 1px 3px rgba(60, 45, 30, .08);
+  --label-blur: blur(16px);
+  --closing-bg: rgba(255, 255, 255, .82);
+
+  --guard-bg: #1D1D1F;
+  --guard-ink: #F5F5F7;
+  --guard-muted: #A19A90;
+  --guard-x: #FF453A;
+
+  /* Warm accents: 1 黑(强调) / 2 焦糖(品牌，换品牌色优先改这里并同步 6) / 3-6 大地色降饱和 */
+  --accent-1: #1D1D1F;
+  --accent-2: #A6683C;
+  --accent-3: #5B6E52;
+  --accent-4: #A44A3F;
+  --accent-5: #7A6A58;
+  --accent-6: #8B5E3C;
+
+  /* Text on accent fills (video kicker pill, focus chips) */
+  --on-acc: #FFFFFF;
+  /* Video: keep the soft depth blob subtle on the warm paper */
+  --deco-mix: 18%;
+  /* Video: headline scenes hold 9 个汉字一行 */
+  --headline-size: 50px;
+  --mark-mix: 16%;
+}
+.card { --bg-size: 100% 100%; --bg-repeat: no-repeat; }

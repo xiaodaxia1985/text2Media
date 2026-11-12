@@ -1,0 +1,379 @@
+/* Layout: card — fixed-ratio cards, 540 CSS px wide (1080 px at 2x): 3:4 (小红书), 4:5, 1:1, 9:16.
+   Card size comes from --card-w / --card-h on .sheet. Loaded after components.css.
+   All cards sit in one grid (.sheet), which doubles as a contact sheet. */
+
+body { width: max-content; background: var(--sheet-bg, #9a9a96); }
+.sheet { display: grid; grid-template-columns: repeat(3, var(--card-w, 540px)); gap: 24px; padding: 24px; }
+[hidden] { display: none !important; }
+
+.card {
+  width: var(--card-w, 540px); height: var(--card-h, 720px); overflow: hidden; position: relative;
+  display: flex; flex-direction: column; padding: 40px 36px 26px;
+  background: var(--bg); color: var(--ink);
+  background-image: var(--bg-image, none); background-size: var(--bg-size, auto); background-repeat: var(--bg-repeat, no-repeat);
+}
+/* 页顶固定三格：左=系列名，中=这一张是什么（节标签 / 导读 / 全文要点），右=页码。
+   全部卡片同一套位置，缩略图排开时才是一条对齐的页眉。 */
+.c-top {
+  flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
+  font-size: 11.5px; color: var(--muted); letter-spacing: .03em; line-height: 1.4;
+}
+.c-top-s { justify-self: start; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-top-t { justify-self: center; font-weight: 700; letter-spacing: .1em; color: var(--acc-text, var(--acc)); white-space: nowrap; }
+.c-top-p { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-foot {
+  flex: none; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  font-size: 11.5px; color: var(--muted); letter-spacing: .03em; line-height: 1.4;
+}
+.c-foot { padding-top: 12px; font-size: 10.5px; }
+.c-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.c-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding-top: 28px; }
+.c-body > * { flex: none; }
+/* 溢出阶梯的第一、二档：先整块上移（nudge），再压块间距（tight）——都不动字号、不删内容。
+   第三档才收标题字号（[data-shrink] → .shrink），第四档才删可选内容。 */
+.c-body.nudge { padding-top: 22px; }
+.c-body.tight { gap: 8px; padding-top: 18px; }
+.c-body.tight .c-stage { padding: 12px 16px; }
+.c-body.tight .c-cmp-row { padding: 13px 0; }
+.c-body.tight .c-tl-item { padding: 11px 0 13px; }
+.c-body.tight .c-claim-rule { margin: 18px 0 14px; }
+.c-body.tight .c-take, .c-body.tight .c-cmp-note { margin-top: 12px; }
+
+/* ---------- Section card ---------- */
+.card .sec-label {
+  align-self: center; padding: 5px 14px; border-radius: 999px;
+  background: var(--label-bg, var(--panel-bg)); box-shadow: var(--label-edge, none);
+  -webkit-backdrop-filter: var(--label-blur, none); backdrop-filter: var(--label-blur, none);
+  color: var(--label-ink, var(--acc-text)); font-weight: 700;
+  font-size: 12px; letter-spacing: .04em;
+}
+.card .sec-h {
+  font-family: var(--font-head); font-weight: var(--w-h2, 900); color: var(--h2-card-ink, var(--ink));
+  font-size: var(--sec-fs, 29px); line-height: 1.2; margin-top: 0; margin-bottom: 0; letter-spacing: -.02em; text-wrap: balance;
+}
+.card .sec-h.cont { font-size: calc(var(--sec-fs, 29px) * .76); }
+.c-text { font-size: 17px; line-height: 1.7; }
+.c-bullets { list-style: none; }
+.c-bullets li { position: relative; padding-left: 16px; font-size: 15px; line-height: 1.6; margin-bottom: 4px; }
+.c-bullets li::before { content: ""; position: absolute; left: 2px; top: .72em; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); }
+
+/* Figures fill the space left on the card. The canvas is drawn at a fixed base size and an inline
+   script (window.__fit) scales it to the box, so text inside figures grows with the space available. */
+.c-body > .c-fig { flex: 1 1 0; min-height: 110px; display: flex; flex-direction: column; }
+.c-fig-card { flex: 1; min-height: 0; background: var(--fig-bg); border-radius: var(--radius); padding: 16px; border: var(--fig-border, 0); box-shadow: var(--card-shadow, none); }
+.c-fig-box { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.c-fig .fig-canvas { position: absolute; left: 0; top: 0; width: 300px; height: 190px; transform-origin: 0 0; }
+.c-cap { font-size: 13.5px; color: var(--muted); text-align: center; margin-top: 6px; line-height: 1.5; }
+
+.c-take {
+  margin-top: auto; background: var(--pill-bg, var(--acc)); color: var(--pill-ink, var(--on-acc));
+  border: 0; border-radius: 18px; padding: 12px 18px;
+  font-weight: 700; font-size: 16px; line-height: 1.55;
+  box-shadow: var(--pill-shadow, none);
+}
+
+/* Panels on cards: narrower key column, single-column cards */
+.card .panel { padding: 12px 16px 14px; }
+.card .p-table .row { grid-template-columns: 92px 1fr; gap: 12px; font-size: 13.5px; padding: 7px 0; }
+.card .cards.c2, .card .cards.c3 { grid-template-columns: 1fr; }
+.card .p-card { font-size: 13px; }
+.card .p-quote .q { font-size: 14.5px; padding: 12px 14px; }
+
+/* ---------- Cover ---------- */
+/* 封面：标题组、导语、目录三段之间的空白均分，不再把目录用 auto 边距压到底、
+   在中间留一个 280px 的洞（真机上就是"上面一坨、下面一坨，中间空着"）。 */
+/* 封面当海报：标题顶到最大档、行高压紧，kicker 去胶囊改成裸字，
+   分隔线拉成满宽一根发丝线，目录抽掉卡底只留三行字。
+   这些写在版式层而不是某个主题里——换主题只决定颜色，构图不该跟着变。 */
+.c-cover .c-body { gap: 0; padding-top: 26px; justify-content: space-between; }
+.cv-kicker {
+  align-self: flex-start; display: inline-block; padding: 0;
+  background: none; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  color: var(--label-ink, var(--acc-text)); font-weight: 700; font-size: 12px; letter-spacing: .16em;
+}
+.cv-title {
+  /* 字号按字数走五档（metrics.mjs titleTier，输出 132/108/96/84/72 → CSS 66/54/48/42/36）；
+     window.__fit 只在超行时才往下缩（下限 36px）。海报式再放 1.16 倍。 */
+  font-family: var(--font-head); font-weight: var(--w-title, 900);
+  font-size: calc(var(--cv-fs, 58px) * 1.16); line-height: 1.08;
+  margin-top: 10px; color: var(--title-ink, var(--ink)); letter-spacing: var(--ls-title, -.03em); text-wrap: balance;
+}
+.cv-title b { color: var(--acc-text); }
+.cv-rule { width: 100%; height: 1px; background: var(--rule); border-radius: 0; margin: 24px 0 20px; }
+.cv-sub { font-size: 18px; line-height: 1.8; }
+/* Optional AI cover illustration: takes the space left on the cover (the TOC is dropped first if needed). */
+.c-body > .cv-ill { flex: 1 1 0; min-height: var(--cv-ill-min, 210px); margin: -4px 0 14px; }
+.r-1x1 .cv-ill { --cv-ill-min: 120px; }
+.r-4x5 .cv-ill { --cv-ill-min: 170px; }
+.r-9x16 .cv-ill { --cv-ill-min: 300px; }
+/* 目录不再是玻璃盒：三个条目 + 细线，和标题抢不了注意力 */
+.cv-toc { margin-top: 14px; background: none; border-radius: 0; padding: 0; box-shadow: none; }
+.cv-toc-h { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .16em; margin-bottom: 4px; }
+.cv-toc ol { list-style: none; }
+.cv-toc li { display: flex; gap: 12px; font-size: 16px; line-height: 1.5; padding: 12px 0; border-top: 1px solid var(--rule-soft); }
+.cv-toc li:first-child { border-top: 0; }
+.cv-toc li i { font-style: normal; color: var(--acc-text); font-weight: 700; font-family: var(--font-label, var(--font-head)); flex: none; }
+
+/* ---------- Checklist cards ---------- */
+/* Stage boxes keep their content tight and the whole stack sits on the card's vertical centre —
+   filling a short checklist by stretching rows only produces slack, loose rows. */
+.c-list .c-body { justify-content: center; }
+.c-stages { display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
+.c-stage {
+  background: var(--card); border-left: 0; border-radius: 18px;
+  padding: 16px 18px; box-shadow: var(--card-shadow, 0 0 0 1px var(--rule-soft));
+  flex: 0 0 auto; display: flex; flex-direction: column;
+}
+.c-stage-h { display: flex; align-items: baseline; gap: 10px; }
+.c-stage-h small { font-size: 11.5px; color: var(--acc-text); font-weight: 700; flex: none; }
+.c-stage-h b { font-family: var(--font-head); font-size: 18.5px; font-weight: 900; }
+.c-stage ul { list-style: none; margin-top: 6px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.c-stage li { display: flex; gap: 9px; font-size: 15px; line-height: 1.55; padding: 3px 0; }
+.c-box { flex: 0 0 12px; height: 12px; border: 1.5px solid var(--acc-line); border-radius: 50%; margin-top: .4em; }
+.c-done { font-size: 13px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--rule-soft); line-height: 1.5; }
+.c-done b { color: var(--acc-text); }
+.c-guard { background: var(--guard-bg); color: var(--guard-ink); border-radius: var(--radius); padding: 16px 20px 18px; box-shadow: var(--card-shadow, none); flex: 0 0 auto; }
+
+/* Continuation card that carries a guard: both blocks stay tight, the pair is centred together. */
+.guardfill .c-guard-h { font-size: 20px; margin-bottom: 6px; }
+.guardfill .c-guard li { font-size: 15.5px; padding: 5px 0; }
+.guardfill .c-guard-note { font-size: 12.5px; margin-top: 6px; }
+.c-guard-h { font-family: var(--font-head); font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.c-guard ul { list-style: none; }
+.c-guard li { display: flex; gap: 10px; font-size: 14.5px; line-height: 1.55; padding: 4px 0; }
+.c-x { flex: none; font-style: normal; color: var(--guard-x, #e2725b); font-weight: 700; }
+.c-guard-note { font-size: 12px; color: var(--guard-muted); margin-top: 8px; }
+.c-note { font-size: 12px; color: var(--muted); }
+
+/* ---------- End card ---------- */
+.c-end .c-body { justify-content: center; }
+.end-main { flex: 0 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.end-h { font-family: var(--font-head); font-weight: 900; font-size: 26px; line-height: 1.42; }
+.end-h b { color: var(--acc-text); }
+.end-list { list-style: none; flex: 0 0 auto; }
+.end-list li { display: flex; gap: 12px; align-items: center; font-size: 16px; line-height: 1.55; padding: 12px 0; border-top: 1px solid var(--rule-soft); }
+.end-list li i { flex: none; width: 22px; font-style: normal; color: var(--acc-text); font-weight: 700; font-family: var(--font-label, var(--font-head)); }
+/* 结尾要点不挂任何标记：条目之间已有细分割线，再加圆点或横线都是多余的装饰，
+   而且标记一旦和首行字号对不上，看着就像"横线跑到文字外面"。 */
+.end-list li { border-left: 0; }
+.end-list.dense li { font-size: 13.5px; padding: 4px 0; }
+.end-list.shrink { display: block; flex: none; columns: 2; column-gap: 18px; }
+.end-list.shrink li { font-size: 12.5px; padding: 3px 0; break-inside: avoid; }
+.end-src { margin-top: 6px; font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+.end-cta { background: var(--pill-bg, var(--acc)); color: var(--pill-ink, var(--on-acc)); text-align: center; padding: 12px; font-weight: 700; font-size: 15px; border-radius: 999px; box-shadow: var(--pill-shadow, none); }
+
+/* ---------- Role cards: the section declares what it is, the shape follows ---------- */
+
+/* Claim: one sentence owns the card. Breaks the "title + paragraph + figure" rhythm. */
+.c-claimcard .c-body { justify-content: center; gap: 0; }
+.c-claimcard .sec-label { margin-bottom: 26px; }
+/* 主张卡：一句话就该占满整张卡。字号在档位基础上再放 1.3 倍、行高压到 1.2，
+   小字号 + 大留白会让"一句主张"读起来像没排完。 */
+.c-claim { font-family: var(--font-head); font-weight: var(--w-title, 900);
+  font-size: calc(var(--claim-fs, 44px) * 1.3); line-height: 1.2;
+  letter-spacing: -.03em; text-wrap: balance; color: var(--ink); }
+.c-claim-rule { width: 48px; height: 4px; background: var(--acc); margin: 26px 0 20px; flex: none; }
+.c-claim-note { font-size: 17.5px; line-height: 1.9; color: var(--muted); }
+
+/* Compare: a two-column table with shared rows. The rows share the leftover height, so the table
+   reads as one block instead of a short table floating in white space. */
+.c-cmpcard .c-body { justify-content: flex-start; gap: 0; }
+.c-statcard .c-body { justify-content: center; gap: 0; }
+.c-cmpcard .sec-label, .c-statcard .sec-label { margin-bottom: 20px; }
+.c-cmp-lead { font-size: 14.5px; line-height: 1.75; color: var(--muted); margin: 10px 0 18px; flex: none; }
+/* 表格不再拉满卡高，也不再整体居中：标题 → 导语 → 表 → 结论连着排，
+   把空白留在末尾（末尾空会被 QA 量出来），不在标题和表格之间凿一个洞。 */
+.c-cmp { display: flex; flex-direction: column; flex: 0 0 auto; margin: 18px 0 0; min-height: 0; }
+.c-cmp-head { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px;
+  border-bottom: 3px solid var(--ink); padding-bottom: 10px; flex: none; }
+.c-cmp-th { font-family: var(--font-head); font-size: 16px; font-weight: 900; }
+.c-cmp-th.r { color: var(--muted); }
+/* 表格行按内容高度排（flex:0 0 auto），不再为了填满卡片把每行拉到 110px：
+   一行只有一句话却占掉一整条高带，块与块之间就显松，整张卡又铺满了。 */
+.c-cmp-row { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; flex: 0 0 auto;
+  padding: 19px 0; align-items: start; border-bottom: 1px solid var(--rule-soft); }
+.c-cmp-row:last-child { border-bottom: 0; }
+.c-cmp-cell { font-size: 16.5px; line-height: 1.6; }
+.c-cmp-cell.r { color: var(--muted); }
+.c-cmp-note { font-size: 13.5px; line-height: 1.8; color: var(--muted); margin-top: 20px; flex: none; }
+
+/* Timeline: a hairline rail, one dot per node. Nodes stretch to share the card height. */
+.c-tl { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin-top: 4px; }
+.c-tl-item { display: flex; gap: 13px; padding-bottom: 18px; flex: 1 1 0; }
+.c-tl-item:last-child { padding-bottom: 0; }
+.c-tl-rail { flex: 0 0 10px; position: relative; }
+.c-tl-rail::before { content: ""; position: absolute; left: 4px; top: 6px; bottom: -22px; width: 1px; background: var(--rule); }
+.c-tl-item:last-child .c-tl-rail::before { bottom: auto; height: 8px; }
+.c-tl-rail i { position: absolute; left: 0; top: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--acc); }
+.c-tl-body { min-width: 0; }
+.c-tl-body small { display: block; font-size: 11.5px; letter-spacing: .05em; color: var(--muted);
+  font-variant-numeric: tabular-nums; font-weight: 700; }
+.c-tl-body b { display: block; font-family: var(--font-head); font-size: 18.5px; line-height: 1.4; margin-top: 2px; }
+.c-tl-body span { display: block; font-size: 14.5px; line-height: 1.7; color: var(--muted); margin-top: 2px; }
+
+/* Timeline, second reading (content: "timelineStyle": "split").
+   The ladder makes you walk down the order; this one makes you read across —
+   left is the name of the step, right is what it actually means. Two flow cards
+   in the same set should not look like the same card twice. */
+.c-timeline:has(.c-tl-split) { text-align: left; }
+.c-timeline:has(.c-tl-split) .sec-label { align-self: flex-start; }
+.c-timeline:has(.c-tl-split) .sec-h { text-align: left; }
+.c-tl-split { margin-top: 14px; }
+/* 分栏版不吃「整块居中、宽度 86%」那条：它要靠左右两列撑满卡宽，居中会把它推成悬在中间的方块。
+   用 :has 提高特异性，压过后面那条 .c-timeline .c-tl 的居中规则。 */
+.c-timeline:has(.c-tl-split) .c-body { justify-content: center; }
+.c-timeline:has(.c-tl-split) .c-tl { flex: 0 0 auto; width: 100%; margin: 16px 0 0; }
+.c-timeline:has(.c-tl-split) .c-tl-item { flex: 0 0 auto; padding: 20px 0; }
+.c-tl-split .c-tl-item {
+  display: grid; grid-template-columns: 38% 1fr; column-gap: 20px; align-items: baseline;
+  border-top: 1px solid var(--rule-soft);
+}
+.c-tl-split .c-tl-item:last-child { border-bottom: 1px solid var(--rule-soft); }
+.c-tl-split .c-tl-rail { display: none; }
+.c-tl-split .c-tl-body { display: contents; }
+.c-tl-split .c-tl-body b { font-size: 20px; line-height: 1.35; margin-top: 0; }
+.c-tl-split .c-tl-body span { font-size: 14.5px; line-height: 1.7; margin-top: 0; }
+.c-tl-split .c-tl-body small { grid-column: 1; }
+
+/* Stats: one number per row, number and basis on the same baseline. Rows share the card height. */
+.c-stats { display: flex; flex-direction: column; flex: 0 0 auto; margin-top: 6px; }
+.c-stat { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); column-gap: 22px;
+  align-items: baseline; flex: 0 0 auto; min-height: 96px;
+  border-bottom: 1px solid var(--rule-soft); padding: 14px 0; }
+.c-stat:last-child { border-bottom: 0; }
+.c-stat b { font-family: var(--font-head); font-weight: 900; font-size: 64px; line-height: 1.02;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-stat b.cjk { font-size: 42px; letter-spacing: 0; }
+.c-stat b em { font-style: normal; font-size: 18px; font-weight: 700; letter-spacing: 0; margin-left: 4px; color: var(--muted); }
+.c-statcard .c-take { margin-top: 24px; }
+.c-stat-meta { min-width: 0; }
+.c-stat-meta small { display: block; font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+.c-stat-meta span { display: block; font-size: 13px; line-height: 1.7; color: var(--muted); margin-top: 5px; }
+
+/* Opener: chapter divider. Title, rule, one lead line. No section number —
+   it is a second numbering system beside the page count (05 / 09) and only reads as a mistake.
+   整张卡反相：一组暗卡读到中段翻一页白纸（浅色主题里反过来翻一页黑纸）。
+   底 = --ink、字 = --bg，就是"纸和墨互换"，主题不用为它多写一条；
+   借强调胶囊会让浅色主题翻成一页品牌色——那是换了个底，不是反相。 */
+.c-openercard { background: var(--ink); background-image: none; }
+.c-openercard .c-top, .c-openercard .c-foot { color: color-mix(in srgb, var(--bg) 58%, var(--ink)); }
+.c-openercard .sec-label { background: var(--bg); box-shadow: none; color: var(--ink);
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+.c-openercard .c-body { justify-content: center; gap: 0; }
+.c-open { display: flex; flex-direction: column; gap: 0; }
+.c-open-h { font-family: var(--font-head); font-weight: 900; font-size: 58px; line-height: 1.14;
+  letter-spacing: -.02em; margin-top: 0; color: var(--bg); text-wrap: balance; }
+.c-open-rule { width: 72px; height: 3px; background: var(--bg); margin: 22px 0 20px; }
+.c-open-lead { font-size: 17px; line-height: 1.9; max-width: 70%; text-wrap: pretty;
+  color: color-mix(in srgb, var(--bg) 78%, var(--ink)); }
+
+/* ---------- Centred composition ----------
+   主张 / 章节页 / 时间线 / 数据卡：内容整体居中。
+   这四类卡内容量小，靠左排会留出右半页空白，缩到手机上看就是"整块偏左"。
+   对比卡（表格）和过程卡（图）不在此列——它们本来就是满幅的块。 */
+.c-claimcard, .c-openercard, .c-timeline, .c-statcard { text-align: center; }
+.c-claimcard .sec-label, .c-openercard .sec-label,
+.c-timeline .sec-label, .c-statcard .sec-label { align-self: center; }
+.c-claimcard .sec-h, .c-openercard .sec-h,
+.c-timeline .sec-h, .c-statcard .sec-h { text-align: center; }
+.c-claim-rule { margin-left: auto; margin-right: auto; }
+/* 居中后说明要收成一块，不能横铺满卡宽 */
+.c-claim-note { text-align: center; max-width: 74%; margin-left: auto; margin-right: auto; }
+
+/* 页顶只有一个标签位，所有卡都放在同一处：居中。
+   标签只写这一节是什么（痛点 / 找工具 / 验证），不写 01、02 这类节序号——
+   序号和右上角的页码是两套编号，同时出现只会被读成排版错。 */
+
+.c-open { align-items: center; text-align: center; }
+/* 幕标：这一部分叫什么，章节页的起点 */
+.c-open-kicker { font-family: var(--font-label, var(--font-head)); font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; color: var(--acc-text, var(--acc)); margin-bottom: 30px; }
+.c-open-rule, .c-open-lead { text-align: center; margin-left: auto; margin-right: auto; }
+/* 章节页：标题块略高于中线，下方留白当"换气"，不悬停在正中。
+   14% 会把整块顶得太高（下方空掉近四成，看着像没排完），收到 8% 才落在"略高于中线"的位置。 */
+.c-openercard .c-body { padding-bottom: 8%; }
+
+/* 时间线：竖轨改为居中阶梯，标题 / 说明都居中，节点之间用短分割线 */
+.c-timeline .c-tl-rail { display: none; }
+.c-timeline .c-body { justify-content: flex-start; }
+.c-timeline .c-tl { flex: 0 0 auto; width: 86%; margin: auto; }
+.c-timeline .c-tl-item { flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.c-timeline .c-tl-item + .c-tl-item { border-top: 1px solid var(--rule-soft); }
+.c-timeline .c-tl-body { text-align: center; }
+.c-timeline .c-tl-body small { letter-spacing: .12em; }
+/* 没有真实时间就什么都不放：顺序由位置表达，分隔线已经够用。
+   编号、圆点、短横线在这张卡上都是多余装饰，只会和标题抢注意力。 */
+/* 节点按内容高度排列（flex:0 0 auto），不再均分整页：
+   均分会让每个节点之间空出一大块，块与块看着松、整卡又铺满。 */
+.c-timeline .c-tl-item { flex: 0 0 auto; position: relative; padding: 16px 0 18px; }
+.c-timeline .c-tl-item:first-child { padding-top: 0; }
+.c-timeline .c-tl-item:last-child { padding-bottom: 0; }
+
+/* 数据卡：三个数字横排成一排对照，不再上下堆成塔——堆塔一眼只能读一个数 */
+.c-stat { display: flex; flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.c-stat-meta { text-align: center; }
+.c-stat-meta small { letter-spacing: .06em; }
+.c-statcard .c-stats { flex-direction: row; justify-content: center; align-items: flex-start; gap: 30px; }
+.c-statcard .c-stat { flex: 0 0 auto; min-height: 0; padding: 0; border-bottom: 0; gap: 2px; }
+.c-statcard .c-stat b { font-size: 96px; letter-spacing: -.045em; }
+.c-statcard .sec-label { margin-bottom: 14px; }
+.c-statcard .c-take { margin-top: 18px; }
+
+/* ---------- 图卡证据（M10 / S08）：图是主角，文字让位 ----------
+   图占卡高 45–65%（下面 flex 撑开，min-height 45% 兜底），说明 ≤40 字压在下方，
+   有数字就排一行小号数字。图卡若只当"配图"（缩到 <45%）就该换卡型，不要硬排。 */
+.c-figcard .c-body { gap: 14px; }
+/* 图不拉高到撑满：按图的天然比例（300×190）铺满宽度，占卡高约 45–50%，
+   多出来的空间由整组（图 + 说明 + 数字）居中消化——把图拉满反而会在框里留一条长空带。 */
+.c-figcard .c-figgroup { flex: none; display: flex; flex-direction: column; gap: 14px; margin: auto 0; }
+.c-figcard .c-body > .c-fig { flex: none; min-height: 0; }
+.c-figcard .c-fig-box { height: auto; aspect-ratio: 300 / 190; }
+.c-figcard .c-body.tight { gap: 10px; }
+.c-figcard .c-fig-cap {
+  flex: none; font-size: 16px; line-height: 1.75; color: var(--muted);
+  max-width: 84%; margin: 0 auto; text-align: center;
+}
+.c-figcard .c-fig-stats { flex: none; display: flex; justify-content: center; gap: 26px; }
+.c-figcard .c-fig-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.c-figcard .c-fig-stat b {
+  font-family: var(--font-head); font-weight: 900; font-size: 30px; line-height: 1.1;
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+}
+.c-figcard .c-fig-stat b em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 3px; }
+.c-figcard .c-fig-stat small { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+
+/* ---------- Ratio tweaks ---------- */
+.r-1x1 .c-cover .c-body { padding-top: 20px; }
+.r-1x1 .cv-title { font-size: calc(var(--cv-fs, 58px) * .8); margin-top: 10px; }
+.r-1x1 .cv-rule { margin: 16px 0 12px; }
+.r-1x1 .card .sec-h, .r-4x5 .card .sec-h { font-size: calc(var(--sec-fs, 29px) * .93); }
+.r-9x16 .cv-title { font-size: calc(var(--cv-fs, 58px) * 1.1); }
+.r-9x16 .c-cover .c-body { padding-top: 70px; }
+.r-9x16 .c-claim { font-size: calc(var(--claim-fs, 44px) * 1.3); }
+.r-9x16 .c-claimcard .sec-label { margin-bottom: 40px; }
+.r-9x16 .c-claim-rule { margin: 30px 0 22px; }
+.r-9x16 .c-col li { font-size: 16.5px; line-height: 1.95; }
+.r-9x16 .c-stage-h b { font-size: 20px; }
+.r-9x16 .c-stage li { font-size: 16px; }
+.r-9x16 .c-done { font-size: 14px; }
+.r-9x16 .c-guard li { font-size: 16.5px; }
+.r-9x16 .c-cmp-cell { font-size: 17.5px; }
+.r-9x16 .c-cmp-row { min-height: 86px; max-height: 172px; }
+.r-9x16 .c-tl-item { padding-bottom: 30px; }
+.r-9x16 .c-tl-body b { font-size: 20px; }
+.r-9x16 .c-stat b { font-size: 104px; }
+.r-9x16 .c-stat b.cjk { font-size: 60px; }
+.r-9x16 .c-stat { min-height: 118px; }
+.r-1x1 .c-stat b { font-size: 50px; }
+.r-1x1 .c-stat { min-height: 76px; }
+.r-1x1 .c-stat b { font-size: 46px; }
+.r-9x16 .c-open-h { font-size: 50px; }
+.r-1x1 .c-claim { font-size: calc(var(--claim-fs, 44px) * 1.02); }
+.r-1x1 .c-stat b { font-size: 46px; }
+/* 收尾当签名：字号抬到 36，按钮收成直角，和主张卡的大字呼应 */
+.c-end .end-h { font-size: 36px; line-height: 1.32; letter-spacing: -.02em; }
+/* 反白章节页上的幕标（这一部分叫什么）要跟着底色走，不能再用强调色 */
+.c-openercard .c-open-kicker { color: var(--bg); opacity: .7; }
+.c-openercard .c-open-h, .c-openercard .c-open-rule { color: var(--bg); }
+.c-openercard .c-open-lead { color: color-mix(in srgb, var(--bg) 78%, var(--ink)); }

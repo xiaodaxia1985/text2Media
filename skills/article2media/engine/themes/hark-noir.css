@@ -1,0 +1,157 @@
+/* hark-noir | Hark 深色玻璃：深海军蓝夜空底、冷光渐层、半透明玻璃卡与发丝高光、白胶囊强调；适合 AI、产品、技术实践与暗色封面，抖音信息流里更抓眼 */
+/* 规则：不用纯黑；正文不用纯白；面与面之间靠 1px 高光分层，不靠阴影；强调色只做冷蓝一档。 */
+:root {
+  --font-head: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --w-title: 700;
+  --w-h2: 700;
+  --h2-ink: #F4F6FA;
+
+  /* Background: 夜空 —— 顶部冷蓝辉光，底部沉入近黑 */
+  --bg: #0A0F1A;
+  --bg-image:
+    radial-gradient(120% 72% at 50% -12%, rgba(92, 128, 232, .32) 0%, rgba(92, 128, 232, 0) 62%),
+    radial-gradient(90% 55% at 82% 112%, rgba(24, 92, 156, .26) 0%, rgba(24, 92, 156, 0) 70%),
+    linear-gradient(180deg, #121B2E 0%, #0A101B 58%, #070A11 100%);
+  --bg-size: 100% 100%;
+  --bg-repeat: no-repeat;
+
+  --ink: #F4F6FA;
+  --ink-strong: #FFFFFF;
+  --muted: #98A3B6;
+  --rule: rgba(255, 255, 255, .14);
+  --rule-soft: rgba(255, 255, 255, .08);
+  --sec-rule: 1px solid rgba(255, 255, 255, .12);
+
+  /* Materials: 玻璃层 —— 半透明白 + 1px 高光，不用实心卡 */
+  --fig-bg: rgba(255, 255, 255, .055);
+  --card: rgba(255, 255, 255, .065);
+  --panel-fill: rgba(255, 255, 255, .06);
+  --well-bg: rgba(255, 255, 255, .055);
+  --box-bg: rgba(255, 255, 255, .06);
+  --box-border: 0;
+  --box-radius: 10px;
+  --radius: 24px;
+  --radius-sm: 14px;
+  --panel-mix: 8%;
+  --sheet-bg: #05070C;
+  --card-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10), 0 24px 56px -36px rgba(0, 0, 0, .9);
+
+  /* Emphasis: Hark 的白色激活胶囊 */
+  --pill-bg: #F4F6FA;
+  --pill-ink: #0A0F1A;
+  --pill-shadow: 0 12px 30px -16px rgba(0, 0, 0, .85);
+
+  --label-bg: rgba(255, 255, 255, .09);
+  --label-edge: inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --label-blur: blur(18px);
+  --closing-bg: rgba(255, 255, 255, .07);
+
+  /* Guard card: 反相成白卡 */
+  --guard-bg: #F4F6FA;
+  --guard-ink: #0A0F1A;
+  --guard-muted: #5C6474;
+  --guard-x: #C2410C;
+
+  /* Accent palette: 只有一个色相（217° 冷蓝）+ 明度阶。3-6 只做明暗变化，不再引入青绿/琥珀 */
+  --accent-1: #FFFFFF;
+  --accent-2: #8FB4FF;
+  --accent-3: #FFFFFF;
+  --accent-4: #6D93D8;
+  --accent-5: #A7B4CC;
+  --accent-6: #9DB6D8;
+
+  /* 语义色：固定（通过=白，代价=暖红） */
+  --ok: #F4F6FA;
+  --bad: #FF8A7A;
+
+  --on-acc: #0A0F1A;
+  --fs-title: 58px;
+  --fs-body: 17px;
+  --deco-mix: 30%;
+  --mark-mix: 22%;
+}
+
+.card {
+  --bg-size: 100% 100%; --bg-repeat: no-repeat;
+  text-spacing-trim: trim-start;
+  font-synthesis: none;
+}
+
+/* ---------- 版式：App 式的紧凑节奏 ---------- */
+/* 边距统一到 72 / 80（输出像素）：.card 40×36，卡片四边不再贴平台画框 */
+.card { padding: 40px 36px 26px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .055); }
+.c-body { gap: 18px; padding-top: 18px; }
+.c-top, .c-foot { font-size: 11px; letter-spacing: .08em; color: #8B97AB; }
+
+/* 玻璃胶囊标签 */
+.card .sec-label {
+  background: var(--label-bg); box-shadow: var(--label-edge);
+  -webkit-backdrop-filter: var(--label-blur); backdrop-filter: var(--label-blur);
+  color: #DCE6F6; font-size: 11px; font-weight: 600; letter-spacing: .10em;
+  padding: 6px 14px; border-radius: 999px;
+}
+.card .sec-h { color: #FFFFFF; }
+.c-text { font-size: 20px; line-height: 1.8; color: #C4CEDF; letter-spacing: .01em; text-wrap: pretty; }
+.c-bullets li { font-size: 16px; line-height: 1.68; color: #C4CEDF; }
+.c-bullets li::before { background: var(--accent-2); }
+/* 固定小件只用品牌色（蓝），不跟节轮换 */
+.c-stage-h small, .c-done b { color: var(--accent-2); }
+.c-box { border-color: color-mix(in srgb, var(--accent-2) 50%, transparent); }
+.c-cap, .c-note { color: #8B97AB; }
+
+/* 结论 = 白色激活胶囊 */
+.c-take { background: var(--pill-bg); color: var(--pill-ink); border-radius: 999px; padding: 13px 20px; font-size: 17px; font-weight: 600; letter-spacing: 0; }
+
+/* 图卡：玻璃面 + 高光边，靠 1px 分层而不是阴影 */
+.c-fig-card { border-radius: 20px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10); }
+
+/* 图内方框：中性玻璃 + 中性发丝边（不跟节色走） */
+.box, .page .box {
+  background: var(--box-bg);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10);
+}
+.box.hl { box-shadow: none; }
+
+/* 清单卡 */
+.c-stage { background: rgba(255, 255, 255, .055); border-radius: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09); }
+.c-stage-h b { font-size: 19.5px; color: #F4F6FA; }
+.c-guard { border-radius: 18px; box-shadow: none; }
+
+/* 对比组：通过/代价用固定语义色；只在「没通过」那侧上色 */
+.cmp-col:not(.no) { border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+.cmp-col.no { border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+.cmp-col:not(.no) li i { color: var(--ok); }
+.cmp-col.no li i { color: var(--bad); }
+
+/* 一张清单卡只用一个强调色：各阶段继承本节色 */
+.c-stages .c-stage { --acc: unset !important; }
+
+/* ---------- 封面：夜空 + 白色胶囊目录 ---------- */
+.c-cover .c-body { padding-top: 54px; }
+/* 封面只给颜色。构图（海报式标题、满宽发丝线、目录不带卡底）在 layouts/card.css 里，
+   主题写了结构就会被主题的加载顺序吃掉，换主题时整组骨架跟着漂。 */
+.cv-kicker { color: #8FB4FF; }
+.cv-title { color: #FFFFFF; }
+.cv-sub { color: #A9B4C8; }
+.cv-toc-h { color: #8B97AB; }
+.cv-toc li { border-top: 1px solid rgba(255, 255, 255, .08); font-size: 16px; }
+.cv-toc li i { color: #A9C4FF; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- 结尾卡 ---------- */
+.end-h { color: #FFFFFF; }
+.end-list li { font-size: 15px; padding: 7px 0; border-top-color: rgba(255, 255, 255, .08); color: #C4CEDF; }
+.end-list li i { color: #A9C4FF; }
+.end-cta { border-radius: 999px; padding: 14px; font-size: 16px; font-weight: 600; }
+.end-src { color: #8B97AB; }
+
+/* 9:16：底部 132px 留给抖音 UI；图高固定，避免玻璃面被拉成空场 */
+.r-9x16 .card { padding-bottom: 132px; }
+.r-9x16 .c-cover .c-body { padding-top: 80px; }
+.r-9x16 .c-body { gap: 20px; padding-top: 24px; }
+.r-9x16 .c-text { font-size: 21.5px; line-height: 1.78; }
+.r-9x16 .c-fig { flex: 0 0 auto; height: 340px; min-height: 0; }
+.r-9x16 .c-take { font-size: 18px; padding: 15px 22px; }
+.r-9x16 .c-stage li { font-size: 16.5px; }
+.r-9x16 .c-stage-h b { font-size: 21px; }

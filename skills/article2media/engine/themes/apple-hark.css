@@ -1,0 +1,75 @@
+/* apple-hark | 苹果 Hark（默认）：灰白底一丝天蓝、白色大圆角卡片、磨砂胶囊标签、黑底白字强调、柔和弥散阴影；适合科技产品解读、AI 应用、新品发布、设计方法论，全平台通用 */
+/* 字体不走网络：Inter 由 engine/assets/fonts/inter-variable.woff2 内嵌（见 scripts/lib/fonts.mjs），Noto Sans SC 用系统字体 */
+:root {
+  /* Typography: SF-style sans, tight tracking, 800-weight titles */
+  --font-head: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --w-title: 800;
+  --w-h2: 800;
+  --h2-ink: #1D1D1F;
+
+  /* Background: Apple gray-white with the faintest sky hint (structure reads --bg-image) */
+  --bg: #F5F5F7;
+  --bg-image:
+    radial-gradient(58% 20% at 50% 0%, rgba(255, 255, 255, .7), transparent 70%),
+    linear-gradient(180deg, #F8FAFC 0%, #F2F5F9 30%, #EDF1F6 55%, #EFEFF3 82%, #F0EEF1 100%);
+  --bg-size: 100% 2400px;
+  --bg-repeat: repeat;
+
+  /* Ink & rules */
+  --ink: #1D1D1F;
+  --muted: #7D7D84;
+  --rule: rgba(29, 29, 31, .10);
+  --rule-soft: rgba(29, 29, 31, .06);
+  --sec-rule: 1px solid rgba(29, 29, 31, .10);
+
+  /* Materials: opaque white cards + soft wells (three Hark layers live in the layouts) */
+  --fig-bg: #FFFFFF;
+  --card: #FFFFFF;
+  --panel-fill: #FFFFFF;
+  --well-bg: rgba(29, 29, 31, .05);
+  --box-bg: rgba(29, 29, 31, .045);
+  --box-border: 0;
+  --radius: 28px;
+  --radius-sm: 15px;
+  --panel-mix: 6%;
+  --sheet-bg: #E8E8ED;
+  --card-shadow: 0 18px 44px -20px rgba(30, 45, 70, .18), 0 2px 6px -4px rgba(30, 45, 70, .06);
+
+  /* Emphasis: black pill, white text (Hark's "Chat" tab) */
+  --pill-bg: #1D1D1F;
+  --pill-ink: #FFFFFF;
+  --pill-shadow: 0 14px 30px -14px rgba(0, 0, 0, .45);
+
+  /* Frosted label capsules */
+  --label-bg: rgba(255, 255, 255, .66);
+  --label-edge: inset 0 0 0 1px rgba(29, 29, 31, .07), 0 1px 3px rgba(20, 30, 50, .06);
+  --label-blur: blur(16px);
+  --closing-bg: rgba(255, 255, 255, .8);
+
+  /* Dark "guard" card in checklists */
+  --guard-bg: #1D1D1F;
+  --guard-ink: #F5F5F7;
+  --guard-muted: #A1A1A6;
+  --guard-x: #FF453A;
+
+  /* Accent palette (rotates per section):
+     1 强调主色(黑) / 2 品牌主色(苹果蓝，换品牌色优先改这里并同步 6) / 3-6 降饱和辅助色 */
+  --accent-1: #1D1D1F;
+  --accent-2: #0071E3;
+  --accent-3: #2C7A5A;
+  --accent-4: #AD4B3C;
+  --accent-5: #5E6A7A;
+  --accent-6: #3E6E9C;
+
+  /* Text on accent fills (video kicker pill, focus chips) */
+  --on-acc: #FFFFFF;
+  /* Video: keep the soft depth blob subtle on the light gray paper */
+  --deco-mix: 16%;
+  /* Video: headline scenes hold 9 个汉字一行 */
+  --headline-size: 50px;
+  /* Video: keyword sweep / highlight wash (black accent at full strength reads as a gray smear) */
+  --mark-mix: 14%;
+}
+/* Long page tiles the gradient; cards stretch it to their own height */
+.card { --bg-size: 100% 100%; --bg-repeat: no-repeat; }

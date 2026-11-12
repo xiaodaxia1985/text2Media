@@ -1,0 +1,11 @@
+/* article2media 引擎本地字体（2026-11-10）
+   与生成的 HTML 同目录时可直接引用；不同目录请改成 file:/// 绝对路径或 data URI。
+   中文不在这里 —— 中文用系统的 Noto Sans SC（本机已装 NotoSansSC-VF.ttf，全量 100–900），原因见 scripts/lib/fonts.mjs 注释。 */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('./inter-variable.woff2') format('woff2');
+}

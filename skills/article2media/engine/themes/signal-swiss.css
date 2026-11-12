@@ -1,0 +1,145 @@
+/* signal-swiss | 瑞士信号：纯白 + 墨黑 + 单点橘红、直角无阴影、粗细分隔线、超大标题与数字；适合抖音封面、观点卡片、数据结论，信息流里最跳 */
+/* 规则：直角、无阴影、只用线与字号差建立层级；橘红只做「信号条 / 强调块」；每卡最多一个视觉重物。 */
+:root {
+  --font-head: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --w-title: 800;
+  --w-h2: 800;
+  --h2-ink: #111111;
+
+  /* Background: 纯白纸 */
+  --bg: #FFFFFF;
+  --bg-image: none;
+  --bg-size: 100% 100%;
+  --bg-repeat: no-repeat;
+
+  --ink: #111111;
+  --ink-strong: #000000;
+  --muted: #6B6B6B;
+  --rule: rgba(17, 17, 17, .28);
+  --rule-soft: rgba(17, 17, 17, .12);
+  --sec-rule: 1px solid rgba(17, 17, 17, .28);
+
+  /* Materials: 纸片 + 硬边框，没有阴影 */
+  --fig-bg: #FFFFFF;
+  --card: #FFFFFF;
+  --panel-fill: #FFFFFF;
+  --well-bg: #F2F2F2;
+  --box-bg: #F2F2F2;
+  --box-border: 1px solid rgba(17, 17, 17, .18);
+  --box-radius: 0;
+  --radius: 2px;
+  --radius-sm: 0;
+  --panel-mix: 4%;
+  --sheet-bg: #E6E6E6;
+  --card-shadow: none;
+
+  /* Emphasis: 黑条 */
+  --pill-bg: #111111;
+  --pill-ink: #FFFFFF;
+  --pill-shadow: none;
+
+  --label-bg: #111111;
+  --label-edge: none;
+  --label-blur: none;
+  --closing-bg: #FFFFFF;
+
+  --guard-bg: #111111;
+  --guard-ink: #FFFFFF;
+  --guard-muted: #B5B5B5;
+  --guard-x: #FF5A36;
+
+  /* Accent palette: 只有一个色相（15° 信号橘）+ 墨阶。3-6 只做明度变化，不再引入藏青/深绿 */
+  --accent-1: #111111;
+  --accent-2: #D8390E;
+  --accent-3: #111111;
+  --accent-4: #A32B0B;
+  --accent-5: #4A4A4A;
+  --accent-6: #9E4526;
+
+  /* 语义色：固定（通过=墨，代价=橘） */
+  --ok: #111111;
+  --bad: #D8390E;
+
+  --on-acc: #FFFFFF;
+  --fs-title: 60px;
+  --fs-body: 17px;
+}
+
+/* ---------- 版式：直角 + 粗线 ---------- */
+.card {
+  /* 边距统一到 72 / 80（输出像素）：.card 40×36 */
+  padding: 40px 36px 26px;
+  text-spacing-trim: trim-start;
+  font-synthesis: none;
+}
+.c-body { gap: 18px; padding-top: 18px; }
+.c-top, .c-foot { font-size: 10.5px; letter-spacing: .12em; color: #6B6B6B; }
+.c-top { border-bottom: 1px solid rgba(17, 17, 17, .28); padding-bottom: 10px; }
+.c-foot { border-top: 1px solid rgba(17, 17, 17, .12); padding-top: 10px; }
+
+/* 节标签 = 黑色小方块 */
+.card .sec-label {
+  background: #111111; color: #FFFFFF; box-shadow: none; border-radius: 2px;
+  padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: .12em;
+}
+/* 汉字不用负字距 */
+.card .sec-h { letter-spacing: -.01em; }
+.c-text { font-size: 20.5px; line-height: 1.82; color: #1C1C1C; letter-spacing: .01em; text-wrap: pretty; }
+.c-bullets li { font-size: 16px; line-height: 1.68; padding-left: 18px; }
+.c-bullets li::before { width: 6px; height: 2px; border-radius: 0; top: .68em; background: var(--accent-2); }
+/* 固定小件只用品牌色（红），不跟节轮换 */
+.c-stage-h small, .c-done b { color: var(--accent-2); }
+.c-box { border-color: color-mix(in srgb, var(--accent-2) 45%, transparent); }
+.c-cap, .c-note { color: #6B6B6B; }
+
+/* 结论 = 黑条 */
+.c-take { border-radius: 2px; padding: 12px 16px; font-size: 17px; font-weight: 700; letter-spacing: 0; }
+
+/* 图卡：硬边框 */
+.c-fig-card { border-radius: 2px; border: 1px solid #111111; box-shadow: none; }
+
+/* 图内方框：直角、细边、中性底（不跟节色走） */
+.box, .page .box { background: var(--box-bg); border-radius: 2px; }
+
+/* 清单卡 */
+.c-stage { border-radius: 2px; border: 1px solid rgba(17, 17, 17, .2); box-shadow: none; padding: 12px 16px; }
+.c-stage-h b { font-size: 20px; letter-spacing: 0; }
+.c-guard { border-radius: 2px; }
+
+/* 对比组：通过/代价用固定语义色，不跟节轮换；只在「没通过」那侧上色 */
+.cmp-col:not(.no) { border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
+.cmp-col.no { border-color: color-mix(in srgb, var(--bad) 55%, transparent); }
+.cmp-col:not(.no) li i { color: var(--ok); }
+.cmp-col.no li i { color: var(--bad); }
+
+/* 一张清单卡只用一个强调色：各阶段继承本节色，不再逐阶段换色 */
+.c-stages .c-stage { --acc: unset !important; }
+
+/* ---------- 封面 ----------
+   只给颜色。构图（海报式标题、满宽发丝线、目录不带卡底）在 layouts/card.css 里。 */
+.c-cover .c-body { padding-top: 26px; }
+.cv-sub { color: #3A3A3A; }
+.cv-toc-h { color: #6B6B6B; }
+/* 3:4 封面：目录占满下半张卡，封面不留空洞 */
+.r-3x4 .c-cover .c-body > .cv-toc { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.r-3x4 .c-cover .cv-toc ol { flex: 0 0 auto; display: block; }
+.r-3x4 .c-cover .cv-toc { border-top: 0; }
+.r-3x4 .c-cover .cv-toc-h { margin-bottom: 18px; }
+
+/* ---------- 结尾卡 ---------- */
+.end-list li { font-size: 15px; padding: 7px 0; }
+.end-list li i { color: var(--accent-2); }
+.end-cta { border-radius: 2px; padding: 13px; font-size: 16px; font-weight: 700; letter-spacing: .02em; }
+.end-src { color: #6B6B6B; }
+
+/* 9:16：底部 132px 留给抖音 UI；图高固定 */
+.r-9x16 .card { padding-bottom: 132px; }
+.r-9x16 .c-cover .c-body { padding-top: 60px; }
+.r-9x16 .c-body { gap: 20px; padding-top: 24px; }
+.r-9x16 .c-text { font-size: 21.5px; line-height: 1.8; }
+.r-9x16 .c-fig { flex: 0 0 auto; height: 340px; min-height: 0; }
+.r-9x16 .c-take { font-size: 18px; padding: 14px 18px; }
+.r-9x16 .c-stage li { font-size: 16.5px; }
+.r-9x16 .c-stage-h b { font-size: 21px; }

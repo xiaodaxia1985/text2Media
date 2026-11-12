@@ -1,0 +1,160 @@
+/* apple-flow | 苹果蓝白交互：纯白纸面 + iOS 系统蓝单色强调、严格 8pt 栅格、发丝描边白卡、蓝色胶囊结论；适合产品解读、方法论、个人实践记录，小红书 3:4 与抖音 9:16 通用 */
+/* 规则：一个卡片一个焦点；蓝只用在「结论 / 目录序号 / 小标题」；正文用近黑而非纯黑；卡片留白大于内容。 */
+:root {
+  /* Typography: SF 气质无衬线，标题负字距，正文 17px / 1.72 */
+  --font-head: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --w-title: 700;
+  --w-h2: 700;
+  --h2-ink: #1D1D1F;
+
+  /* Background: 纯白 + 顶部一丝冷光，模拟 Apple 产品页的柔光 */
+  --bg: #FFFFFF;
+  --bg-image:
+    radial-gradient(120% 58% at 50% 0%, rgba(232, 240, 252, .85) 0%, rgba(232, 240, 252, 0) 62%);
+  --bg-size: 100% 100%;
+  --bg-repeat: no-repeat;
+
+  /* Ink & rules */
+  --ink: #1D1D1F;
+  --ink-strong: #000000;
+  --muted: #6E6E73;
+  --rule: rgba(0, 0, 0, .09);
+  --rule-soft: rgba(0, 0, 0, .05);
+  --sec-rule: 1px solid rgba(0, 0, 0, .09);
+
+  /* Materials: 不透明白卡 + 极浅灰井，阴影只做「浮起 1px」 */
+  --fig-bg: #FFFFFF;
+  --card: #FFFFFF;
+  --panel-fill: #FFFFFF;
+  --well-bg: #F5F5F7;
+  --box-bg: #F5F5F7;
+  --box-border: 0;
+  --box-radius: 10px;
+  --radius: 22px;
+  --radius-sm: 12px;
+  --panel-mix: 4%;
+  --sheet-bg: #E9E9EC;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 10px 28px -16px rgba(0, 0, 0, .14);
+
+  /* Emphasis: iOS 蓝胶囊（结论 / CTA），不用黑胶囊 */
+  --pill-bg: #0071E3;
+  --pill-ink: #FFFFFF;
+  --pill-shadow: 0 6px 16px -14px rgba(0, 113, 227, .26);
+
+  /* Labels: 无胶囊，直接让位给标题 */
+  --label-bg: transparent;
+  --label-edge: none;
+  --label-blur: none;
+  --closing-bg: #FFFFFF;
+
+  /* Guard card in checklists */
+  --guard-bg: #1D1D1F;
+  --guard-ink: #FFFFFF;
+  --guard-muted: #A1A1A6;
+  --guard-x: #FF453A;
+
+  /* Accent palette: 只有一个色相（212° 蓝）+ 墨阶。3-6 只做明度变化，不再引入绿/藏青 */
+  --accent-1: #1D1D1F;
+  --accent-2: #0071E3;
+  --accent-3: #1D1D1F;
+  --accent-4: #0059B3;
+  --accent-5: #6E6E73;
+  --accent-6: #3C6E9E;
+
+  /* 语义色：固定，不跟节轮换（通过=墨，不成立=iOS 红） */
+  --ok: #1D1D1F;
+  --bad: #D70015;
+
+  --on-acc: #FFFFFF;
+  --fs-title: 58px;
+  --fs-body: 17px;
+}
+
+/* 卡片把顶部柔光拉伸到自身高度 */
+.card {
+  --bg-size: 100% 100%; --bg-repeat: no-repeat;
+  /* 中文排印：行首标点收起（避头尾），不合成字重 */
+  text-spacing-trim: trim-start;
+  font-synthesis: none;
+}
+
+/* ---------- 版式：8pt 栅格，留白 > 内容 ---------- */
+/* 边距统一到 72 / 80（输出像素）：.card 40×36，卡片四边不再贴平台画框 */
+.card { padding: 40px 36px 26px; }
+.c-body { gap: 18px; padding-top: 18px; }
+.c-top, .c-foot { font-size: 11px; letter-spacing: .08em; color: #86868B; }
+.c-foot { padding-top: 14px; }
+
+/* 节标签退成一行小字，把层级让给标题 */
+.card .sec-label {
+  background: none; box-shadow: none; padding: 0; border-radius: 0;
+  color: var(--accent-2); font-size: 12px; font-weight: 600; letter-spacing: .14em;
+}
+/* 汉字不用负字距（版式层已设 -.03em 给封面大字，节标题这里收回 0） */
+.card .sec-h { letter-spacing: 0; }
+/* 正文 20.5px：卡片缩到手机宽度约 0.72，等效 14.8pt，接近 iOS 正文档位 */
+.c-text {
+  font-size: 20.5px; line-height: 1.85; color: #3A3A3C;
+  letter-spacing: .01em; text-wrap: pretty;
+}
+.c-bullets li { font-size: 16px; line-height: 1.7; padding-left: 18px; }
+.c-bullets li::before { width: 6px; height: 6px; top: .6em; background: var(--accent-2); }
+/* 固定小件（圆点、阶段编号、待勾）只用品牌色，不跟节轮换 */
+.c-stage-h small, .c-done b { color: var(--accent-2); }
+.c-box { border-color: color-mix(in srgb, var(--accent-2) 45%, transparent); }
+.c-cap { font-size: 13px; color: #86868B; }
+.c-note { font-size: 12.5px; color: #86868B; }
+
+/* 结论 = 蓝色胶囊，居中，读图时形成节奏 */
+.c-take { border-radius: 999px; padding: 13px 20px; font-size: 17px; font-weight: 600; letter-spacing: 0; text-align: center; }
+
+/* 图卡：白底 + 发丝描边，去掉重阴影 */
+.c-fig-card { border-radius: 18px; border: 1px solid rgba(0, 0, 0, .06); box-shadow: none; }
+
+/* 图内方框跟着本节色走，避免整组图灰成一片 */
+.box, .page .box { background: var(--box-bg); }
+
+/* 清单卡 */
+.c-stage { border-radius: 16px; border: 1px solid rgba(0, 0, 0, .06); box-shadow: none; padding: 12px 16px; }
+.c-stage-h b { font-size: 19.5px; letter-spacing: 0; }
+.c-guard { border-radius: 18px; }
+
+/* 对比组：通过/代价用固定语义色，不跟节轮换；只在「没通过」那侧上色 */
+.cmp-col:not(.no) { border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
+.cmp-col.no { border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+.cmp-col:not(.no) li i { color: var(--ok); }
+.cmp-col.no li i { color: var(--bad); }
+
+/* 一张清单卡只用一个强调色：各阶段继承本节色 */
+.c-stages .c-stage { --acc: unset !important; }
+
+/* ---------- 封面：白纸 ----------
+   只给颜色。构图（海报式标题、满宽发丝线、目录不带卡底）在 layouts/card.css 里。 */
+.c-cover .c-body { padding-top: 26px; }
+.cv-kicker { color: var(--accent-2); }
+.cv-sub { color: #6E6E73; }
+.cv-toc-h { color: #86868B; }
+.cv-toc li:first-child { border-top: 0; }
+/* 3:4 封面：目录占满下半张卡，消灭封面空洞 */
+.r-3x4 .c-cover .c-body > .cv-toc { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.r-3x4 .c-cover .cv-toc ol { flex: 0 0 auto; display: block; }
+.r-3x4 .c-cover .cv-toc { border-top: 0; }
+.r-3x4 .c-cover .cv-toc-h { margin-bottom: 18px; }
+
+/* ---------- 结尾卡 ---------- */
+.end-list li { font-size: 15px; padding: 8px 0; }
+.end-list li i { color: var(--accent-2); }
+.end-cta { border-radius: 999px; padding: 14px; font-size: 16px; }
+.end-src { font-size: 10.5px; color: #86868B; }
+
+/* 9:16 竖屏：底部 132px 是抖音 UI 安全区，图高固定，文案放大一档 */
+.r-9x16 .card { padding-bottom: 132px; }
+.r-9x16 .c-cover .c-body { padding-top: 60px; }
+.r-9x16 .c-body { gap: 20px; padding-top: 24px; }
+.r-9x16 .c-text { font-size: 21.5px; line-height: 1.82; }
+.r-9x16 .c-fig { flex: 0 0 auto; height: 340px; min-height: 0; }
+.r-9x16 .c-take { font-size: 18px; padding: 15px 22px; }
+.r-9x16 .c-stage li { font-size: 16.5px; }
+.r-9x16 .c-stage-h b { font-size: 21px; }
