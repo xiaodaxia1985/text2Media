@@ -1,0 +1,153 @@
+/* paper-editorial-green | 纸感编辑·品牌绿：暖白纸面、华文中宋标题、发丝分隔线与右对齐页码、墨绿单点强调；适合精读系列、长文复盘、商业叙事 */
+/* 规则：标题用衬线、正文用无衬线；不用圆角不用阴影，用 1px 线与编号建立秩序；朱红一版只用一处。 */
+:root {
+  /* Typography: 标题=华文中宋（衬线，与拉丁同为衬线，粗细一致；不合成加粗）；正文=Inter + Noto Sans SC */
+  --font-head: 'STZhongsong', 'Songti SC', 'Noto Serif SC', 'SimSun', serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --w-title: 400;
+  --w-h2: 400;
+  --h2-ink: #171512;
+
+  /* Background: 暖白纸，顶部一层极淡的光，别做渐变云 */
+  --bg: #FBFAF6;
+  --bg-image:
+    radial-gradient(110% 40% at 50% 0%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, 0) 70%);
+  --bg-size: 100% 100%;
+  --bg-repeat: no-repeat;
+
+  --ink: #171512;
+  --ink-strong: #000000;
+  --muted: #6F6A63;
+  --rule: rgba(23, 21, 18, .16);
+  --rule-soft: rgba(23, 21, 18, .08);
+  --sec-rule: 1px solid rgba(23, 21, 18, .16);
+
+  /* Materials: 纸面白卡 + 细边框，无阴影 */
+  --fig-bg: #FFFFFF;
+  --card: #FFFFFF;
+  --panel-fill: #FFFFFF;
+  --well-bg: #F4F1EA;
+  --box-bg: #F4F1EA;
+  --box-border: 1px solid rgba(23, 21, 18, .10);
+  --box-radius: 3px;
+  --radius: 6px;
+  --radius-sm: 4px;
+  --panel-mix: 5%;
+  --sheet-bg: #EFEBE3;
+  --card-shadow: none;
+
+  /* Emphasis: 朱红细线而不是色块 */
+  --pill-bg: #17564A;
+  --pill-ink: #FFFFFF;
+  --pill-shadow: none;
+
+  --label-bg: transparent;
+  --label-edge: none;
+  --label-blur: none;
+  --closing-bg: #FBFAF6;
+
+  --guard-bg: #171512;
+  --guard-ink: #FBFAF6;
+  --guard-muted: #A9A49B;
+  --guard-x: #E06A4E;
+
+  /* Accent palette: 只有一个色相（7° 朱红）+ 墨阶。3-6 只做明度变化，不再引入松绿/赭石 */
+  --accent-1: #171512;
+  --accent-2: #17564A;
+  --accent-3: #171512;
+  --accent-4: #0E3A32;
+  --accent-5: #4A4E57;
+  --accent-6: #7FA294;
+
+  /* 语义色：固定（通过=墨，代价=朱红） */
+  --ok: #171512;
+  --bad: #B23A2A;
+
+  --on-acc: #FFFFFF;
+  --fs-title: 52px;
+  --fs-body: 16.5px;
+}
+
+.card {
+  --bg-size: 100% 100%; --bg-repeat: no-repeat;
+  text-spacing-trim: trim-start;
+  font-synthesis: none;
+}
+
+/* ---------- 版式：杂志页边距 + 编号秩序 ---------- */
+/* 边距统一到 72 / 80（输出像素）：.card 40×36，卡片四边不再贴平台画框 */
+.card { padding: 40px 36px 26px; }
+.c-body { gap: 20px; padding-top: 20px; }
+.c-top, .c-foot { font-size: 10.5px; letter-spacing: .14em; color: #8A847B; }
+
+/* 节标签：一条短线 + 编号小字 */
+.card .sec-label {
+  background: none; box-shadow: none; padding: 0; border-radius: 0;
+  color: #7A736A; font-size: 11px; font-weight: 600; letter-spacing: .16em;
+}
+.card .sec-label::before {
+  content: ""; display: inline-block; width: 20px; height: 1px;
+  background: var(--accent-2); margin-right: 10px; vertical-align: middle;
+}
+/* 衬线细体是这套主题的气质，字号和构图层在版式里 */
+.card .sec-h { font-family: var(--font-head); font-weight: 400; letter-spacing: 0; }
+.c-text { font-size: 20px; line-height: 1.9; color: #332F2B; letter-spacing: .01em; text-wrap: pretty; }
+.c-bullets li { font-size: 16px; line-height: 1.78; }
+.c-bullets li::before { background: var(--accent-2); }
+/* 固定小件只用品牌色（赭红），不跟节轮换 */
+.c-stage-h small, .c-done b { color: var(--accent-2); }
+.c-box { border-color: color-mix(in srgb, var(--accent-2) 45%, transparent); }
+.c-cap, .c-note { color: #8A847B; }
+
+/* 结论 = 左线引文，不做胶囊；左线固定品牌色，不跟节轮换 */
+.c-take {
+  background: none; color: #211E1A; border-left: 3px solid var(--accent-2);
+  border-radius: 0; padding: 4px 0 4px 14px; font-size: 17.5px; font-weight: 600;
+  box-shadow: none; line-height: 1.78;
+}
+
+/* 图卡：细边框纸片 */
+.c-fig-card { border-radius: 4px; border: 1px solid rgba(23, 21, 18, .14); box-shadow: none; }
+
+/* 图内方框：中性纸色 + 发丝边，不跟节色染色 */
+.box, .page .box { background: var(--box-bg); }
+
+/* 清单卡 */
+.c-stage { border-radius: 4px; box-shadow: none; border: 1px solid rgba(23, 21, 18, .12); padding: 12px 16px; }
+.c-stage-h b { font-family: var(--font-head); font-weight: 400; font-size: 20px; }
+.c-guard { border-radius: 4px; }
+
+/* 对比组：通过/代价用固定语义色；只在「没通过」那侧上色 */
+.cmp-col:not(.no) { border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
+.cmp-col.no { border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+.cmp-col:not(.no) li i { color: var(--ok); }
+.cmp-col.no li i { color: var(--bad); }
+
+/* 一张清单卡只用一个强调色：各阶段继承本节色 */
+.c-stages .c-stage { --acc: unset !important; }
+
+/* ---------- 封面：报头式排版 ----------
+   只给颜色与字重。构图（海报式标题、满宽发丝线、目录不带卡底）在 layouts/card.css 里。 */
+.c-cover .c-body { padding-top: 26px; }
+.cv-title { font-weight: 400; letter-spacing: 0; }
+.cv-kicker { color: #8A847B; }
+.cv-sub { color: #6F6A63; }
+.cv-toc-h { color: #8A847B; }
+
+/* ---------- 结尾卡 ---------- */
+.end-h { font-weight: 400; letter-spacing: 0; }
+.end-list li { font-size: 15px; padding: 8px 0; }
+.end-list li i { color: var(--accent-2); }
+.end-cta { border-radius: 2px; padding: 14px; font-size: 15.5px; font-weight: 600; letter-spacing: .04em; }
+.end-src { color: #8A847B; }
+
+/* 9:16：底部 132px 留给抖音 UI；图高固定 */
+.r-9x16 .card { padding-bottom: 132px; }
+.r-9x16 .c-cover .c-body { padding-top: 60px; }
+.r-9x16 .c-body { gap: 20px; padding-top: 24px; }
+.r-9x16 .c-text { font-size: 21px; line-height: 1.88; }
+.r-9x16 .c-fig { flex: 0 0 auto; height: 340px; min-height: 0; }
+.r-9x16 .c-take { font-size: 18px; }
+.r-9x16 .c-stage li { font-size: 16.5px; }
+.r-9x16 .c-stage-h b { font-size: 22px; }
