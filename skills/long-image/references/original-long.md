@@ -4,7 +4,7 @@
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md                  # 白底阅读面 → <目录>/full/full.png
-node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md --theme quiet    # 用某个主题的颜色与字体 → <目录>/quiet-full/
+node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md --theme paper-editorial    # 用某个主题的颜色与字体 → <目录>/paper-editorial-full/
 ```
 
 ## 阅读面（1080 px 成品）

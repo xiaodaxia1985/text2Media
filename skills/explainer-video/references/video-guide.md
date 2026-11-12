@@ -151,7 +151,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/video.mjs check  <目录>/video/video.json   # 校验：首句长度、cue、字幕长度、预计时长
 node ${CLAUDE_SKILL_DIR}/scripts/video.mjs make   <目录>/video/video.json   # 配音 → 插画 → 渲染 → 审片
-node ${CLAUDE_SKILL_DIR}/scripts/video.mjs render <目录>/video/video.json --theme brutal   # 换主题重渲（配音复用）
+node ${CLAUDE_SKILL_DIR}/scripts/video.mjs render <目录>/video/video.json --theme signal-swiss   # 换主题重渲（配音复用）
 ```
 - 配音按句缓存：只改了某一镜的口播，只会重新生成那几句。
 - 输出在 `<目录>/video/<主题>/`：`video.mp4`、`cover.png`、`cover-3x4.jpg`、`captions.srt`、`post.md`（发布文案和 AI 声明）、`contact-sheet.jpg`（审片总览）、`review.json`。

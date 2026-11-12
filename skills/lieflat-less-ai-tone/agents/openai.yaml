@@ -1,0 +1,4 @@
+interface:
+  display_name: "去AI味"
+  short_description: "三层去 AI 味：脚本分级检测 + 语义判读，先出改前报告，确认后按白名单改写并复测"
+  default_prompt: "使用 $lieflat-less-ai-tone 检查并清理这篇稿子的 AI 写作痕迹。"

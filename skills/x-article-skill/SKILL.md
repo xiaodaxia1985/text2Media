@@ -1,6 +1,7 @@
 ---
 name: x-article-skill
 description: 根据用户提供的个人语料、参考材料和视觉风格，制作中文 X Article 长文内容包，包括标题、正文、配图、封面和导流短文；也支持单项修改。
+version: "2.0.1"
 ---
 
 # X Article Skill

@@ -29,7 +29,7 @@ version: "2.0.1"
 ## 1. 排版
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --check                # 只校验：解析、标题长度
-node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --theme quiet          # → <目录>/quiet-wechat/
+node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --theme paper-editorial  # → <目录>/paper-editorial-wechat/
 node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/rewrite.md                        # 主题默认用 rewrite.md 里记录的（图表按它截的图）
 node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --title "公众号标题" --digest "摘要" --cover-title "两行\n标题"
 ```

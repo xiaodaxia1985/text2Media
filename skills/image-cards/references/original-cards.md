@@ -4,7 +4,7 @@
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md                      # 3:4，白底阅读面 → <目录>/full-3x4/
-node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 1:1 --theme quiet   # → <目录>/quiet-full-1x1/
+node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 1:1 --theme paper-editorial   # → <目录>/paper-editorial-full-1x1/
 ```
 
 ## 卡片怎么排

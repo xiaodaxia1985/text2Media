@@ -26,7 +26,7 @@ version: "2.0.1"
 ## 1. 杂志长图（content.json）
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/content.json                    # 主题取 content.json 的 theme
-node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/content.json --theme midnight   # 用户指定主题
+node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/content.json --theme hark-noir   # 用户指定主题
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/content.json --theme all        # 全部主题，分目录输出
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs --list                                 # 列出主题
 ```
@@ -42,7 +42,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/long.mjs --list                                
 ## 2. 原文长图（article.md）
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md                  # 白底阅读面
-node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md --theme quiet    # 用主题的颜色与字体
+node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md --theme paper-editorial    # 用主题的颜色与字体
 ```
 读 `references/original-long.md`（阅读面规格）和 `../article2media/references/verbatim.md`（允许与禁止、逐块校验）。全文校验未通过（改字、调序、漏块、重复）就是错误，按提示修，不能靠目测放行。看 `full/review/` 里的重叠切片，逐张看完再交付。
 

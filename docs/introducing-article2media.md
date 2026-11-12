@@ -40,10 +40,10 @@ date: 2026-11-09
 上图是同一篇 X 长文的全部产出。原文是 Dan Koe 的[《The most lucrative AI business to start in 2027》](https://x.com/thedankoe/status/2117664712532123680)，是英文的，产出全部是中文。示例视频和音色样张不随仓库分发，跑一遍 `video.mjs make` 就能得到同样的成片。
 
 为了展示不同风格，示例里每种产出各用了一套主题：
-- **长图**：商业杂志 editorial；
-- **小红书卡片**：新粗野 brutal；
-- **公众号**：瑞士极简 swiss；
-- **口播视频**：深色科技 midnight，配音用「资讯播报男声」。
+- **长图**：纸感编辑 paper-editorial；
+- **小红书卡片**：瑞士信号 signal-swiss；
+- **公众号**：苹果蓝白 apple-flow；
+- **口播视频**：深色玻璃 hark-noir，配音用「资讯播报男声」。
 
 七种产出的规格和用途如下：
 
@@ -131,10 +131,10 @@ AI 生成的东西最怕「看起来差不多」。所以每一种产出都有�
   - 每一句配音的错字率和音色漂移；
   - 成片响度。
 
-下面是示例视频（Dan Koe 那篇，midnight 主题、资讯播报男声）的真实审片输出：
+下面是示例视频（Dan Koe 那篇，hark-noir 主题、资讯播报男声）的真实审片输出：
 
 ```
-审片：video/midnight/contact-sheet.jpg
+审片：video/hark-noir/contact-sheet.jpg
   ✓ 首句说完：4.83s
   ✓ 第一个画面信息：0.75s
   ✓ 最长画面静止：4.7s

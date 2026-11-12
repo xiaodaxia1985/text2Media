@@ -20,7 +20,7 @@
 ```jsonc
 {
   "lang": "zh",                       // zh | en，影响"第 1 / 3 页""图 1A"等界面文字
-  "theme": "editorial",               // 主题名，或 {"long": "…", "cards": "…", "wechat": "…"} 分别指定。用户没指定时由你按 styles.md 来选；--theme 会覆盖它
+  "theme": "paper-editorial",               // 主题名，或 {"long": "…", "cards": "…", "wechat": "…"} 分别指定。用户没指定时由你按 styles.md 来选；--theme 会覆盖它
   "title": "DAN KOE：2027 年\n最赚钱的 AI 生意",  // 每页顶部大标题，建议 2 行，每行 ≤ 12 个汉字
   "series": "实战手册 · 创作者经济",      // 页眉左侧的栏目名（可选）
   "source": {                          // 原文信息，用于页脚来源行

@@ -7,7 +7,7 @@
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/comic.mjs check <目录>/comic.json
 node ${CLAUDE_SKILL_DIR}/scripts/comic.mjs make  <目录>/comic.json      # 出图（约 1–1.5 分钟一格，3 格并行）+ 排版
-node ${CLAUDE_SKILL_DIR}/scripts/comic.mjs render <目录>/comic.json --theme quiet   # 只重排（分格已缓存）
+node ${CLAUDE_SKILL_DIR}/scripts/comic.mjs render <目录>/comic.json --theme paper-editorial   # 只重排（分格已缓存）
 ```
 
 ## 1. 先把讲解变成认知因果拍点

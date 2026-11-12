@@ -47,7 +47,7 @@ console.log('== Skills');
   for (const d of dirs) {
     const f = path.join(SKILLS, d, 'SKILL.md');
     if (!fs.existsSync(f)) { bad.push(`${d}: 没有 SKILL.md`); continue; }
-    const fm = fs.readFileSync(f, 'utf8').match(/^---\n([\s\S]*?)\n---/)?.[1] || '';
+    const fm = fs.readFileSync(f, 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] || '';
     const get = (k) => fm.match(new RegExp(`^${k}:\\s*(.*)$`, 'm'))?.[1]?.replace(/^"|"$/g, '');
     if (get('name') !== d) bad.push(`${d}: name 是 ${get('name')}`);
     if (get('version') !== plugin.version) bad.push(`${d}: version ${get('version')} ≠ ${plugin.version}`);
@@ -116,7 +116,7 @@ const tmpContent = (patch) => {
   let r = run([f, '--check']);
   check('不指定比例 → 长图', r.code === 0 && /版式：长图/.test(r.out), r.out);
   r = run([f, '--out', path.join(OUT, 'd1'), '--page', '1']);
-  check('不指定主题且 content 无 theme → editorial（默认）', r.code === 0 && /主题：editorial（默认）/.test(r.out) && fs.existsSync(path.join(OUT, 'd1', 'page-01.png')), r.out);
+  check('不指定主题且 content 无 theme → apple-hark（默认）', r.code === 0 && /主题：apple-hark（默认）/.test(r.out) && fs.existsSync(path.join(OUT, 'd1', 'page-01.png')), r.out);
 }
 {
   // image figures may point at local files, relative to content.json (e.g. frames cut from a source video).
@@ -136,15 +136,15 @@ const tmpContent = (patch) => {
   check('配图的本地文件不存在 → 报错', r.code !== 0 && /找不到图片文件/.test(r.out), r.out);
 }
 {
-  const f = tmpContent({ theme: 'notebook' });
+  const f = tmpContent({ theme: 'paper-editorial' });
   const r = run([f, '--out', path.join(OUT, 'd2'), '--page', '1']);
-  check('content.json 的 theme 生效', r.code === 0 && /主题：notebook（content.json 指定）/.test(r.out), r.out);
-  const f2 = tmpContent({ theme: { long: 'midnight', cards: 'brutal' } });
+  check('content.json 的 theme 生效', r.code === 0 && /主题：paper-editorial（content.json 指定）/.test(r.out), r.out);
+  const f2 = tmpContent({ theme: { long: 'hark-noir', cards: 'signal-swiss' } });
   const rl = run([f2, '--out', path.join(OUT, 'd5'), '--page', '1']);
   const rc = run([f2, '--ratio', '3:4', '--out', path.join(OUT, 'd6'), '--page', '1']);
-  check('theme 按版式区分：长图 midnight / 卡片 brutal', /主题：midnight/.test(rl.out) && /主题：brutal/.test(rc.out), rl.out + rc.out);
-  const r2 = run([f, '--theme', 'swiss', '--out', path.join(OUT, 'd3'), '--page', '1']);
-  check('--theme 覆盖 content.json', r2.code === 0 && /\[swiss\]/.test(r2.out), r2.out);
+  check('theme 按版式区分：长图 hark-noir / 卡片 signal-swiss', /主题：hark-noir/.test(rl.out) && /主题：signal-swiss/.test(rc.out), rl.out + rc.out);
+  const r2 = run([f, '--theme', 'signal-swiss', '--out', path.join(OUT, 'd3'), '--page', '1']);
+  check('--theme 覆盖 content.json', r2.code === 0 && /\[signal-swiss\]/.test(r2.out), r2.out);
 }
 {
   let r = run([gallery, '--layout', 'xhs', '--check']);
@@ -163,7 +163,7 @@ const tmpContent = (patch) => {
   check('公众号 + 比例 → 报错退出', r.code !== 0, r.out);
   r = run(['--list']);
   const n = (r.out.match(/^\w[\w-]*\s+/gm) || []).length;
-  check(`--list 列出全部主题（${n} 个）`, r.code === 0 && n >= 21, r.out);
+  check(`--list 列出全部主题（${n} 个）`, r.code === 0 && n >= 7, r.out);
 }
 
 // ---------- 1b. AI illustrations (offline mock provider) + 改写稿 → rewrite.md → 公众号 ----------
@@ -172,7 +172,7 @@ console.log('\n== AI 插画 + 公众号总结');
   const dir = path.join(OUT, 'ill');
   fs.mkdirSync(dir, { recursive: true });
   const c = JSON.parse(fs.readFileSync(gallery, 'utf8'));
-  c.theme = 'dopamine';
+  c.theme = 'paper-editorial';
   c.cover = { ...(c.cover || {}), illustration: { prompt: 'a paper plane flying over a city at dawn' } };
   c.pages[0].sections[0].figures[1] = { type: 'illustration', prompt: 'a small seedling growing out of a laptop keyboard', caption: '测试插画。' };
   const f = path.join(dir, 'content.json');
@@ -185,21 +185,21 @@ console.log('\n== AI 插画 + 公众号总结');
   const files = fs.existsSync(path.join(dir, 'illustrations')) ? fs.readdirSync(path.join(dir, 'illustrations')).filter((x) => x.endsWith('.svg')) : [];
   check(`illustrate.mjs --provider mock 生成 2 张（实际 ${files.length}）`, g.code === 0 && files.length === 2, g.out);
   for (const lay of [[], ['--ratio', '3:4']]) {
-    r = run([f, ...lay, '--out', path.join(dir, lay[1] || 'long')]);
+    r = run([f, ...lay, '--out', path.join(dir, (lay[1] || 'long').replace(':', 'x'))]);
     const m = r.out.match(/版面检查：(\d+) 个错误/);
     check(`有插画 · ${lay[1] || 'long'}：0 错误、无占位`, r.code === 0 && m && m[1] === '0' && !/插画还没生成/.test(r.out), r.out);
   }
-  r = run([f, '--theme', 'brutal', '--out', path.join(dir, 'brutal'), '--page', '1']);
-  check('别的主题没有专属插画 → 借用并提示', r.code === 0 && /借用了 dopamine 主题的插画/.test(r.out), r.out);
+  r = run([f, '--theme', 'signal-swiss', '--out', path.join(dir, 'signal-swiss'), '--page', '1']);
+  check('别的主题没有专属插画 → 借用并提示', r.code === 0 && /借用了 paper-editorial 主题的插画/.test(r.out), r.out);
 
   // 公众号总结：content.json → export → rewrite.md → wechat-layout
   r = exec(wrapper('article-rewrite', 'export'), [f]);
   const rmd = path.join(dir, 'rewrite.md');
   const md = fs.existsSync(rmd) ? fs.readFileSync(rmd, 'utf8') : '';
   const figs = fs.existsSync(path.join(dir, 'rewrite-assets')) ? fs.readdirSync(path.join(dir, 'rewrite-assets')).filter((x) => /^fig-.*\.png$/.test(x)) : [];
-  check(`导出 rewrite.md：front matter 带主题与来源，图表转成图片（${figs.length} 张）+ 题图`, r.code === 0 && /kind: "rewrite"/.test(md) && /theme: "dopamine"/.test(md) && /hero: "rewrite-assets\/hero\.png"/.test(md) && figs.length >= 4 && /!\[图 1A\]\(rewrite-assets\/fig-1A\.png\)/.test(md), r.out + md.slice(0, 400));
+  check(`导出 rewrite.md：front matter 带主题与来源，图表转成图片（${figs.length} 张）+ 题图`, r.code === 0 && /kind: "rewrite"/.test(md) && /theme: "paper-editorial"/.test(md) && /hero: "rewrite-assets\/hero\.png"/.test(md) && figs.length >= 4 && /!\[图 1A\]\(rewrite-assets\/fig-1A\.png\)/.test(md), r.out + md.slice(0, 400));
   r = exec(wrapper('wechat-layout', 'wechat'), [rmd, '--out', path.join(dir, 'wechat')]);
-  check('公众号排版 rewrite.md：主题跟随导出、逐块一致、0 错误', r.code === 0 && /主题：dopamine（文章 front matter 指定）/.test(r.out) && /全文校验：通过/.test(r.out) && /版面检查：0 个错误/.test(r.out), r.out);
+  check('公众号排版 rewrite.md：主题跟随导出、逐块一致、0 错误', r.code === 0 && /主题：paper-editorial（文章 front matter 指定）/.test(r.out) && /全文校验：通过/.test(r.out) && /版面检查：0 个错误/.test(r.out), r.out);
   const body = fs.existsSync(path.join(dir, 'wechat', 'article-body.html')) ? fs.readFileSync(path.join(dir, 'wechat', 'article-body.html'), 'utf8') : '';
   const imgs = (body.match(/<img [^>]*src="data:image\/png;base64,/g) || []).length;
   check(`公众号正文只有内联样式，图片内嵌（${imgs} 张），没有残留标记属性`, body && !/\sclass=|<style|<script|data-source-block|data-deco/.test(body) && imgs >= figs.length + 1, body.slice(0, 300));
@@ -380,15 +380,15 @@ console.log('\n== 原文卡片 · 公众号排版 · 翻译');
   check(`原文卡片 3:4：${cards.length} 张，逐块一致（段落跨卡拼接）、0 错误`, r.code === 0 && cards.length >= 4 && qa.verify === 'pass' && /版面检查：0 个错误/.test(r.out) && fs.existsSync(path.join(cdir, 'overview.jpg')) && fs.existsSync(path.join(cdir, 'caption.md')), r.out);
   const html = fs.existsSync(path.join(cdir, 'cards.html')) ? fs.readFileSync(path.join(cdir, 'cards.html'), 'utf8') : '';
   check('原文卡片：确实有段落在行间断开并在下一张接上', /class="[^"]*ac-cut/.test(html) && /class="[^"]*ac-cont/.test(html));
-  r = exec(wrapper('image-cards', 'cards'), [art, '--ratio', '1:1', '--theme', 'midnight']);
-  check('原文卡片 1:1 + 深色主题：0 错误（含正文对比度）', r.code === 0 && /版面检查：0 个错误/.test(r.out) && fs.existsSync(path.join(dir, 'midnight-full-1x1', 'card-01.png')), r.out);
-  r = exec(wrapper('long-image', 'long'), [art, '--theme', 'midnight']);
+  r = exec(wrapper('image-cards', 'cards'), [art, '--ratio', '1:1', '--theme', 'hark-noir']);
+  check('原文卡片 1:1 + 深色主题：0 错误（含正文对比度）', r.code === 0 && /版面检查：0 个错误/.test(r.out) && fs.existsSync(path.join(dir, 'hark-noir-full-1x1', 'card-01.png')), r.out);
+  r = exec(wrapper('long-image', 'long'), [art, '--theme', 'hark-noir']);
   check('原文长图 + 深色主题：正文对比度够、0 错误', r.code === 0 && /版面检查：0 个错误/.test(r.out) && !/对比度/.test(r.out), r.out);
   r = exec(wrapper('long-image', 'long'), [art]);
   check('长图 skill 给文章 → 原文长图，逐字一致', r.code === 0 && /逐字一致/.test(r.out) && fs.existsSync(path.join(dir, 'full', 'full.png')), r.out);
 
-  r = exec(wrapper('wechat-layout', 'wechat'), [art, '--theme', 'editorial', '--cover-title', '原文卡片测试\\n一篇很长的文章']);
-  const wdir = path.join(dir, 'editorial-wechat');
+  r = exec(wrapper('wechat-layout', 'wechat'), [art, '--theme', 'paper-editorial', '--cover-title', '原文卡片测试\\n一篇很长的文章']);
+  const wdir = path.join(dir, 'paper-editorial-wechat');
   const body = fs.existsSync(path.join(wdir, 'article-body.html')) ? fs.readFileSync(path.join(wdir, 'article-body.html'), 'utf8') : '';
   check('公众号排版（原文）：逐块一致、0 错误；标题进标题栏不进正文', r.code === 0 && /全文校验：通过/.test(r.out) && /版面检查：0 个错误/.test(r.out) && !body.includes('原文卡片测试：一篇很长的文章') && body.includes('最后一段：结束。'), r.out);
   const wnotes = fs.existsSync(path.join(wdir, 'wechat.md')) ? fs.readFileSync(path.join(wdir, 'wechat.md'), 'utf8') : '';
@@ -420,8 +420,8 @@ console.log('\n== 原文卡片 · 公众号排版 · 翻译');
   fs.writeFileSync(path.join(tdir, 'lazy.md'), zh.replace('这就是为什么一人创意团队做这件事每月能收 $5,000。', 'That is why a one-person creative team can charge a lot for this work.').replace('prompt: write 3 hooks', 'prompt: 写 3 个开头'));
   r = exec(T, ['check', path.join(tdir, 'article.md'), path.join(tdir, 'lazy.md')]);
   check('翻译检查：代码被翻译 → 报错；有段没翻译、丢了数字 → 提示', r.code !== 0 && /代码块要原样保留/.test(r.out) && /像是没翻译/.test(r.out) && /数字 5000/.test(r.out), r.out);
-  r = exec(wrapper('wechat-layout', 'wechat'), [path.join(tdir, 'article.zh.md'), '--theme', 'quiet']);
-  const tb = fs.existsSync(path.join(tdir, 'quiet-wechat', 'article-body.html')) ? fs.readFileSync(path.join(tdir, 'quiet-wechat', 'article-body.html'), 'utf8') : '';
+  r = exec(wrapper('wechat-layout', 'wechat'), [path.join(tdir, 'article.zh.md'), '--theme', 'paper-editorial']);
+  const tb = fs.existsSync(path.join(tdir, 'paper-editorial-wechat', 'article-body.html')) ? fs.readFileSync(path.join(tdir, 'paper-editorial-wechat', 'article-body.html'), 'utf8') : '';
   check('外文搬运：译文排公众号，页首注明「中文译文」，逐块一致', r.code === 0 && /全文校验：通过/.test(r.out) && tb.includes('中文译文'), r.out);
 }
 
@@ -492,7 +492,7 @@ console.log('\n== 视频输入');
 // Every example × (long, 4 card ratios, 公众号总结 = export → rewrite.md → wechat-layout) × theme(s).
 console.log('\n== 渲染矩阵');
 const layouts = [[], ['--ratio', '3:4'], ['--ratio', '4:5'], ['--ratio', '1:1'], ['--ratio', '9:16'], ['wechat']];
-const themeArg = onlyThemes || (quick ? 'editorial' : 'all');
+const themeArg = onlyThemes || (quick ? 'apple-hark' : 'all');
 const rows = [];
 for (const ex of EXAMPLES) {
   for (const lay of layouts) {
@@ -506,7 +506,7 @@ for (const ex of EXAMPLES) {
       const wd = path.join(OUT, 'm', path.basename(ex, '.json'), 'wechat');
       fs.mkdirSync(wd, { recursive: true });
       fs.copyFileSync(ex, path.join(wd, 'content.json'));
-      const e = exec(wrapper('article-rewrite', 'export'), [path.join(wd, 'content.json'), '--theme', themeArg === 'all' ? 'editorial' : themeArg.split(',')[0]]);
+      const e = exec(wrapper('article-rewrite', 'export'), [path.join(wd, 'content.json'), '--theme', themeArg === 'all' ? 'paper-editorial' : themeArg.split(',')[0]]);
       r = e.code === 0 ? exec(wrapper('wechat-layout', 'wechat'), [path.join(wd, 'rewrite.md'), '--theme', themeArg]) : e;
     } else r = run([ex, ...lay, '--theme', themeArg, '--out', path.join(OUT, 'm', path.basename(ex, '.json'), sub)]);
     const m = r.out.match(/版面检查：(\d+) 个错误，(\d+) 个提示/);

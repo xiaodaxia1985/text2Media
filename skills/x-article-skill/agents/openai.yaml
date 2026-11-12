@@ -1,0 +1,4 @@
+interface:
+  display_name: "X 长文"
+  short_description: "按个人语料与视觉风格做中文 X Article 内容包：标题、正文、配图、封面、导流短文"
+  default_prompt: "使用 $x-article-skill 把这批材料做成一篇 X 长文。"

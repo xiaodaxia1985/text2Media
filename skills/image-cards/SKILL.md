@@ -79,7 +79,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --p
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --check   # 只校验：会出几张
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4           # 出图，一组大约 5 秒
-node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --theme brutal
+node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --theme signal-swiss
 ```
 - 主题：content.json 的 `theme`（可写成 `{"long": …, "cards": …}` 分开指定）；都没有时按 `../article2media/references/styles.md` 选。卡片场景的主题调整见 styles.md 第 3 步。
 - **排版量纲是写死的**（`engine/scripts/lib/metrics.mjs`）：卡片四边留白 72 / 80 输出像素（CSS 40 / 36）；大标题按去标点字数走五档 132 / 108 / 96 / 84 / 72（6 字以内 / 7–10 字 / 两行且每行 ≤8 字 / 两行 / 三行）；节标题收在 48–76。改字号时改这个模块，不要在各处手写 px。
@@ -94,7 +94,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --t
 读 `references/original-cards.md` 和 `../article2media/references/verbatim.md`。
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4
-node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4 --theme quiet   # 用主题的颜色与字体
+node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4 --theme paper-editorial   # 用主题的颜色与字体
 ```
 全文校验未通过就是错误，不能靠目测放行。看 `overview.jpg` 检查断开的位置；张数超过上限时按 original-cards.md 处理，不删原文。
 
