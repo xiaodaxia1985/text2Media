@@ -145,7 +145,7 @@ try {
 // 同目录有 article.md 时，拿它核对每节 span 指的到底是不是这句话。
 const articlePath = path.join(path.dirname(contentPath), 'article.md');
 const md = fs.existsSync(articlePath) ? fs.readFileSync(articlePath, 'utf8') : '';
-const { errors, warnings, info } = validate(content, { layout, ratio: ratio || '3:4', md });
+const { errors, warnings, info } = validate(content, { layout, ratio: ratio || '3:4', md, limit: platform?.max ?? null });
 for (const m of Array.isArray(content.pages) ? resolveImageFigures(content, path.dirname(contentPath)) : []) errors.push(`${m.where}：找不到图片文件 ${m.src}（本地图片的路径相对 content.json 所在目录）`);
 if (warnings.length) {
   console.log(`⚠ 内容提示（${warnings.length}）：`);

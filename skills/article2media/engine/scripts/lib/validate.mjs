@@ -27,7 +27,7 @@ const LIMITS = {
 const ROLES = ['claim', 'compare', 'timeline', 'stat', 'opener', 'fig', 'process', 'evidence', 'quote', 'checklist', 'structure', 'sec', 'divider', 'keyword', 'list'];
 const ROLE_ALIAS = { divider: 'opener' };
 
-export function validate(c, { layout = 'long', ratio = '3:4', md = '' } = {}) {
+export function validate(c, { layout = 'long', ratio = '3:4', md = '', limit = null } = {}) {
   const errors = [];
   const warnings = [];
   const err = (p, m) => errors.push(`${p}: ${m}`);
@@ -245,10 +245,13 @@ export function validate(c, { layout = 'long', ratio = '3:4', md = '' } = {}) {
   // ---- 3:4 card layout (小红书) ----
   if (layout === 'card') {
     const spec = ratioSpec(ratio);
+    // 张数上限按平台走：同一比例在不同平台的上限不一样（3:4 小红书 18、抖音 30）
+    const cap = limit ?? spec.limit;
+    const capName = limit ? `${spec.name}（按平台上限）` : spec.name;
     const plan = planCards(c, ratio);
     info.cards = plan.length;
-    if (plan.length > spec.limit) {
-      err('cards', `将生成 ${plan.length} 张卡片，超过 ${spec.name} 单篇上限 ${spec.limit} 张：给次要的节加 "card": {"mode": "skip"}，或少用 split`);
+    if (plan.length > cap) {
+      err('cards', `将生成 ${plan.length} 张卡片，超过 ${capName} 单篇上限 ${cap} 张：给次要的节加 "card": {"mode": "skip"}，或少用 split`);
     }
     const cover = c.cover || {};
     String(cover.title || c.title || '').split('\n').forEach((l, i) => len(`cover.title 第 ${i + 1} 行`, l, 10, '封面标题'));

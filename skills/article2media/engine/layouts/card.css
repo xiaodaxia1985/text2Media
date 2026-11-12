@@ -258,6 +258,9 @@ body { width: max-content; background: var(--sheet-bg, #9a9a96); }
    借强调胶囊会让浅色主题翻成一页品牌色——那是换了个底，不是反相。 */
 .c-openercard { background: var(--ink); background-image: none; }
 .c-openercard .c-top, .c-openercard .c-foot { color: color-mix(in srgb, var(--bg) 58%, var(--ink)); }
+/* 页眉中间那格（.c-top-t）自带强调色，不会跟随 .c-top 的继承；反相页上遇到浅 accent
+   就是白底白字。这里显式跟整条页眉一起反相。 */
+.c-openercard .c-top-t { color: color-mix(in srgb, var(--bg) 58%, var(--ink)); }
 .c-openercard .sec-label { background: var(--bg); box-shadow: none; color: var(--ink);
   -webkit-backdrop-filter: none; backdrop-filter: none; }
 .c-openercard .c-body { justify-content: center; gap: 0; }
