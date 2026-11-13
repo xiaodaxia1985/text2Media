@@ -91,8 +91,10 @@ export function buildStage(video, align, themeCss, opts = {}) {
       const first = Math.min(...built.events.map((e) => e.t).filter((t) => t > win.in + 0.3), win.out);
       events.push({ id: `${sid}deco`, p: 'recede', t: Math.max(win.in + 0.6, first - 0.35) });
     }
+    // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
+    const sheet = sc.type !== 'title' && sc.type !== 'image';
     return (
-      `<section class="v-scene${sc.chip ? ' has-chip' : ''} acc" id="${sid}" style="--acc:${acc(i)}">${deco}` +
+      `<section class="v-scene${sc.chip ? ' has-chip' : ''}${sheet ? ' sheet' : ''} acc" id="${sid}" style="--acc:${acc(i)}">${deco}` +
       (sc.chip ? `<div class="v-chip" id="${sid}chip" style="top:-40px;left:0">${md(sc.chip)}</div>` : '') +
       `<div class="v-cam" id="${sid}cam">${built.html}</div></section>`
     );

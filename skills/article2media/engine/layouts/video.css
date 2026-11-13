@@ -49,6 +49,33 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-scene.has-chip { top: 172px; height: 488px; }
 .v-cam { transform-origin: 50% 45%; width: 100%; }
 
+/* Card scenes: the image-card material, reused for video. Everything comes from the theme,
+   so apple-hark is a soft white card and signal-swiss is a hard-edged sheet with a hairline. */
+.v-scene.sheet {
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--card);
+  border: var(--sheet-border, var(--card-border, var(--box-border, 0)));
+  border-radius: var(--radius, 18px);
+  box-shadow: var(--card-shadow, none);
+}
+/* The background numeral/blob stays inside the card as a watermark (card layouts put the chapter number inside too). */
+.v-scene.sheet .v-deco.num { right: 10px; font-size: 250px; opacity: .07; }
+.v-scene.sheet .v-deco.blob { display: none; }
+
+/* Inside the card, inner blocks step down to the well surface: white-on-white would erase them. */
+.v-scene.sheet .v-item,
+.v-scene.sheet .v-checks li,
+.v-scene.sheet .v-stat,
+.v-scene.sheet .v-col,
+.v-scene.sheet .v-src { background: var(--well-bg); box-shadow: none; }
+.v-scene.sheet .v-col.bad { background: color-mix(in srgb, var(--well-bg) 70%, var(--bg)); }
+
+/* The checklist sweep reads as a selection box on a big white card; make it a marker underline instead. */
+.v-scene.sheet .v-checks li > span {
+  background: linear-gradient(transparent calc(100% - 9px), color-mix(in srgb, var(--acc) 55%, transparent) calc(100% - 9px)) 0 0 / 0% 100% no-repeat;
+}
+
 .v-title { font-family: var(--font-head); font-weight: var(--w-h2, 900); font-size: 46px; line-height: 1.22; margin: 0 0 22px; color: var(--title-ink, var(--ink)); letter-spacing: .01em; }
 .v-title.big { font-size: 58px; }
 .v-title b, .v-headline b { color: var(--acc-text); }

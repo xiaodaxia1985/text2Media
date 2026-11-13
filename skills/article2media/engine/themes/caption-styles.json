@@ -62,6 +62,14 @@
       "--cap-key": "#B23A2A"
     }
   },
+  "paper-editorial-green": {
+    "style": "ink",
+    "vars": {
+      "--cap-weight": "700",
+      "--cap-track": ".06em",
+      "--cap-key": "#17564A"
+    }
+  },
   "signal-swiss": {
     "style": "block",
     "vars": {

@@ -31,6 +31,8 @@
   --box-radius: 0;
   --radius: 2px;
   --radius-sm: 0;
+  /* Video: a hard black frame reads as a printed sheet (the white card would vanish on white paper). */
+  --sheet-border: 2px solid var(--ink);
   --panel-mix: 4%;
   --sheet-bg: #E6E6E6;
   --card-shadow: none;

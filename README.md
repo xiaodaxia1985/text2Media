@@ -304,7 +304,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 ### 字幕
 
-单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设（pill / sticker / block / ink / marker / cinema / glass）分给 7 套主题，关键词用主题色，配置见 [`engine/themes/caption-styles.json`](skills/article2media/engine/themes/caption-styles.json)。
+单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设（pill / sticker / block / ink / marker / cinema / glass）分给 8 套主题，关键词用主题色，配置见 [`engine/themes/caption-styles.json`](skills/article2media/engine/themes/caption-styles.json)。
 
 ### 审片与交付
 
@@ -533,7 +533,7 @@ skills/
 │       ├── scripts/             # fetch / render / export / translate / illustrate / video / comic / doctor
 │       │   └── lib/             # chrome（CDP 驱动）、各版式与原文账本、校验、出图；media/（视频转逐字稿）；video/（配音、对齐、镜头、渲染、字幕）
 │       ├── layouts/             # 各版式的结构 CSS
-│       ├── themes/              # 21 个主题 CSS；illustration-styles.json、caption-styles.json
+│       ├── themes/              # 8 个主题 CSS；illustration-styles.json、caption-styles.json
 │       └── assets/voices/       # 6 款公开音色（catalog.json）
 ├── article-fetch/               # 每个能力：SKILL.md、agents/openai.yaml、references/、scripts/（指向引擎的入口）
 ├── video-transcript/
@@ -557,7 +557,7 @@ scripts/install.sh               # 依赖检查（只提示，不下载）
 
 ```bash
 node tests/run-all.mjs --quick                  # 约 4 分钟：11 个 skill 的结构、CLI 行为、各能力检查、每个示例 × 6 种版式
-node tests/run-all.mjs                          # 约 20 分钟：4 个示例 × 6 种版式 × 21 个主题
+node tests/run-all.mjs                          # 约 20 分钟：4 个示例 × 6 种版式 × 8 个主题
 node tests/run-all.mjs --themes pop,dopamine    # 只测指定主题
 node tests/theme-sheet.mjs                      # 重新生成 docs/themes.jpg
 claude plugin validate .
