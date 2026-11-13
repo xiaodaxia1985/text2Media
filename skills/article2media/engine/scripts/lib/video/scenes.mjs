@@ -7,6 +7,22 @@ import { plainText } from './text.mjs';
 
 const md = (s) => esc(String(s ?? '')).replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 
+// Numbers keep the precision they are written with: 98.7 must never round to 99. `decimals` overrides when the
+// script wants a fixed precision (98.70).
+const CJK = /[\u4e00-\u9fa5]/;
+const decOf = (v) => {
+  const s = String(v ?? '');
+  const k = s.indexOf('.');
+  return k >= 0 ? s.length - k - 1 : 0;
+};
+const fmtNum = (v, dec = 0) =>
+  Number(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+/** " 小时" is a unit set beside the figure at a smaller size; "%" stays welded to the digits. */
+const splitSuffix = (t) => {
+  const s = String(t ?? '');
+  return CJK.test(s) ? { sym: '', unit: s.trim() } : { sym: s, unit: '' };
+};
+
 /** Cue resolver for one scene: cue text → absolute time of its first spoken character. */
 export function cueResolver(sceneAlign, offset, fallbackStart, fallbackEnd) {
   const lines = sceneAlign?.lines || [];
@@ -36,15 +52,18 @@ const B = {
   number(s, at, win) {
     const ev = [], counters = [];
     const lab = id('n'), st = id('n'), num = id('n'), badge = id('n'), img = id('n');
+    const dec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : decOf(s.to);
+    const { sym, unit } = splitSuffix(s.suffix);
     const tCount = at(s.count_cue ?? String(s.to));
     if (s.label) ev.push({ id: lab, p: 'rise', t: win.in + 0.05 });
     if (s.start_text) ev.push({ id: st, p: 'rise', t: Math.max(win.in + 0.1, at(s.start_text.slice(-3)) - 0.15) });
-    ev.push({ id: num, p: 'pop', t: tCount - 0.12 });
-    counters.push({ id: `${num}v`, from: Number(s.from) || 0, to: Number(s.to), t: tCount - 0.05, dur: 0.95, prefix: s.prefix || '', suffix: s.suffix || '' });
+    // The figure flips in on its own axis rather than popping: a counter that lands reads as a fact, not a bubble.
+    ev.push({ id: num, p: 'flip', t: tCount - 0.12 });
+    counters.push({ id: `${num}v`, from: Number(s.from) || 0, to: Number(s.to), t: tCount - 0.05, dur: 0.95, prefix: s.prefix || '', suffix: sym, dec });
     if (s.badge) ev.push({ id: badge, p: 'stamp', t: at(s.badge_cue ?? s.badge) });
     const imgT = s.image ? Math.max(tCount + 0.5, at(s.image.cue, { end: true }) + 0.2) : 0;
     if (s.image) ev.push({ id: img, p: 'pop', t: imgT });
-    const fmt = (v) => `${s.prefix || ''}${Number(v).toLocaleString('en-US')}${s.suffix || ''}`;
+    const fmt = (v) => `${s.prefix || ''}${fmtNum(v, dec)}${sym}`;
     return {
       events: ev, counters,
       html:
@@ -52,6 +71,7 @@ const B = {
         (s.label ? `<div class="v-label" id="${lab}">${md(s.label)}</div>` : '') +
         (s.start_text ? `<div class="v-from" id="${st}"><span>${md(s.start_text)}</span><i class="v-arrow">↓</i></div>` : '') +
         `<div class="v-big" id="${num}"><span id="${num}v">${esc(fmt(s.from ?? 0))}</span>` +
+        (unit ? `<em class="v-unit">${esc(unit)}</em>` : '') +
         (s.badge ? `<em class="v-badge" id="${badge}">${md(s.badge)}</em>` : '') + `</div>` +
         (s.image ? `<figure class="v-proof" id="${img}"><img src="${esc(s.image.src)}" alt="">${s.image.note ? `<figcaption>${md(s.image.note)}</figcaption>` : ''}</figure>` : '') +
         `</div>`,
@@ -148,10 +168,12 @@ const B = {
     if (s.title) { ev.push({ id: ti, p: 'rise', t: win.in + 0.08 }); if (s.title_cue) ev.push({ id: ti, p: 'focus', t: at(s.title_cue, { line: 0 }) }); }
     const items = (s.items || []).map((it) => {
       const i = id('s');
+      const dec = Number.isFinite(Number(it.decimals)) ? Math.max(0, Number(it.decimals)) : decOf(it.value);
+      const { sym, unit } = splitSuffix(it.suffix);
       const t = at(it.cue ?? String(it.value));
       ev.push({ id: i, p: 'pop', t: t - 0.15 });
-      counters.push({ id: `${i}v`, from: 0, to: Number(it.value), t: t - 0.1, dur: 0.8, prefix: it.prefix || '', suffix: it.suffix || '' });
-      return `<div class="v-stat" id="${i}"><b id="${i}v">${esc((it.prefix || '') + '0' + (it.suffix || ''))}</b><span>${md(it.label)}</span></div>`;
+      counters.push({ id: `${i}v`, from: 0, to: Number(it.value), t: t - 0.1, dur: 0.8, prefix: it.prefix || '', suffix: sym, dec });
+      return `<div class="v-stat" id="${i}"><b id="${i}v">${esc((it.prefix || '') + fmtNum(0, dec) + sym)}</b>${unit ? `<i class="v-unit sm">${esc(unit)}</i>` : ''}<span>${md(it.label)}</span></div>`;
     }).join('');
     if (s.note) ev.push({ id: no, p: 'pop', t: at(s.note_cue ?? s.note) });
     return { events: ev, counters, html: `<div class="sc-stats">${s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : ''}<div class="v-stat-list">${items}</div>${s.note ? `<div class="v-note" id="${no}">${md(s.note)}</div>` : ''}</div>` };
@@ -199,6 +221,76 @@ const B = {
     return { events: ev, html: `<div class="sc-check">${s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : ''}<ul class="v-checks">${items}</ul>${s.cta ? `<div class="v-cta" id="${cta}">${md(s.cta)}</div>` : ''}</div>` };
   },
 
+  /** A number over time: the figure plus a drawn line. The visual weight a 45-second video otherwise lacks. */
+  trend(s, at, win) {
+    const ev = [], counters = [];
+    const ti = id('t'), fig = id('n'), line = id('l'), area = id('a'), last = id('d');
+    const vals = (s.values || []).map(Number).filter((v) => Number.isFinite(v));
+    const data = vals.length >= 2 ? vals : [Number(s.from ?? 0), Number(s.to ?? 0)];
+    const dec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : decOf(data[data.length - 1]);
+    const { sym, unit } = splitSuffix(s.suffix);
+    const t = at(s.count_cue ?? String(data[data.length - 1]));
+    const W = 438, H = 150, pad = 10;
+    const max = Math.max(...data), min = Math.min(...data, 0);
+    const x = (k) => pad + (k * (W - pad * 2)) / (data.length - 1);
+    const y = (v) => H - 26 - ((v - min) / Math.max(1, max - min)) * (H - 52);
+    const pts = data.map((v, k) => `${x(k).toFixed(1)} ${y(v).toFixed(1)}`);
+    if (s.title) ev.push({ id: ti, p: 'rise', t: win.in + 0.06 });
+    ev.push({ id: fig, p: 'flip', t: t - 0.12 });
+    counters.push({ id: `${fig}v`, from: 0, to: data[data.length - 1], t: t - 0.05, dur: 1.1, prefix: s.prefix || '', suffix: sym, dec });
+    ev.push({ id: area, p: 'fade', t: t + 0.1 });
+    ev.push({ id: line, p: 'draw', t: t + 0.05, dur: 1.0 });
+    const dots = data.slice(0, -1).map((v, k) => {
+      const i = id('d');
+      ev.push({ id: i, p: 'pop', t: t + 0.05 + k * 0.22 });
+      const pos = `left:${((x(k) / W) * 100).toFixed(1)}%;top:${((y(v) / H) * 100).toFixed(1)}%`;
+      return `<i class="v-dot" id="${i}" style="${pos}"></i>`;
+    }).join('');
+    ev.push({ id: last, p: 'pulse', t: t + 1.05 });
+    const lastPos = `left:${((x(data.length - 1) / W) * 100).toFixed(1)}%;top:${((y(data[data.length - 1]) / H) * 100).toFixed(1)}%`;
+    const labels = (s.labels || []).map((l, k) => `<span style="left:${((x(k) / W) * 100).toFixed(1)}%">${esc(l)}</span>`).join('');
+    return {
+      events: ev, counters,
+      html:
+        `<div class="sc-trend">` +
+        (s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : '') +
+        `<div class="v-big sm" id="${fig}"><span id="${fig}v">${esc((s.prefix || '') + fmtNum(0, dec) + sym)}</span>${unit ? `<em class="v-unit">${esc(unit)}</em>` : ''}</div>` +
+        `<div class="v-chart">` +
+        `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">` +
+        `<polygon class="v-area" id="${area}" points="${pts.join(' ')} ${x(data.length - 1).toFixed(1)} ${H - 12} ${pad} ${H - 12}"/>` +
+        `<polyline class="v-line" id="${line}" points="${pts.join(' ')}"/>` +
+        `</svg>` +
+        `<div class="v-dots">${dots}<i class="v-dot last" id="${last}" style="${lastPos}"></i></div>` +
+        `<div class="v-xlabels">${labels}</div>` +
+        `</div>` +
+        (s.note ? `<div class="v-note">${md(s.note)}</div>` : '') +
+        `</div>`,
+    };
+  },
+
+  /** Ranked bars: several quantities compared by length, each growing when the narration reaches it. */
+  bars(s, at, win) {
+    const ev = [];
+    const ti = id('t');
+    const items = s.items || [];
+    const vals = items.map((it) => Number(it.value) || 0);
+    const max = Number(s.max) || Math.max(...vals, 1);
+    // Precision is per value (15 stays 15%, 98.7 keeps its one decimal) unless the scene forces one for all.
+    const sceneDec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : null;
+    if (s.title) ev.push({ id: ti, p: 'rise', t: win.in + 0.06 });
+    const rows = items.map((it) => {
+      const i = id('b'), bar = id('b');
+      const t = at(it.cue ?? it.label);
+      const dec = sceneDec ?? (Number.isFinite(Number(it.decimals)) ? Math.max(0, Number(it.decimals)) : decOf(it.value));
+      ev.push({ id: i, p: 'rise', t: t - 0.15 });
+      ev.push({ id: bar, p: 'grow', t: t, dur: 0.55 });
+      const pct = Math.max(2, Math.min(100, (Number(it.value) / max) * 100));
+      const { sym, unit } = splitSuffix(it.suffix);
+      return `<li class="v-bar" id="${i}"><b>${md(it.label)}</b><span class="v-bar-track"><i class="v-bar-fill" id="${bar}" style="width:${pct.toFixed(1)}%"></i></span><em>${esc(fmtNum(it.value, dec) + sym)}${unit ? ` <small>${esc(unit)}</small>` : ''}</em></li>`;
+    }).join('');
+    return { events: ev, html: `<div class="sc-bars">${s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : ''}<ul class="v-bars">${rows}</ul></div>` };
+  },
+
   title(s, at, win) {
     const ev = [];
     const ti = id('t'), sub = id('s'), img = id('m');
@@ -207,8 +299,11 @@ const B = {
     let k = 0;
     const html = md(s.title || plainText(s.lines?.[0] || '')).replace(/<b>([\s\S]+?)<\/b>/g, (m, w) => {
       const i = `${ti}k${k++}`;
-      ev.push({ id: i, p: 'mark', t: at(w.replace(/<[^>]+>/g, '')) });
-      return `<b id="${i}">${w}</b>`;
+      const wt = at(w.replace(/<[^>]+>/g, ''));
+      ev.push({ id: i, p: 'mark', t: wt });
+      // A light passes over the keyword once as it is said: the eye lands on the word the ear just heard.
+      ev.push({ id: `${i}s`, p: 'sweep', t: wt + 0.12, dur: 0.55 });
+      return `<b id="${i}">${w}<i class="v-sheen" id="${i}s"></i></b>`;
     });
     if (s.sub) ev.push({ id: sub, p: 'rise', t: at(s.sub_cue, { line: 1 }) });
     if (s.image) ev.push({ id: img, p: 'pop', t: at(s.image.cue, { frac: 0.3 }) });

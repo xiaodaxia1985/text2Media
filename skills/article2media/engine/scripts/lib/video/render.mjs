@@ -2,6 +2,7 @@
 // Deterministic: every animation is a paused Web Animation; each frame seeks the whole page to t and is captured.
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from '../chrome.mjs';
@@ -16,6 +17,13 @@ const SKILL = path.resolve(HERE, '..', '..', '..');
 const readCss = (n) => fs.readFileSync(path.join(SKILL, 'layouts', n), 'utf8');
 
 export const TIMING = { coverHold: 0.5, coverFade: 0.25, voiceLead: 0.05, tail: 1.6, sceneLead: 0.2, fps: 30 };
+
+/** Frame-capture is one DevTools roundtrip per frame; several pages over the same deterministic timeline scale
+ *  better than one page doing them in order. Kept modest: each page is a full 1080×1920 compositor. */
+export function defaultWorkers() {
+  const cores = os.cpus()?.length || 4;
+  return Math.max(1, Math.min(3, Math.floor(cores / 4)));
+}
 
 /** Caption look for a theme: a preset from layouts/video.css plus --cap-* variables (themes/caption-styles.json). */
 export function captionStyle(theme, override) {
@@ -67,8 +75,10 @@ export function buildStage(video, align, themeCss, opts = {}) {
     const at = cueResolver(a, VO, win.in + 0.3, win.out - 0.3);
     const built = buildScene(sc, { at, win, align: a, offset: VO });
     const sid = `sc${i}`;
+    // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
+    const sheet = sc.type !== 'title' && sc.type !== 'image';
     events.push({ id: sid, p: 'scene-in', t: win.in });
-    if (i + 1 < scenes.length) events.push({ id: sid, p: 'scene-out', t: win.out - 0.26 });
+    if (i + 1 < scenes.length) events.push({ id: sid, p: sheet ? 'mask-out' : 'scene-out', t: win.out - 0.3 });
     events.push({ id: `${sid}cam`, p: 'cam', t: win.in, dur: win.out - win.in });
     for (const e of built.events) events.push({ ...e, scene: i, t: Math.max(win.in + 0.06, Math.min(e.t, win.out - 0.3)), raw: e.t });
     for (const c of built.counters || []) counters.push({ ...c, t: Math.max(win.in + 0.06, c.t) });
@@ -92,7 +102,6 @@ export function buildStage(video, align, themeCss, opts = {}) {
       events.push({ id: `${sid}deco`, p: 'recede', t: Math.max(win.in + 0.6, first - 0.35) });
     }
     // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
-    const sheet = sc.type !== 'title' && sc.type !== 'image';
     return (
       `<section class="v-scene${sc.chip ? ' has-chip' : ''}${sheet ? ' sheet' : ''} acc" id="${sid}" style="--acc:${acc(i)}">${deco}` +
       (sc.chip ? `<div class="v-chip" id="${sid}chip" style="top:-40px;left:0">${md(sc.chip)}</div>` : '') +
@@ -160,12 +169,18 @@ const STAGE_JS = String.raw`
   const P = {
     'scene-in': [[{ opacity: 0, transform: 'translateY(34px)' }, { opacity: 1, transform: 'none' }], .38, E],
     'scene-out': [[{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-26px)' }], .26, 'ease-in'],
+    // Card scenes leave behind a mask rather than a fade: the sheet wipes up and the next one arrives on a clean page.
+    'mask-out': [[{ clipPath: 'inset(0 0 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 100% 0)', opacity: 1 }], .3, 'ease-in'],
     'cover-out': [[{ opacity: 1, transform: 'scale(1)', filter: 'blur(0)' }, { opacity: 0, transform: 'scale(1.06)', filter: 'blur(6px)' }], .25, 'ease-in'],
     cam: [[{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }], 1, 'linear'],
     drift: [[{ transform: 'translate(24px, 10px) scale(.94)' }, { transform: 'translate(-8px, -6px) scale(1.02)' }], 1, 'linear'],
     recede: [[{ opacity: .5 }, { opacity: .1 }], .5, 'ease-out'],
     rise: [[{ opacity: 0, transform: 'translateY(22px)' }, { opacity: 1, transform: 'none' }], .36, E],
     pop: [[{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.06)', offset: .7 }, { opacity: 1, transform: 'scale(1)' }], .42, E],
+    // A figure that lands like a mechanical counter, on its own axis.
+    flip: [[{ opacity: 0, transform: 'rotateX(-74deg)' }, { opacity: 1, transform: 'rotateX(8deg)', offset: .72 }, { opacity: 1, transform: 'rotateX(0deg)' }], .44, E],
+    // One light passing over a keyword, timed to the word being spoken.
+    sweep: [[{ transform: 'translateX(-120%)', opacity: 0 }, { transform: 'translateX(52%)', opacity: .85, offset: .45 }, { transform: 'translateX(220%)', opacity: 0 }], .55, 'ease-out'],
     stamp: [[{ opacity: 0, transform: 'scale(1.6)' }, { opacity: 1, transform: 'scale(1)' }], .26, 'ease-out'],
     fade: [[{ opacity: 0 }, { opacity: 1 }], .3, 'ease-out'],
     grow: [[{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], .32, E],
@@ -185,7 +200,7 @@ const STAGE_JS = String.raw`
     if ((e.p === 'draw' || e.p === 'check') && el.tagName !== 'path') target = el.querySelector('path') || el;
     // Entrances hold their first frame before they start (fill both); exits and accents must not (forwards / none),
     // or an exit's first keyframe would show the element from t = 0.
-    const exit = e.p === 'scene-out' || e.p === 'cover-out' || e.p === 'dim';
+    const exit = e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'cover-out' || e.p === 'dim';
     const accent = e.p === 'pulse' || e.p === 'focus';
     const a = target.animate(kf, { duration: (e.dur || dur) * 1000, delay: e.t * 1000, easing, fill: accent ? 'none' : exit ? 'forwards' : 'both', composite: accent ? 'add' : 'replace' });
     a.pause();
@@ -215,13 +230,22 @@ const STAGE_JS = String.raw`
       }
       el.style.whiteSpace = '';
     }
+    // Big figures: shrink only when the figure itself is wider than its box (a long number, not a unit — units are
+    // already set at .40em so "48 小时" never wraps).
+    for (const el of document.querySelectorAll('.v-big')) {
+      const avail = (el.parentElement || el).clientWidth - 4;
+      el.style.fontSize = '';
+      if (avail <= 0) continue;
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (el.scrollWidth > avail) el.style.fontSize = Math.max(56, Math.floor((size * avail) / el.scrollWidth)) + 'px';
+    }
   };
   window.__seek = function (t) {
     for (const a of anims) a.currentTime = t * 1000;
     for (const c of cnt) {
       const x = Math.max(0, Math.min(1, (t - c.t) / c.dur));
-      const v = Math.round(c.from + (c.to - c.from) * ease(x));
-      c.el.textContent = c.prefix + v.toLocaleString('en-US') + c.suffix;
+      const v = Math.round((c.from + (c.to - c.from) * ease(x)) * Math.pow(10, c.dec || 0)) / Math.pow(10, c.dec || 0);
+      c.el.textContent = c.prefix + v.toLocaleString('en-US', { minimumFractionDigits: c.dec || 0, maximumFractionDigits: c.dec || 0 }) + c.suffix;
     }
     for (const k of kar) {
       const x = Math.max(0, Math.min(1, (t - k.t) / .18));
@@ -322,7 +346,7 @@ export async function renderVideo(video, align, opts) {
       const box = { l: 30, r: 540 - 72, t: 120, b: 662 };
       document.querySelectorAll('.v-scene').forEach((sc, i) => {
         const inEv = tl.events.find((e) => e.id === sc.id && e.p === 'scene-in');
-        const outEv = tl.events.find((e) => e.id === sc.id && e.p === 'scene-out');
+        const outEv = tl.events.find((e) => e.id === sc.id && (e.p === 'scene-out' || e.p === 'mask-out'));
         const t = outEv ? outEv.t - 0.05 : tl.total - 0.1;
         window.__seek(t);
         for (const el of sc.querySelectorAll('h2,h3,li,.v-big,.v-item,.v-stat,.v-target,.v-src,.v-cta,.v-tag,.v-proof,.v-quote,.v-note,.v-col,.v-pt')) {
@@ -345,30 +369,61 @@ export async function renderVideo(video, align, opts) {
     const whooshes = data.events.filter((e) => e.p === 'scene-in').map((e) => e.t).filter((t) => t > 1);
     await renderSfx(page, { seconds: total, whooshes, out: sfxPath });
 
-    // Frames → ffmpeg.
+    // Frames → ffmpeg, in parallel slices. Capture is one DevTools roundtrip per frame, so several pages each owning
+    // a contiguous run of the timeline keep the compositor busy instead of queueing behind one page; the slices are
+    // concatenated losslessly afterwards. Deterministic because every page seeks to absolute times.
     const silentMp4 = path.join(out, 'video-silent.mp4');
-    const enc = spawn('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-      '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(fps), silentMp4], { stdio: ['pipe', 'ignore', 'pipe'] });
-    let encErr = '';
-    enc.stderr.on('data', (d) => { encErr += d; });
     const nFrames = Math.ceil(total * fps);
     const sheetTimes = sampleTimes(data, total);
+    // Slot numbers are fixed up front: slices finish out of order, so the file name must come from the time, not from
+    // how many frames a worker happened to capture first.
+    sheetTimes.forEach((s, i) => { s.i = i; });
     const sheet = [];
     const t0 = Date.now();
-    for (let f = 0; f < nFrames; f++) {
-      const t = f / fps;
-      await page.evaluate(`window.__seek(${t})`);
-      const buf = await page.screenshot({ clip: { x: 0, y: 0, width: 540, height: 960 }, format: 'jpeg', quality: 92, beyond: false });
-      if (!enc.stdin.write(buf)) await new Promise((r) => enc.stdin.once('drain', r));
-      const want = sheetTimes.find((s) => !s.done && t >= s.t);
-      if (want) { want.done = true; const p = path.join(out, 'review', `f-${String(sheet.length).padStart(2, '0')}.jpg`); fs.writeFileSync(p, buf); sheet.push({ ...want, file: p }); }
-      if (f === 0) fs.writeFileSync(path.join(out, 'cover.jpg'), buf);
-      if (f % (fps * 10) === 0 && f) log(`  帧 ${f}/${nFrames}（${((Date.now() - t0) / 1000).toFixed(0)}s）`);
-    }
-    enc.stdin.end();
-    await new Promise((r) => enc.on('close', r));
-    if (!fs.existsSync(silentMp4)) throw new Error(`编码失败：${encErr.slice(-500)}`);
-    log(`  ${nFrames} 帧，用时 ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    const K = Math.max(1, Math.min(opts.workers || defaultWorkers(), nFrames));
+    const chunks = Array.from({ length: K }, (_, k) => [Math.floor((k * nFrames) / K), Math.floor(((k + 1) * nFrames) / K)]);
+    const segFiles = [];
+    const encArgs = (file) => ['-hide_banner', '-v', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
+      '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(fps), file];
+    const drawChunk = async (k) => {
+      const [from, to] = chunks[k];
+      const pg = k === 0 ? page : await browser.newPage();
+      if (k !== 0) {
+        await pg.setViewport(540, 960, 2);
+        await pg.goto(pathToFileURL(stagePath).href);
+        await pg.settle(30000);
+        await pg.evaluate(() => window.__fit && window.__fit());
+      }
+      const seg = path.join(out, `seg-${String(k).padStart(2, '0')}.mp4`);
+      const enc = spawn('ffmpeg', encArgs(seg), { stdio: ['pipe', 'ignore', 'pipe'] });
+      let err = '';
+      enc.stderr.on('data', (d) => { err += d; });
+      for (let f = from; f < to; f++) {
+        const t = f / fps;
+        await pg.evaluate(`window.__seek(${t})`);
+        const buf = await pg.screenshot({ clip: { x: 0, y: 0, width: 540, height: 960 }, format: 'jpeg', quality: 92, beyond: false });
+        if (!enc.stdin.write(buf)) await new Promise((r) => enc.stdin.once('drain', r));
+        // A slot is filled only once this slice's clock has actually reached its time, and only for slots inside this
+        // slice — otherwise a slice that starts late grabs a frame meant for an earlier moment.
+        const want = sheetTimes.find((s) => !s.done && s.t >= from / fps && t >= s.t);
+        if (want) { want.done = true; const p = path.join(out, 'review', `f-${String(want.i).padStart(2, '0')}.jpg`); fs.writeFileSync(p, buf); sheet.push({ ...want, file: p }); }
+        if (f === 0) fs.writeFileSync(path.join(out, 'cover.jpg'), buf);
+        if (k === 0 && f % (fps * 10) === 0 && f) log(`  帧 ${f}/${nFrames}（${((Date.now() - t0) / 1000).toFixed(0)}s）`);
+      }
+      enc.stdin.end();
+      await new Promise((r) => enc.on('close', r));
+      if (!fs.existsSync(seg)) throw new Error(`编码失败（第 ${k + 1} 段）：${err.slice(-500)}`);
+      if (k !== 0) await pg.close();
+      segFiles[k] = seg;
+    };
+    await Promise.all(chunks.map((_, k) => drawChunk(k)));
+    const listPath = path.join(out, 'segments.txt');
+    fs.writeFileSync(listPath, segFiles.map((f) => `file '${path.basename(f)}'`).join('\n'));
+    ff(['-f', 'concat', '-safe', '0', '-i', listPath, '-c', 'copy', silentMp4]);
+    fs.rmSync(listPath, { force: true });
+    for (const f of segFiles) fs.rmSync(f, { force: true });
+    sheet.sort((a, b) => a.i - b.i);
+    log(`  ${nFrames} 帧，${K} 路并行，用时 ${((Date.now() - t0) / 1000).toFixed(0)}s`);
     capDrops = captionDropouts(silentMp4, data.captions, fps);
 
     // Cover images: full 9:16 frame 0 and a 3:4 center crop for 小红书-style covers.
@@ -379,10 +434,10 @@ export async function renderVideo(video, align, opts) {
     // Contact sheet for review (HTML → screenshot).
     const sheetHtml = `<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#222;font:14px -apple-system,sans-serif;color:#eee;width:${6 * 222}px}
       .g{display:grid;grid-template-columns:repeat(6,210px);gap:12px;padding:12px}.g div{text-align:center}img{width:210px;display:block;border-radius:6px}</style>
-      <div class="g">${sheet.map((s) => `<div><img src="${pathToFileURL(s.file).href}"><div>${s.t.toFixed(2)}s · ${esc(s.label)}</div></div>`).join('')}</div>`;
+      <div class="g">${sheet.filter((s) => fs.existsSync(s.file)).map((s) => `<div><img src="${pathToFileURL(s.file).href}"><div>${s.t.toFixed(2)}s · ${esc(s.label)}</div></div>`).join('')}</div>`;
     const sheetPath = path.join(out, 'review', 'sheet.html');
     fs.writeFileSync(sheetPath, sheetHtml);
-    const rows = Math.ceil(sheet.length / 6);
+    const rows = Math.ceil(sheet.filter((s) => fs.existsSync(s.file)).length / 6);
     await page.setViewport(6 * 222, rows * 410 + 24, 1);
     await page.goto(pathToFileURL(sheetPath).href);
     await page.settle(5000);

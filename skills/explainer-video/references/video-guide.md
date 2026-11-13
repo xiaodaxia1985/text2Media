@@ -93,6 +93,8 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 | `merge` | 几个因素合成一个结果 | `title`、`sources[{text, cue}]`、`target`、`target_cue`（带上升小折线） |
 | `compare` | 对 vs 错、这样做 vs 别这样 | `chip`、`title`、`left/right{title, items[{text, cue, delay}]}` |
 | `stats` | 两三个并列的量 | `chip`、`title`、`items[{value, prefix, suffix, label, cue}]`、`note`+`note_cue` |
+| `trend` | 一个数，加它怎么长起来的（视觉重物） | `title`、`values`（≥2 个点，如 `[10,26,58,137,200]`）、`labels`（横轴，可省）、`from`/`to`（只有两点时用）、`suffix`、`note`、`count_cue` |
+| `bars` | 几个量比长短（代价、时长、比例） | `title`、`items[{label, value, suffix, cue}]`、`max`（不写就用最大值）、`decimals` |
 | `quote` | 一句有力的原话 | `quote`（可含 `\n`）、`quote_line`（哪一行在念它，逐字点亮）、`by` |
 | `checklist` | 收尾回顾 | `title`、`items[{text, cue}]`、`cta`+`cta_cue` |
 | `title` | 一个判断、一个转场 | `title`（`**词**` 说到时划荧光）、`sub`、`image` |
@@ -105,6 +107,10 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 - 一镜里的元素按口播顺序出现；同时出现的多个元素用 `delay` 错开 0.3 秒。
 - 标题在镜头开始时就在（不留空屏），说到标题时再强调一下。
 - 结论性的画面（清单全部出现、数字滚完）要留时间看清：脚本会自动加停顿。
+
+**数字与单位**：数字按写时的精度显示，`98.7` 不会变成 `99`（需要固定两位时写 `decimals`）；单位写成 `" 小时"` 时自动另起小号排在数字旁，不会折行，`%` 仍紧贴数字。像"提前 48 小时"这种前后对比，用 `bars` 比用一个数更有重量。
+
+**画面重量**：一条片子里至少留一镜"视觉重物"——一段走势（`trend`）、一组条形对比（`bars`）、或一个满版大数字；全是小号文字和清单，观众划走得最快。
 
 ### 2.5 封面
 ```json
@@ -154,6 +160,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs make   <目录>/video/video.json   # 
 node ${CLAUDE_SKILL_DIR}/scripts/video.mjs render <目录>/video/video.json --theme signal-swiss   # 换主题重渲（配音复用）
 ```
 - 配音按句缓存：只改了某一镜的口播，只会重新生成那几句。
+- 渲染默认分片并行（本机按 CPU 数取 2–3 路，每路一个页面、一段连续帧、一条 ffmpeg，最后无损拼接）：45 秒 / 1368 帧的片子约 75 秒渲完，单路串行约 160 秒。
 - 输出在 `<目录>/video/<主题>/`：`video.mp4`、`cover.png`、`cover-3x4.jpg`、`captions.srt`、`post.md`（发布文案和 AI 声明）、`contact-sheet.jpg`（审片总览）、`review.json`。
 
 ## 4. 审片（必须做）

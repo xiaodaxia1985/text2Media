@@ -323,6 +323,28 @@ body { width: max-content; background: var(--sheet-bg, #9a9a96); }
 .c-statcard .sec-label { margin-bottom: 14px; }
 .c-statcard .c-take { margin-top: 18px; }
 
+/* ---------- 数字卡（metric）：一个数 + 它怎么长起来的 ----------
+   和视频的 trend 镜同一套规矩：小数位照数值写，单位另起小号；走势是数据本身，不是装饰。 */
+.c-metriccard .c-body { justify-content: center; }
+.c-metric { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.c-metric-fig { display: flex; align-items: baseline; min-width: 0; }
+.c-metric-fig b { font-family: var(--font-head); font-weight: 900; font-size: 92px; line-height: 1.04;
+  letter-spacing: -.035em; font-variant-numeric: tabular-nums; color: var(--acc-text); white-space: nowrap; }
+.c-metric-fig em { font-style: normal; font-size: 34px; font-weight: 800; letter-spacing: 0;
+  margin-left: 6px; color: var(--acc-text); opacity: .78; white-space: nowrap; }
+.c-metric-label { font-size: 14.5px; font-weight: 700; letter-spacing: .02em; color: var(--muted); margin-top: 10px; }
+.c-metric-spark { width: 100%; margin-top: 26px; }
+.c-metric-spark svg { width: 100%; height: 96px; display: block; }
+.c-metric-spark polygon { fill: color-mix(in srgb, var(--acc) 12%, transparent); }
+.c-metric-spark polyline { fill: none; stroke: var(--acc); stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.c-metric-x { display: flex; justify-content: space-between; width: 100%; margin-top: 8px;
+  font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+.c-metric-note { font-size: 13px; line-height: 1.8; color: var(--muted); margin-top: 18px; max-width: 92%; }
+.c-metriccard .c-take { margin-top: 20px; }
+.r-1x1 .c-metric-fig b { font-size: 62px; }
+.r-1x1 .c-metric-spark svg { height: 66px; }
+.r-9x16 .c-metric-fig b { font-size: 104px; }
+
 /* ---------- 图卡证据（M10 / S08）：图是主角，文字让位 ----------
    图占卡高 45–65%（下面 flex 撑开，min-height 45% 兜底），说明 ≤40 字压在下方，
    有数字就排一行小号数字。图卡若只当"配图"（缩到 <45%）就该换卡型，不要硬排。 */

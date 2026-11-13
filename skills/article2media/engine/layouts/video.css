@@ -81,11 +81,15 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-title b, .v-headline b { color: var(--acc-text); }
 
 /* number */
-.sc-number { text-align: center; }
+.sc-number { text-align: center; perspective: 900px; }
 .v-label { font-size: 22px; font-weight: 700; color: var(--muted); letter-spacing: .1em; }
 .v-from { margin-top: 18px; font-family: var(--font-head); font-size: 40px; color: var(--muted); line-height: 1.2; }
 .v-from .v-arrow { display: block; font-style: normal; font-size: 30px; color: var(--acc-text); margin-top: 4px; }
-.v-big { position: relative; display: inline-block; margin-top: 4px; font-family: var(--font-head); font-weight: 900; font-size: 112px; line-height: 1.05; color: var(--acc-text); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.v-big { position: relative; display: inline-block; margin-top: 4px; font-family: var(--font-head); font-weight: 900; font-size: 112px; line-height: 1.05; color: var(--acc-text); letter-spacing: -.01em; font-variant-numeric: tabular-nums; transform-origin: 50% 82%; }
+.v-big.sm { font-size: 84px; }
+/* A unit sits beside the figure at reading size instead of sharing its 112px: "48 小时" must never wrap. */
+.v-unit { display: inline-block; font-style: normal; font-size: .40em; font-weight: 800; margin-left: .12em; letter-spacing: .02em; vertical-align: .06em; color: var(--acc-text); opacity: .82; white-space: nowrap; }
+.v-unit.sm { font-size: .44em; margin-left: .06em; margin-right: .2em; }
 .v-badge { position: absolute; right: -54px; top: -26px; font-style: normal; font-size: 20px; font-weight: 800; color: var(--on-acc); background: var(--accent-2, var(--acc)); padding: 6px 12px; border-radius: 12px; rotate: 8deg; white-space: nowrap; font-family: var(--font-head); }
 .v-proof { margin: 18px auto 0; width: 228px; background: var(--card); border-radius: 16px; padding: 10px 10px 8px; box-shadow: 0 18px 40px -18px rgba(0,0,0,.45); rotate: -3deg; }
 .v-proof img { width: 100%; display: block; border-radius: 10px; }
@@ -142,6 +146,33 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-stat b { font-family: var(--font-head); font-size: 96px; line-height: 1; color: var(--acc-text); font-variant-numeric: tabular-nums; min-width: 2.3em; }
 .v-stat span { font-size: 27px; font-weight: 800; white-space: nowrap; }
 .v-note { align-self: flex-start; margin-top: 18px; font-size: 24px; font-weight: 700; color: var(--acc-text); background: var(--panel-bg); padding: 8px 14px; border-radius: 12px; }
+
+/* trend — a figure with the shape of how it got there */
+.sc-trend { display: flex; flex-direction: column; }
+.sc-trend .v-big { align-self: center; margin: 2px 0 10px; }
+.v-chart { position: relative; margin-top: 4px; }
+.v-chart svg { width: 100%; height: 150px; display: block; overflow: visible; }
+.v-line { fill: none; stroke: var(--acc-line); stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.v-area { fill: color-mix(in srgb, var(--acc) 16%, transparent); opacity: 0; }
+.v-dots { position: absolute; inset: 0; pointer-events: none; }
+.v-dots .v-dot { position: absolute; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 18%, transparent); }
+.v-dots .v-dot.last { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: var(--acc-text); box-shadow: 0 0 0 6px color-mix(in srgb, var(--acc) 22%, transparent); }
+.v-xlabels { position: relative; height: 22px; margin-top: 6px; }
+.v-xlabels span { position: absolute; top: 0; translate: -50% 0; font-size: 15px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+
+/* bars — several quantities compared by length */
+.sc-bars { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.v-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 26px; }
+.v-bar { display: grid; grid-template-columns: 108px 1fr auto; align-items: center; gap: 14px; }
+.v-bar b { font-family: var(--font-head); font-size: 22px; font-weight: 800; line-height: 1.3; }
+.v-bar-track { height: 26px; border-radius: 13px; background: var(--well-bg); overflow: hidden; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent); }
+.v-bar-fill { display: block; height: 100%; border-radius: 13px; background: var(--acc); transform-origin: 0 50%; }
+.v-bar em { font-family: var(--font-head); font-size: 24px; font-weight: 900; font-style: normal; color: var(--acc-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-bar em small { font-size: .72em; font-weight: 700; opacity: .8; }
+
+/* A single light sweep across a keyword, timed to the word being spoken. */
+.v-headline b, .v-title b { position: relative; }
+.v-sheen { position: absolute; left: 0; top: -.1em; width: 46%; height: 1.2em; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 26%, transparent), transparent); opacity: 0; pointer-events: none; }
 
 /* quote */
 .sc-quote { padding: 0 6px; }

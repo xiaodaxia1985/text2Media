@@ -106,6 +106,11 @@ export function planCards(content, ratio = '3:4', budgetAdjust = 0) {
         plan.push(...packStages(s, num, k, budget));
         continue;
       }
+      // 声明了 metric 的节自己成一张数字卡：一个数加走势，不必再退回正文卡。
+      if (s.metric) {
+        plan.push({ kind: 'metric', s, num, k, pg });
+        continue;
+      }
       const roleKind = ROLE_KIND[s.role];
       if (roleKind && roleReady(s, roleKind)) {
         plan.push({ kind: roleKind, s, num, k, pg });
@@ -303,6 +308,44 @@ function statCard(it) {
   );
 }
 
+// 数字卡（metric）：一个数，加它怎么长起来的。和视频的 trend 镜共用一套规矩——
+// 小数位照数值写（98.7 不会变 99），单位另起小号（「48 小时」不折行）。
+function metricSpark(vals) {
+  const W = 300, H = 92, pad = 6;
+  const max = Math.max(...vals), min = Math.min(...vals, 0);
+  const x = (i) => pad + (i * (W - pad * 2)) / (vals.length - 1);
+  const y = (v) => H - 12 - ((v - min) / Math.max(1e-6, max - min)) * (H - 26);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polygon points="${pts} ${W - pad},${H - 8} ${pad},${H - 8}"/><polyline points="${pts}"/></svg>`;
+}
+
+function metricCard(it) {
+  const s = it.s;
+  const m = s.metric || {};
+  const raw = String(m.value ?? '').replace(/,/g, '');
+  const dec = Number.isFinite(Number(m.decimals)) ? Math.max(0, Number(m.decimals)) : (raw.split('.')[1] || '').length;
+  const n = Number(raw);
+  const fig = Number.isFinite(n)
+    ? n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })
+    : raw;
+  const unit = m.unit || '';
+  const sym = unit ? '' : (m.suffix || '');
+  const vals = (m.values || []).map(Number).filter((v) => Number.isFinite(v));
+  const labels = (m.labels || []).map((l) => `<span>${md(l)}</span>`).join('');
+  return (
+    roleLabel(it) +
+    roleHead(it) +
+    `<div class="c-metric">` +
+    `<div class="c-metric-fig"><b>${md((m.prefix || '') + fig + sym)}</b>${unit ? `<em>${md(unit)}</em>` : ''}</div>` +
+    (m.label ? `<div class="c-metric-label">${md(m.label)}</div>` : '') +
+    (vals.length >= 2 ? `<div class="c-metric-spark"${drop(6, '走势图')}>${metricSpark(vals)}</div>` : '') +
+    (labels ? `<div class="c-metric-x"${drop(7, '走势标签')}>${labels}</div>` : '') +
+    (m.note ? `<p class="c-metric-note" data-qa-text${drop(5, '数字说明')}>${md(m.note)}</p>` : '') +
+    `</div>` +
+    (s.takeaway ? `<p class="c-take" data-qa-text${drop(3, '结论')}>${md(s.takeaway)}</p>` : '')
+  );
+}
+
 // 图卡证据（M10 / S08）：图自己撑起这张卡——占卡高 45–65%，文字让位，
 // 说明压在 ≤40 字，有数字就排一行小号数字，不跟图抢位置。
 function figCard(it, L) {
@@ -427,6 +470,8 @@ export function buildCards(ctx) {
         return frame(timelineCard(it), { ...base, cls: 'c-timeline', acc: accVar(it.k, nAcc), tag: tagOf(it) });
       case 'stat':
         return frame(statCard(it), { ...base, cls: 'c-statcard', acc: accVar(it.k, nAcc), tag: tagOf(it) });
+      case 'metric':
+        return frame(metricCard(it), { ...base, cls: 'c-metriccard', acc: accVar(it.k, nAcc), tag: tagOf(it) });
       case 'opener':
         return frame(openerCard(it), { ...base, cls: 'c-openercard', acc: accVar(it.k, nAcc), tag: tagOf(it) });
       case 'fig':
