@@ -139,9 +139,11 @@ export function buildStage(video, align, themeCss, opts = {}) {
       }
     });
     const digit = sc.deco ?? (String(sc.chip || '').match(/\d+/) || [])[0];
-    const deco = digit ? `<div class="v-deco num" id="${sid}deco">${esc(digit)}</div>` : `<div class="v-deco blob" id="${sid}deco"></div>`;
-    events.push({ id: `${sid}deco`, p: 'drift', t: win.in, dur: win.out - win.in });
+    // 背景装饰只做"第 N 件事"的大号数字；没有章节数字就留白——早先那团模糊圆斑在
+    // 浅色主题上看着像一块脏阴影，已去掉（2026-11-13）。
+    const deco = digit ? `<div class="v-deco num" id="${sid}deco">${esc(digit)}</div>` : '';
     if (digit) {
+      events.push({ id: `${sid}deco`, p: 'drift', t: win.in, dur: win.out - win.in });
       // Chapter beat: the numeral opens the scene strong, then recedes when the content starts arriving.
       const first = Math.min(...built.events.map((e) => e.t).filter((t) => t > win.in + 0.3), win.out);
       events.push({ id: `${sid}deco`, p: 'recede', t: Math.max(win.in + 0.6, first - 0.35) });

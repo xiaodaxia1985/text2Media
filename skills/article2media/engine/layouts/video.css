@@ -250,4 +250,3 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 /* Depth behind the content: a giant faint numeral for "第 N 件事" scenes, a soft drifting color blob otherwise. */
 .v-deco { position: absolute; z-index: -1; pointer-events: none; }
 .v-deco.num { right: -18px; top: 50%; translate: 0 -55%; font-family: var(--font-head); font-weight: 900; font-size: 380px; line-height: 1; color: var(--acc); opacity: .1; }
-.v-deco.blob { right: -60px; top: 6%; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, color-mix(in srgb, var(--acc) var(--deco-mix, 34%), transparent), transparent 70%); }
