@@ -291,6 +291,35 @@ const B = {
     return { events: ev, html: `<div class="sc-bars">${s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : ''}<ul class="v-bars">${rows}</ul></div>` };
   },
 
+  /** 出发板（翻牌）：每个数字一格，按口播逐个翻下来。数字多位数也读得清。 */
+  board(s, at, win) {
+    const ev = [], counters = [];
+    const lab = id('b'), wrap = id('b'), tid = id('b');
+    const dec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : decOf(s.to ?? s.value);
+    const { sym, unit } = splitSuffix(s.suffix);
+    const val = Number(s.to ?? s.value);
+    const text = (Number.isFinite(val) ? fmtNum(val, dec) : String(s.value ?? '')) + sym;
+    if (s.label) ev.push({ id: lab, p: 'rise', t: win.in + 0.06 });
+    const t = at(s.count_cue ?? text);
+    const tiles = [...text].map((ch, k) => {
+      const i = `${wrap}${k}`;
+      if (!/[0-9]/.test(ch)) return `<span class="flap fixed" id="${i}">${esc(ch)}</span>`;
+      ev.push({ id: i, p: 'flip', t: t - 0.1 + k * 0.07, dur: 0.34 });
+      return `<span class="flap" id="${i}">${esc(ch)}</span>`;
+    }).join('');
+    if (s.title) ev.push({ id: tid, p: 'rise', t: win.in + 0.04 });
+    return {
+      events: ev, counters,
+      html:
+        `<div class="sc-board">` +
+        (s.title ? `<h2 class="v-title" id="${tid}">${md(s.title)}</h2>` : '') +
+        `<div class="v-flaps" id="${wrap}">${tiles}</div>` +
+        (unit ? `<div class="v-flap-unit">${esc(unit)}</div>` : '') +
+        (s.label ? `<div class="v-label" id="${lab}" style="margin-top:22px">${md(s.label)}</div>` : '') +
+        `</div>`,
+    };
+  },
+
   title(s, at, win) {
     const ev = [];
     const ti = id('t'), sub = id('s'), img = id('m');

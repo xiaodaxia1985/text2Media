@@ -68,7 +68,19 @@ export function buildStage(video, align, themeCss, opts = {}) {
   const sa = (sc) => align.scenes.find((a) => a.id === sc.id);
   const starts = scenes.map((sc, i) => (i === 0 ? T.coverHold + T.coverFade : VO + (sa(sc)?.start ?? 0) - T.sceneLead));
 
-  const events = [], counters = [], karaoke = [], captions = [];
+  const events = [], counters = [], karaoke = [], captions = [], fxLayers = [];
+  // Inter-scene transitions, ported from the HyperFrames cover-transition catalog (transitions-cover / -radial / -light).
+  // A layer covers the cut, the scenes swap underneath it, then the layer leaves the other way. Without a declaration
+  // the film keeps its mask/fade rhythm; "transitions": "wipe" (or a list, repeating) replaces those boundaries.
+  const FX = {
+    wipe: { n: 2, inDur: .26, inStagger: .09, outDur: .26, outStagger: .09 },
+    blinds: { n: 8, inDur: .2, inStagger: .035, outDur: .22, outStagger: .035 },
+    iris: { n: 1, inDur: .34, inStagger: 0, outDur: .3, outStagger: 0 },
+    flash: { n: 1, inDur: .16, inStagger: 0, outDur: .16, outStagger: 0 },
+  };
+  const fxDecl = video.transitions ?? video.transition;
+  const fxList = (Array.isArray(fxDecl) ? fxDecl : fxDecl ? [fxDecl] : []).filter((x) => FX[x]);
+  const fxAt = (b) => (fxList.length ? fxList[fxList.length > 1 ? b % fxList.length : 0] : null);
   const sceneHtml = scenes.map((sc, i) => {
     const win = { in: starts[i], out: i + 1 < scenes.length ? starts[i + 1] : total };
     const a = sa(sc);
@@ -77,8 +89,27 @@ export function buildStage(video, align, themeCss, opts = {}) {
     const sid = `sc${i}`;
     // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
     const sheet = sc.type !== 'title' && sc.type !== 'image';
+    const fxName = i + 1 < scenes.length ? fxAt(i) : null;
+    const fx = fxName ? FX[fxName] : null;
     events.push({ id: sid, p: 'scene-in', t: win.in });
-    if (i + 1 < scenes.length) events.push({ id: sid, p: sheet ? 'mask-out' : 'scene-out', t: win.out - 0.3 });
+    if (fx) {
+      // Covered at the cut: in-layer built so it is opaque just before the next scene starts, swap under it,
+      // then the layer sweeps away while the next scene's own entrance plays behind it.
+      const covered = win.out - 0.02;
+      const inTotal = fx.inDur + (fx.n - 1) * fx.inStagger;
+      const t0 = covered - inTotal;
+      const tOut = covered + 0.1;
+      const layers = [];
+      for (let k = 0; k < fx.n; k++) {
+        const id = fxName === 'iris' ? `fx${i}i` : fxName === 'flash' ? `fx${i}f` : `fx${i}${fxName === 'wipe' ? 'p' : 'b'}${k}`;
+        const p = fxName === 'flash' ? 'fx-flash' : fxName === 'iris' ? 'fx-iris' : 'fx-cover';
+        events.push({ id, p: `${p}-in`, t: t0 + k * fx.inStagger, dur: fx.inDur });
+        events.push({ id, p: `${p}-out`, t: tOut + k * fx.outStagger, dur: fx.outDur });
+        layers.push({ id, k });
+      }
+      fxLayers.push({ i, name: fxName, n: fx.n, layers });
+      events.push({ id: sid, p: 'hide', t: covered });
+    } else if (i + 1 < scenes.length) events.push({ id: sid, p: sheet ? 'mask-out' : 'scene-out', t: win.out - 0.3 });
     events.push({ id: `${sid}cam`, p: 'cam', t: win.in, dur: win.out - win.in });
     for (const e of built.events) events.push({ ...e, scene: i, t: Math.max(win.in + 0.06, Math.min(e.t, win.out - 0.3)), raw: e.t });
     for (const c of built.counters || []) counters.push({ ...c, t: Math.max(win.in + 0.06, c.t) });
@@ -107,6 +138,14 @@ export function buildStage(video, align, themeCss, opts = {}) {
       (sc.chip ? `<div class="v-chip" id="${sid}chip" style="top:-40px;left:0">${md(sc.chip)}</div>` : '') +
       `<div class="v-cam" id="${sid}cam">${built.html}</div></section>`
     );
+  }).join('\n');
+  const fxHtml = fxLayers.map(({ i, name, n, layers }) => {
+    const inside = layers.map(({ id, k }) => {
+      if (name === 'iris' || name === 'flash') return `<div class="fx-${name}" id="${id}"></div>`;
+      if (name === 'wipe') return `<div class="fx-p${k + 1}" id="${id}"></div>`;
+      return `<div class="fx-b" id="${id}" style="top:${(k * 100) / n}%;height:${100 / n}%"></div>`;
+    }).join('');
+    return `<div class="v-fx" style="--acc:${acc(i + 1)}">${inside}</div>`;
   }).join('\n');
   captions.sort((a, b) => a.t - b.t);
   // A caption stays up through short pauses until the next one replaces it (a hard cut, no blinking gap);
@@ -152,6 +191,7 @@ export function buildStage(video, align, themeCss, opts = {}) {
 <div class="v-progress"><i id="prog"></i></div>
 <div class="v-credit">${esc(opts.credit || '')}</div>
 ${sceneHtml}
+${fxHtml}
 <div class="v-cap cap-${cap.style}" style="${esc(cap.css)}"><span class="c" id="cap" style="visibility:hidden"></span></div>
 ${cover}
 </main>
@@ -172,6 +212,15 @@ const STAGE_JS = String.raw`
     // Card scenes leave behind a mask rather than a fade: the sheet wipes up and the next one arrives on a clean page.
     'mask-out': [[{ clipPath: 'inset(0 0 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 100% 0)', opacity: 1 }], .3, 'ease-in'],
     'cover-out': [[{ opacity: 1, transform: 'scale(1)', filter: 'blur(0)' }, { opacity: 0, transform: 'scale(1.06)', filter: 'blur(6px)' }], .25, 'ease-in'],
+    // A scene that leaves instantly under a cover layer: no fade, the next scene's entrance does the work.
+    hide: [[{ opacity: 1 }, { opacity: 0 }], .02, 'linear'],
+    // Cover-transition layers (catalog: staggered colour blocks, blinds, iris, flash-through-white).
+    'fx-cover-in': [[{ transform: 'translateX(-101%)' }, { transform: 'translateX(0)' }], .26, 'cubic-bezier(.7,0,.2,1)'],
+    'fx-cover-out': [[{ transform: 'translateX(0)' }, { transform: 'translateX(101%)' }], .26, 'cubic-bezier(.7,0,.2,1)'],
+    'fx-iris-in': [[{ clipPath: 'circle(0% at 50% 42%)' }, { clipPath: 'circle(82% at 50% 42%)' }], .34, 'cubic-bezier(.6,.02,.2,1)'],
+    'fx-iris-out': [[{ clipPath: 'circle(82% at 50% 42%)' }, { clipPath: 'circle(0% at 50% 42%)' }], .3, 'ease-in'],
+    'fx-flash-in': [[{ opacity: 0 }, { opacity: 1 }], .16, 'ease-in'],
+    'fx-flash-out': [[{ opacity: 1 }, { opacity: 0 }], .16, 'ease-out'],
     cam: [[{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }], 1, 'linear'],
     drift: [[{ transform: 'translate(24px, 10px) scale(.94)' }, { transform: 'translate(-8px, -6px) scale(1.02)' }], 1, 'linear'],
     recede: [[{ opacity: .5 }, { opacity: .1 }], .5, 'ease-out'],
@@ -200,7 +249,7 @@ const STAGE_JS = String.raw`
     if ((e.p === 'draw' || e.p === 'check') && el.tagName !== 'path') target = el.querySelector('path') || el;
     // Entrances hold their first frame before they start (fill both); exits and accents must not (forwards / none),
     // or an exit's first keyframe would show the element from t = 0.
-    const exit = e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'cover-out' || e.p === 'dim';
+    const exit = e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'cover-out' || e.p === 'dim' || e.p === 'hide' || e.p.startsWith('fx-');
     const accent = e.p === 'pulse' || e.p === 'focus';
     const a = target.animate(kf, { duration: (e.dur || dur) * 1000, delay: e.t * 1000, easing, fill: accent ? 'none' : exit ? 'forwards' : 'both', composite: accent ? 'add' : 'replace' });
     a.pause();
@@ -346,7 +395,7 @@ export async function renderVideo(video, align, opts) {
       const box = { l: 30, r: 540 - 72, t: 120, b: 662 };
       document.querySelectorAll('.v-scene').forEach((sc, i) => {
         const inEv = tl.events.find((e) => e.id === sc.id && e.p === 'scene-in');
-        const outEv = tl.events.find((e) => e.id === sc.id && (e.p === 'scene-out' || e.p === 'mask-out'));
+        const outEv = tl.events.find((e) => e.id === sc.id && (e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'hide'));
         const t = outEv ? outEv.t - 0.05 : tl.total - 0.1;
         window.__seek(t);
         for (const el of sc.querySelectorAll('h2,h3,li,.v-big,.v-item,.v-stat,.v-target,.v-src,.v-cta,.v-tag,.v-proof,.v-quote,.v-note,.v-col,.v-pt')) {

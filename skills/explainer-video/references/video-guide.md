@@ -95,6 +95,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 | `stats` | 两三个并列的量 | `chip`、`title`、`items[{value, prefix, suffix, label, cue}]`、`note`+`note_cue` |
 | `trend` | 一个数，加它怎么长起来的（视觉重物） | `title`、`values`（≥2 个点，如 `[10,26,58,137,200]`）、`labels`（横轴，可省）、`from`/`to`（只有两点时用）、`suffix`、`note`、`count_cue` |
 | `bars` | 几个量比长短（代价、时长、比例） | `title`、`items[{label, value, suffix, cue}]`、`max`（不写就用最大值）、`decimals` |
+| `board` | 一个要敲进记忆的数字，像机场翻牌（98.7%、200 家） | `title`、`value`、`suffix`、`count_cue`、`label`、`decimals`（一个镜头只用一次，多用就不稀罕了） |
 | `quote` | 一句有力的原话 | `quote`（可含 `\n`）、`quote_line`（哪一行在念它，逐字点亮）、`by` |
 | `checklist` | 收尾回顾 | `title`、`items[{text, cue}]`、`cta`+`cta_cue` |
 | `title` | 一个判断、一个转场 | `title`（`**词**` 说到时划荧光）、`sub`、`image` |
@@ -110,7 +111,18 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 
 **数字与单位**：数字按写时的精度显示，`98.7` 不会变成 `99`（需要固定两位时写 `decimals`）；单位写成 `" 小时"` 时自动另起小号排在数字旁，不会折行，`%` 仍紧贴数字。像"提前 48 小时"这种前后对比，用 `bars` 比用一个数更有重量。
 
-**画面重量**：一条片子里至少留一镜"视觉重物"——一段走势（`trend`）、一组条形对比（`bars`）、或一个满版大数字；全是小号文字和清单，观众划走得最快。
+**画面重量**：一条片子里至少留一镜"视觉重物"——一段走势（`trend`）、一组条形对比（`bars`）、一个满版大数字，或一次翻牌（`board`）；全是小号文字和清单，观众划走得最快。
+
+**转场**：镜头之间默认是"卡片上推 + 淡出"，够用，别全片都换。要更有节奏时，在 video.json 顶层写 `"transitions": ["wipe","blinds","iris","flash"]`（只写一个名就是全片统一）：
+
+| 名字 | 画面 | 适合 |
+|---|---|---|
+| `wipe` | 两层色块先后横扫过屏，遮住切换 | 章节之间，最重的一刀 |
+| `blinds` | 8 条横百叶错位拉过 | 从数字镜切到清单镜 |
+| `iris` | 圆形从中间张开/收拢 | 收尾、聚焦某个判断 |
+| `flash` | 闪白一刀 | 情绪转折，一次就够 |
+
+原则：一条片子最多两种转场，同一处用一次；切换时的字幕不会被遮住（字幕恒在最上层）。转场只改"怎么切"，不改内容时长，总时长仍由口播决定。
 
 ### 2.5 封面
 ```json

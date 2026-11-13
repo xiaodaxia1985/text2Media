@@ -10,9 +10,31 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-credit { position: absolute; left: 30px; right: 72px; top: 108px; font-size: 10.5px; color: var(--muted); letter-spacing: .04em; z-index: 5; font-family: var(--font-label, var(--font-body)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v-chip { position: absolute; left: 30px; top: 132px; z-index: 4; font-size: 15px; font-weight: 800; color: var(--on-acc); background: var(--acc); padding: 4px 13px; border-radius: 999px; letter-spacing: .04em; font-family: var(--font-head); }
 
+/* Cover transitions: a full-frame layer hides the cut for ~0.3s. Ported from the HyperFrames catalog
+   (staggered colour blocks · horizontal blinds · iris · flash-through-white). Layers sit above every scene
+   and below the caption/cover, so subtitles never blink out during a cut. */
+.v-fx { position: absolute; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.v-fx .fx-p1 { position: absolute; inset: 0; background: var(--acc); transform: translateX(-101%); will-change: transform; }
+.v-fx .fx-p2 { position: absolute; inset: 0; background: var(--ink); transform: translateX(-101%); will-change: transform; }
+.v-fx .fx-b { position: absolute; left: 0; right: 0; background: var(--acc); transform: translateX(-101%); will-change: transform; }
+.v-fx .fx-b:nth-child(even) { background: var(--ink); }
+.v-fx .fx-iris { position: absolute; inset: 0; background: var(--ink); clip-path: circle(0% at 50% 42%); }
+.v-fx .fx-flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+
+/* Departure-board card: each character is its own flip tile, so a multi-digit figure reads as a fact, not a bubble. */
+.sc-board { display: flex; flex-direction: column; justify-content: center; gap: 16px; height: 100%; }
+.v-flaps { display: flex; align-items: stretch; gap: 6px; margin-top: 6px; }
+.flap { position: relative; display: flex; align-items: center; justify-content: center; min-width: 56px; height: 96px; padding: 0 10px;
+  border-radius: 10px; background: var(--flap-bg, var(--ink, #171717)); color: var(--flap-ink, #fff); font-family: var(--font-head); font-size: 56px; font-weight: 800;
+  line-height: 1; letter-spacing: -.02em; box-shadow: inset 0 -2px 0 color-mix(in srgb, #000 40%, transparent), 0 2px 8px color-mix(in srgb, #000 14%, transparent); transform-origin: 50% 0; }
+.flap::after { content: ''; position: absolute; left: 6px; right: 6px; top: 50%; height: 1px; background: color-mix(in srgb, #fff 16%, transparent); }
+.flap.fixed { background: transparent; box-shadow: none; min-width: 22px; padding: 0 2px; color: var(--ink, #171717); }
+.flap.fixed::after { display: none; }
+.v-flap-unit { font-size: 22px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+
 /* Captions: one line that never wraps (the font shrinks to fit), hard cuts between phrases — no pop, no resize animation,
    no blinking gaps. Each theme picks a preset in themes/caption-styles.json and tunes it through --cap-* variables. */
-.v-cap { position: absolute; left: 30px; right: 72px; top: 676px; height: 64px; display: flex; align-items: center; justify-content: center; z-index: 6; pointer-events: none; }
+.v-cap { position: absolute; left: 30px; right: 72px; top: 676px; height: 64px; display: flex; align-items: center; justify-content: center; z-index: 46; pointer-events: none; }
 .v-cap span.c {
   display: inline-block; white-space: nowrap; text-align: center; line-height: 1.25; word-spacing: .3em;
   font-family: var(--cap-font, var(--font-body)); font-weight: var(--cap-weight, 800); font-size: var(--cap-size, 30px);
