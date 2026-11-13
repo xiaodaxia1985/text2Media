@@ -11,6 +11,7 @@ import { fontsStyle } from '../fonts.mjs';
 import { buildScene, cueResolver } from './scenes.mjs';
 import { captionPhrases, plainText } from './text.mjs';
 import { renderSfx } from './sfx.mjs';
+import { FFMPEG } from './ffmpeg.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL = path.resolve(HERE, '..', '..', '..');
@@ -366,7 +367,7 @@ const STAGE_JS = String.raw`
 export function captionDropouts(mp4, captions, fps) {
   // .v-cap: left 30, right 72, top 676, height 64 CSS px on a 540×960 stage rendered at 2×.
   const W = 292, H = 32;
-  const r = spawnSync('ffmpeg', ['-v', 'error', '-i', mp4, '-vf', `crop=876:128:60:1352,scale=${W}:${H},format=gray`, '-f', 'rawvideo', '-'], { maxBuffer: 1 << 28 });
+  const r = spawnSync(FFMPEG, ['-v', 'error', '-i', mp4, '-vf', `crop=876:128:60:1352,scale=${W}:${H},format=gray`, '-f', 'rawvideo', '-'], { maxBuffer: 1 << 28 });
   if (r.status !== 0 || !r.stdout?.length) return null;
   const n = W * H, total = Math.floor(r.stdout.length / n);
   const energy = (f) => {
@@ -388,7 +389,7 @@ export function captionDropouts(mp4, captions, fps) {
 }
 
 function ff(args, opts = {}) {
-  const r = spawnSync('ffmpeg', ['-hide_banner', '-v', 'error', '-y', ...args], { encoding: 'utf8', maxBuffer: 64 << 20, ...opts });
+  const r = spawnSync(FFMPEG, ['-hide_banner', '-v', 'error', '-y', ...args], { encoding: 'utf8', maxBuffer: 64 << 20, ...opts });
   if (r.status !== 0) throw new Error(`ffmpeg 失败：${(r.stderr || '').slice(-800)}`);
   return r;
 }
@@ -396,7 +397,7 @@ function ff(args, opts = {}) {
 /** Two-pass loudnorm to I=-14 LUFS, TP=-1 dBTP (linear when possible). */
 function loudnorm(input, output, filterPre, extraInputs = []) {
   const pre = filterPre ? `${filterPre},` : '';
-  const m = spawnSync('ffmpeg', ['-hide_banner', '-nostats', ...extraInputs, '-i', input, '-filter_complex', `${pre}loudnorm=I=-14:TP=-1:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 64 << 20 });
+  const m = spawnSync(FFMPEG, ['-hide_banner', '-nostats', ...extraInputs, '-i', input, '-filter_complex', `${pre}loudnorm=I=-14:TP=-1:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 64 << 20 });
   const j = JSON.parse((m.stderr.match(/\{[\s\S]*?\}/g) || ['{}']).pop());
   ff([...extraInputs, '-i', input, '-filter_complex', `${pre}loudnorm=I=-14:TP=-1:LRA=11:measured_I=${j.input_i}:measured_TP=${j.input_tp}:measured_LRA=${j.input_lra}:measured_thresh=${j.input_thresh}:offset=${j.target_offset}:linear=true`, '-ar', '48000', output]);
   return j;
@@ -481,7 +482,7 @@ export async function renderVideo(video, align, opts) {
         await pg.evaluate(() => window.__fit && window.__fit());
       }
       const seg = path.join(out, `seg-${String(k).padStart(2, '0')}.mp4`);
-      const enc = spawn('ffmpeg', encArgs(seg), { stdio: ['pipe', 'ignore', 'pipe'] });
+      const enc = spawn(FFMPEG, encArgs(seg), { stdio: ['pipe', 'ignore', 'pipe'] });
       let err = '';
       enc.stderr.on('data', (d) => { err += d; });
       for (let f = from; f < to; f++) {

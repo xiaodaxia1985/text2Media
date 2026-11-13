@@ -27,6 +27,7 @@ import { SCENE_TYPES } from './lib/video/scenes.mjs';
 import { plainText, toSpoken, voicedOnly, captionPhrases, capWidth } from './lib/video/text.mjs';
 import { detectImageProviders, pickImageProvider, generateImage } from './lib/imagegen.mjs';
 import { themeStyle, themePalette } from './lib/illustrations.mjs';
+import { FFMPEG } from './lib/video/ffmpeg.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: opt, positionals } = parseArgs({
@@ -52,7 +53,7 @@ const die = (m, code = 1) => { console.error(m); process.exit(code); };
 function doctor() {
   const v = detectVoice({ fresh: true });
   const img = detectImageProviders();
-  const ffmpeg = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8' }).status === 0;
+  const ffmpeg = spawnSync(FFMPEG, ['-version'], { encoding: 'utf8' }).status === 0;
   const voiceLine = v.voxcpm ? `✓ 本地 VoxCPM2（${path.basename(v.voxcpm.model)}）：自然、离线，推荐`
     : v.edge ? '✓ edge-tts（微软神经语音，免费，需要联网）' : v.say ? '⚠ 只有 macOS 系统语音：能用，但机械感明显' : '✗ 没有可用的配音方式';
   const report = {

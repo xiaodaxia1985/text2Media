@@ -15,13 +15,14 @@ import { detectVoice, voiceCatalog, saveLocalVoice, LOCAL_VOICES_DIR, PUBLIC_RIG
 import { readWav, writeWav, levels, stats, trimSpeech } from './wav.mjs';
 import { medianF0 } from './pitch.mjs';
 import { voicedOnly, latinWords, intToZh } from './text.mjs';
+import { FFMPEG, FFPROBE } from './ffmpeg.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PY = path.join(HERE, 'py');
 const RIGHTS = ['personal', 'self', 'authorized', ...PUBLIC_RIGHTS];
 export const PASSAGE = '大家都以为做自媒体要有特长，其实不一定。我就是从零开始，一点一点摸索，慢慢找到了适合自己的方法。';
 
-const ff = (args) => spawnSync('ffmpeg', ['-hide_banner', '-v', 'error', '-y', ...args], { encoding: 'utf8' });
+const ff = (args) => spawnSync(FFMPEG, ['-hide_banner', '-v', 'error', '-y', ...args], { encoding: 'utf8' });
 const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 
 function asr(det, files) {
@@ -85,7 +86,7 @@ export async function importVoice(file, opt) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'a2i-voice-'));
   try {
     // 1) Probe the source, then convert to 48 kHz mono (VoxCPM2's native rate).
-    const pr = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=sample_rate,bit_rate:format=bit_rate,duration', '-of', 'json', file], { encoding: 'utf8' });
+    const pr = spawnSync(FFPROBE, ['-v', 'error', '-show_entries', 'stream=sample_rate,bit_rate:format=bit_rate,duration', '-of', 'json', file], { encoding: 'utf8' });
     const info = JSON.parse(pr.stdout || '{}');
     const srcRate = Number(info.streams?.[0]?.sample_rate || 0), srcKbps = Math.round(Number(info.format?.bit_rate || info.streams?.[0]?.bit_rate || 0) / 1000);
     const full = path.join(tmp, 'full.wav');

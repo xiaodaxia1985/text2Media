@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { readWav, writeWav, trimSpeech, stats, concat } from './wav.mjs';
 import { toSpoken, isVoiced, voicedOnly, plainText, intToZh, latinWords } from './text.mjs';
 import { medianF0 } from './pitch.mjs';
+import { FFMPEG } from './ffmpeg.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL = path.resolve(HERE, '..', '..', '..');
@@ -22,6 +23,8 @@ const PY = path.join(HERE, 'py');
 export const VOICES_DIR = path.join(SKILL, 'assets', 'voices');
 const HOME = os.homedir();
 const SR = 48000;
+
+// ffmpeg/ffprobe are resolved once in ./ffmpeg.mjs — PATH misses them on some Windows setups.
 
 // Two voice libraries:
 //   public  skills/article2media/assets/voices/  — shipped with the skill: designed voices or explicitly consented ones only
@@ -90,10 +93,23 @@ function findEdgePython() {
   return cands.filter(Boolean).find((p) => fs.existsSync(p) && ok(p, ['-c', 'import edge_tts'])) || null;
 }
 
+/** `.runtime/` under the project root, found by walking up from the engine dir. */
+function runtimeDir(...parts) {
+  const cands = [];
+  let dir = SKILL;
+  for (let i = 0; i < 5; i++) {
+    dir = path.dirname(dir);
+    cands.push(path.join(dir, '.runtime', ...parts));
+  }
+  return cands;
+}
+
 /** Find a Python that can import `mod`. */
 function findPython(mod, envVars) {
   const cands = [
     ...envVars.map((v) => process.env[v]).filter(Boolean),
+    // The project's own venv first: it is the one with torch+CUDA, so CTranslate2 can use the GPU.
+    ...runtimeDir('voxcpm-venv', 'Scripts', 'python.exe'),
     path.join(HOME, '.local/share/voxcpm2-mlx/.venv/bin/python'),
     path.join(DATA_DIR, 'venv/bin/python'),
     path.join(HOME, '.local/share/sweety-handdraw-video/venv/bin/python'),
@@ -111,6 +127,9 @@ function findVoxcpmModel() {
     for (const v of cat.voices || []) cands.push(v.verified_generation_parameters?.model_path);
   } catch {}
   cands.push(path.join(HOME, '.local/share/voxcpm2-mlx/models/VoxCPM2-8bit'), path.join(DATA_DIR, 'models/VoxCPM2-8bit'));
+  // CUDA installs (Windows/Linux). 1.5 first: 0.6B fits a 6 GB card at RTF ≈ 2;
+  // VoxCPM2 (2B) also works there but needs ~6 GB peak and is ~10× slower.
+  cands.push(...runtimeDir('models', 'VoxCPM1.5'), ...runtimeDir('models', 'VoxCPM2'));
   return cands.find((p) => p && fs.existsSync(path.join(p, 'config.json'))) || null;
 }
 
@@ -125,13 +144,26 @@ export function detectVoice({ fresh = false } = {}) {
   if (DETECTED && !fresh) return DETECTED;
   const mlxPy = findPython('mlx_audio', ['ARTICLE2MEDIA_MLX_PYTHON', 'HANDDRAW_MLX_PYTHON']);
   const model = mlxPy ? findVoxcpmModel() : null;
-  const asrModel = process.env.ARTICLE2MEDIA_ASR_MODEL || 'mlx-community/whisper-large-v3-turbo';
-  const whisperPy = (mlxPy && ok(mlxPy, ['-c', 'import mlx_whisper'], { timeout: 60000 }) ? mlxPy : null) || findPython('mlx_whisper', ['ARTICLE2MEDIA_ASR_PYTHON']);
+  // Alignment ASR: mlx-whisper on Apple Silicon, faster-whisper (CTranslate2) everywhere else.
+  const mlxAsrModel = process.env.ARTICLE2MEDIA_ASR_MODEL || 'mlx-community/whisper-large-v3-turbo';
+  const cudaAsrModel = process.env.ARTICLE2MEDIA_ASR_MODEL || 'Systran/faster-whisper-large-v3';
+  const whisperPy = (mlxPy && ok(mlxPy, ['-c', 'import mlx_whisper'], { timeout: 60000 }) ? mlxPy : null)
+    || findPython('mlx_whisper', ['ARTICLE2MEDIA_ASR_PYTHON']);
+  const fasterPy = findPython('faster_whisper', ['ARTICLE2MEDIA_ASR_PYTHON']);
+  // A Python that can import a whisper wrapper is not enough — the model must be cached too, or the run stalls.
+  // mlx-whisper only works on Apple Silicon, so on Windows/Linux the CTranslate2 build wins even if mlx imports.
+  const asr = process.platform !== 'darwin' && fasterPy && hfCached(cudaAsrModel)
+    ? { python: fasterPy, model: cudaAsrModel, backend: 'faster' }
+    : whisperPy && hfCached(mlxAsrModel) ? { python: whisperPy, model: mlxAsrModel, backend: 'mlx' }
+      : fasterPy && hfCached(cudaAsrModel) ? { python: fasterPy, model: cudaAsrModel, backend: 'faster' } : null;
+  // PyTorch/CUDA build of VoxCPM, for Windows and Linux boxes with an NVIDIA card.
+  const cudaPy = mlxPy ? null : findPython('voxcpm', ['ARTICLE2MEDIA_VOXCPM_PYTHON']);
+  const cudaModel = cudaPy ? findVoxcpmModel() : null;
   const uvx = ok('uv', ['--version']);
   const edgePy = findEdgePython();
   DETECTED = {
-    voxcpm: mlxPy && model ? { python: mlxPy, model } : null,
-    whisper: whisperPy && hfCached(asrModel) ? { python: whisperPy, model: asrModel } : null,
+    voxcpm: mlxPy && model ? { python: mlxPy, model } : cudaPy && cudaModel ? { python: cudaPy, model: cudaModel } : null,
+    whisper: asr,
     // A plain venv is preferred over `uv run` (see findEdgePython); uv stays as the fallback.
     edge: edgePy ? { python: edgePy } : uvx ? { cmd: 'uv' } : null,
     say: process.platform === 'darwin' && ok('say', ['-v', '?']) ? { cmd: 'say' } : null,
@@ -194,7 +226,7 @@ function runVoxcpm(det, voice, items, dir) {
 }
 
 function toWav48(src, out) {
-  const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', src, '-ac', '1', '-ar', String(SR), '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
+  const r = spawnSync(FFMPEG, ['-v', 'error', '-y', '-i', src, '-ac', '1', '-ar', String(SR), '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`ffmpeg 转换失败：${r.stderr}`);
 }
 
@@ -248,12 +280,14 @@ function runAsr(det, files) {
   }
   if (!todo.length) return out;
   const r = spawnSync(det.whisper.python, [path.join(PY, 'asr_words.py'), det.whisper.model, ...todo], {
-    encoding: 'utf8', timeout: 1800000, maxBuffer: 64 << 20, env: { ...process.env, HF_HUB_OFFLINE: '1', TRANSFORMERS_OFFLINE: '1' },
+    encoding: 'utf8', timeout: 1800000, maxBuffer: 64 << 20,
+    env: { ...process.env, HF_HUB_OFFLINE: '1', TRANSFORMERS_OFFLINE: '1', ARTICLE2MEDIA_ASR_BACKEND: det.whisper.backend || '' },
   });
   if (r.status !== 0) throw new Error(`Whisper 对齐失败：${(r.stderr || '').slice(-500)}`);
   for (const line of r.stdout.split('\n')) {
     if (!line.startsWith('{')) continue;
     const j = JSON.parse(line);
+    if (!j.file) continue;
     out[j.file] = j;
     fs.writeFileSync(`${j.file}.asr.json`, JSON.stringify(j));
   }
@@ -353,7 +387,7 @@ export async function synthesize(scenes, dir, opts = {}) {
   // -12% lands the neutral voices at 4.4–4.9, so no atempo correction is needed afterwards.
   const edgeRate = opts.rate || voice.edge_rate || '-12%';
   const ident = { backend, voice: voice.id, ref: refSha, steps: voice.steps || 16, model: backend === 'voxcpm' ? path.basename(det.voxcpm.model) : backend === 'edge' ? `${voice.edge_fallback || 'zh-CN-YunxiNeural'}@${edgeRate}` : 'Tingting', v: 3 };
-  log(`配音：${backend === 'voxcpm' ? `本地 VoxCPM2 · ${voice.name}（${voice.scope === 'local' ? '本机音色库' : '公开音色'}）` : backend === 'edge' ? `edge-tts · ${voice.edge_fallback || 'zh-CN-YunxiNeural'}（${edgeRate}）` : 'macOS 系统语音（效果有限）'}，${chunks.length} 段`);
+  log(`配音：${backend === 'voxcpm' ? `本地 ${path.basename(det.voxcpm.model)} · ${voice.name}（${voice.scope === 'local' ? '本机音色库' : '公开音色'}）` : backend === 'edge' ? `edge-tts · ${voice.edge_fallback || 'zh-CN-YunxiNeural'}（${edgeRate}）` : 'macOS 系统语音（效果有限）'}，${chunks.length} 段`);
 
   const fileFor = (c, seed) => path.join(cdir, `${hash({ ...ident, text: c.spoken, style: c.style || '', seed })}.wav`);
   // Lines with English terms get more tries: a voice may need several seeds to pronounce a word recognizably.
@@ -426,16 +460,21 @@ export async function synthesize(scenes, dir, opts = {}) {
       if (best.problems.length && !onlyPace(best)) log(`  ⚠ 第 ${i + 1} 段：${best.problems.join('、')}（已用尽重试，保留最好的一次）`);
     });
   }
-  // Still too fast after all tries (a quick reference voice, edge, say): slow the take down to the target pace.
-  // Time-stretching keeps the pitch; it is capped at PACE.floor so the voice doesn't smear.
+  // Final pace trim: if a take still runs faster than this voice wants, time-stretch it down to the voice's target.
+  // atempo keeps the pitch; the stretch is capped at PACE.floor so the voice never smears.
+  // Voices that read a touch hurried set `pace` (and optionally `pace_max`) in the catalog.
+  const paceTarget = Number(voice.pace) || PACE.target;
+  const paceMax = Number(voice.pace_max) || PACE.max;
   const slowed = [];
   const stretch = [];
   results.forEach((r, i) => {
-    if (!r || chunks[i].style || r.rate <= PACE.max) return;
-    const factor = Math.max(PACE.floor, (PACE.target + 0.3) / r.rate);
+    // A voice with its own `pace` is slowed once, globally, on the assembled master (even rhythm, one artifact).
+    if (Number(voice.pace)) return;
+    if (!r || chunks[i].style || r.rate <= paceMax) return;
+    const factor = Math.max(PACE.floor, (paceTarget + 0.3) / r.rate);
     const out = r.file.replace(/\.wav$/, `-t${Math.round(factor * 100)}.wav`);
     if (!fs.existsSync(out)) {
-      const st = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', r.file, '-af', `atempo=${factor.toFixed(3)}`, '-ar', String(SR), '-ac', '1', '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
+      const st = spawnSync(FFMPEG, ['-v', 'error', '-y', '-i', r.file, '-af', `atempo=${factor.toFixed(3)}`, '-ar', String(SR), '-ac', '1', '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
       if (st.status !== 0) return;
     }
     stretch.push({ i, out, from: r.rate });
@@ -456,6 +495,7 @@ export async function synthesize(scenes, dir, opts = {}) {
   const parts = [];
   const timeline = [];
   let t = 0;
+  let audio = 0;
   chunks.forEach((c, i) => {
     const r = results[i];
     if (i > 0) {
@@ -467,14 +507,37 @@ export async function synthesize(scenes, dir, opts = {}) {
     parts.push({ data: r.trimmed.data });
     timeline.push({ start: t, end: t + d, lead: r.trimmed.start });
     t += d;
+    audio += d;
   });
   parts.push({ silence: 0.3 });
+  // Global pace trim for voices that carry their own `pace`: one uniform time-stretch on the assembled master
+  // beats per-chunk stretching, which makes short lines lurch and long lines drag. Every timeline value below
+  // is multiplied by the same factor, so alignment stays exact.
+  const paceWant = Number(voice.pace) || 0;
+  let stretchF = 1;
+  let timeScale = 1;
+  if (paceWant) {
+    // Plain average of the per-chunk rates — the same number this function reports as `pace`, so the
+    // stretch factor and the reported result agree.
+    const rs = results.filter(Boolean).map((r) => r.rate);
+    const rate = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : 0;
+    if (rate > paceWant + 0.05) { stretchF = Math.max(0.86, paceWant / rate); timeScale = 1 / stretchF; }
+  }
   const master = concat(parts, SR);
   const masterRaw = path.join(dir, 'narration-raw.wav');
   writeWav(masterRaw, master, SR);
+  if (stretchF < 1) {
+    const out = path.join(dir, 'narration-raw-slow.wav');
+    const st = spawnSync(FFMPEG, ['-v', 'error', '-y', '-i', masterRaw, '-af', `atempo=${stretchF.toFixed(3)}`, '-ar', String(SR), '-ac', '1', '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
+    if (st.status !== 0) throw new Error(`放慢语速失败：${st.error?.message || st.stderr || `exit ${st.status}`}（ffmpeg=${FFMPEG}）`);
+    fs.renameSync(out, masterRaw);
+    t *= timeScale;
+    for (const tl of timeline) { tl.start *= timeScale; tl.end *= timeScale; tl.lead *= timeScale; }
+    log(`  整体放慢语速 ${Math.round((1 - stretchF) * 100)}%（${paceWant} 字/秒，保持音高）`);
+  }
   // Loudness: voice to -16 LUFS (music and the final master are leveled later).
   const masterPath = path.join(dir, 'narration.wav');
-  const ln = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', masterRaw, '-af', 'highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=9', '-ar', String(SR), '-ac', '1', '-c:a', 'pcm_s16le', masterPath], { encoding: 'utf8' });
+  const ln = spawnSync(FFMPEG, ['-v', 'error', '-y', '-i', masterRaw, '-af', 'highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=9', '-ar', String(SR), '-ac', '1', '-c:a', 'pcm_s16le', masterPath], { encoding: 'utf8' });
   if (ln.status !== 0) throw new Error(`响度处理失败：${ln.stderr}`);
 
   // Alignment: per chunk ASR char times (shifted by the trim) → spoken chars → written chars.
@@ -487,13 +550,13 @@ export async function synthesize(scenes, dir, opts = {}) {
     [...c.spoken].forEach((ch, k) => { if (isVoiced(ch)) spokenVoiced.push({ ch, k }); });
     let times;
     if (r.asr?.words?.length) {
-      const timed = asrCharTimes(r.asr.words).map((x) => ({ ...x, s: x.s - tl.lead, e: x.e - tl.lead }));
+      const timed = asrCharTimes(r.asr.words).map((x) => ({ ...x, s: x.s * timeScale - tl.lead, e: x.e * timeScale - tl.lead }));
       times = alignChars(spokenVoiced.map((x) => x.ch), timed, dur);
     } else {
       const wordsFile = r.file.replace(/\.wav$/, '.words.json');
       const ew = fs.existsSync(wordsFile) ? JSON.parse(fs.readFileSync(wordsFile, 'utf8')) : null;
       times = ew?.length
-        ? alignChars(spokenVoiced.map((x) => x.ch), asrCharTimes(ew).map((x) => ({ ...x, s: x.s - tl.lead, e: x.e - tl.lead })), dur)
+        ? alignChars(spokenVoiced.map((x) => x.ch), asrCharTimes(ew).map((x) => ({ ...x, s: x.s * timeScale - tl.lead, e: x.e * timeScale - tl.lead })), dur)
         : spokenVoiced.map((_, k) => ({ s: (dur * k) / spokenVoiced.length, e: (dur * (k + 1)) / spokenVoiced.length }));
     }
     // Written char index → earliest spoken time.
@@ -508,7 +571,7 @@ export async function synthesize(scenes, dir, opts = {}) {
     });
   });
 
-  const align = { version: 1, holds: opts.holds || {}, backend, voice: voice.id, voiceName: voice.name, duration: master.length / SR, file: 'narration.wav', scenes: [] };
+  const align = { version: 1, holds: opts.holds || {}, backend, voice: voice.id, voiceName: voice.name, duration: +(master.length / SR * timeScale).toFixed(3), file: 'narration.wav', scenes: [] };
   for (const sc of scenes) {
     const scLines = (sc.lines || []).map(plainText);
     const L = scLines.map((text, li) => {
@@ -531,7 +594,8 @@ export async function synthesize(scenes, dir, opts = {}) {
   align.voiceRights = voice.rights || null;
   align.refF0 = voice.ref_f0 || null;
   const plain = align.checks.filter((c) => !c.style);
-  align.pace = plain.length ? +(plain.reduce((a, c) => a + c.rate, 0) / plain.length).toFixed(2) : null;
+  // atempo < 1 plays slower, so the spoken rate drops by the same factor.
+  align.pace = plain.length ? +(plain.reduce((a, c) => a + c.rate, 0) / plain.length * stretchF).toFixed(2) : null;
   align.asr = !!det.whisper;
   fs.writeFileSync(path.join(dir, 'alignment.json'), JSON.stringify(align, null, 1));
   return align;
