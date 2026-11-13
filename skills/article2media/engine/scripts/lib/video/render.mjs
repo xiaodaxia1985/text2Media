@@ -73,14 +73,23 @@ export function buildStage(video, align, themeCss, opts = {}) {
   // A layer covers the cut, the scenes swap underneath it, then the layer leaves the other way. Without a declaration
   // the film keeps its mask/fade rhythm; "transitions": "wipe" (or a list, repeating) replaces those boundaries.
   const FX = {
-    wipe: { n: 2, inDur: .26, inStagger: .09, outDur: .26, outStagger: .09 },
-    blinds: { n: 8, inDur: .2, inStagger: .035, outDur: .22, outStagger: .035 },
-    iris: { n: 1, inDur: .34, inStagger: 0, outDur: .3, outStagger: 0 },
-    flash: { n: 1, inDur: .16, inStagger: 0, outDur: .16, outStagger: 0 },
+    wipe: { kind: 'cover', n: 2, inDur: .26, inStagger: .09, outDur: .26, outStagger: .09 },
+    blinds: { kind: 'cover', n: 8, inDur: .2, inStagger: .035, outDur: .22, outStagger: .035 },
+    iris: { kind: 'cover', n: 1, inDur: .34, inStagger: 0, outDur: .3, outStagger: 0 },
+    flash: { kind: 'cover', n: 1, inDur: .16, inStagger: 0, outDur: .16, outStagger: 0 },
+    // Slide moves animate the frames themselves instead of covering the cut (catalog: transitions-push / -scale).
+    // `squeeze` is deliberately absent: scaling a frame squashes the type, and the type is the design here.
+    push: { kind: 'slide', preset: 'push-x', dur: .52 },
+    'push-y': { kind: 'slide', preset: 'push-y', dur: .52 },
+    // Elastic push: the incoming card overshoots slightly and settles, so the cut lands with a beat.
+    bounce: { kind: 'slide', preset: 'bounce', dur: .62 },
   };
   const fxDecl = video.transitions ?? video.transition;
   const fxList = (Array.isArray(fxDecl) ? fxDecl : fxDecl ? [fxDecl] : []).filter((x) => FX[x]);
   const fxAt = (b) => (fxList.length ? fxList[fxList.length > 1 ? b % fxList.length : 0] : null);
+  const plan = scenes.map((sc, i) => (i + 1 < scenes.length ? fxAt(i) : null));
+  const slideIn = (name) => (name ? `${FX[name].preset}-in` : null);
+  const slideOut = (name) => (name ? `${FX[name].preset}-out` : null);
   const sceneHtml = scenes.map((sc, i) => {
     const win = { in: starts[i], out: i + 1 < scenes.length ? starts[i + 1] : total };
     const a = sa(sc);
@@ -89,10 +98,15 @@ export function buildStage(video, align, themeCss, opts = {}) {
     const sid = `sc${i}`;
     // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
     const sheet = sc.type !== 'title' && sc.type !== 'image';
-    const fxName = i + 1 < scenes.length ? fxAt(i) : null;
+    const fxName = i + 1 < scenes.length ? plan[i] : null;
     const fx = fxName ? FX[fxName] : null;
-    events.push({ id: sid, p: 'scene-in', t: win.in });
-    if (fx) {
+    const inFx = i > 0 ? plan[i - 1] : null;
+    const inSlide = inFx && FX[inFx].kind === 'slide' ? slideIn(inFx) : null;
+    // A pushed frame arrives while the previous one leaves: both slide over the same half second.
+    events.push({ id: sid, p: inSlide || 'scene-in', t: inSlide ? win.in - FX[inFx].dur / 2 : win.in });
+    if (fx && fx.kind === 'slide') {
+      events.push({ id: sid, p: slideOut(fxName), t: win.out - fx.dur / 2 });
+    } else if (fx) {
       // Covered at the cut: in-layer built so it is opaque just before the next scene starts, swap under it,
       // then the layer sweeps away while the next scene's own entrance plays behind it.
       const covered = win.out - 0.02;
@@ -221,6 +235,20 @@ const STAGE_JS = String.raw`
     'fx-iris-out': [[{ clipPath: 'circle(82% at 50% 42%)' }, { clipPath: 'circle(0% at 50% 42%)' }], .3, 'ease-in'],
     'fx-flash-in': [[{ opacity: 0 }, { opacity: 1 }], .16, 'ease-in'],
     'fx-flash-out': [[{ opacity: 1 }, { opacity: 0 }], .16, 'ease-out'],
+    // Slide transitions: the frames themselves move, no cover layer (catalog: push slide / vertical push / squeeze).
+    // Sections are inset by the safe area (438px of a 540px frame), so travel is in px of the frame: 100% of the\n    // element would leave a strip of the incoming sheet visible at the right edge.\n    // The in-presets carry opacity: a scene's base style is transparent (scene-in normally brings it up), so a
+    // transform-only entrance would slide a blank sheet in.
+    'push-x-in': [[{ transform: 'translateX(540px)', opacity: 1 }, { transform: 'translateX(0)', opacity: 1 }], .52, 'cubic-bezier(.65,0,.35,1)'],
+    'push-x-out': [[{ transform: 'translateX(0)' }, { transform: 'translateX(-540px)' }], .52, 'cubic-bezier(.65,0,.35,1)'],
+    'push-y-in': [[{ transform: 'translateY(960px)', opacity: 1 }, { transform: 'translateY(0)', opacity: 1 }], .52, 'cubic-bezier(.65,0,.35,1)'],
+    'push-y-out': [[{ transform: 'translateY(0)' }, { transform: 'translateY(-960px)' }], .52, 'cubic-bezier(.65,0,.35,1)'],
+    // Overshoot then settle: incoming at 92–97% of its travel already, easing back to 0.
+    'bounce-in': [
+      [{ transform: 'translateX(540px)', opacity: 1, offset: 0, easing: 'cubic-bezier(.12,.7,.3,1)' }, { transform: 'translateX(-24px)', opacity: 1, offset: .74, easing: 'cubic-bezier(.3,0,.2,1)' }, { transform: 'translateX(8px)', opacity: 1, offset: .88, easing: 'cubic-bezier(.4,0,.3,1)' }, { transform: 'translateX(0)', opacity: 1, offset: 1 }],
+      .62,
+      'linear',
+    ],
+    'bounce-out': [[{ transform: 'translateX(0)' }, { transform: 'translateX(-540px)' }], .5, 'cubic-bezier(.5,0,.5,1)'],
     cam: [[{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }], 1, 'linear'],
     drift: [[{ transform: 'translate(24px, 10px) scale(.94)' }, { transform: 'translate(-8px, -6px) scale(1.02)' }], 1, 'linear'],
     recede: [[{ opacity: .5 }, { opacity: .1 }], .5, 'ease-out'],
@@ -235,6 +263,8 @@ const STAGE_JS = String.raw`
     grow: [[{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], .32, E],
     'grow-y': [[{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], 1, 'linear'],
     draw: [[{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], .55, E],
+    // Marker ink: revealed by a left-to-right clip rather than a dash (a dashed round cap would paint one fat dot).
+    ink: [[{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], .62, 'cubic-bezier(.35,.02,.25,1)'],
     check: [[{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], .3, 'ease-out'],
     mark: [[{ backgroundSize: '0% 100%' }, { backgroundSize: '100% 100%' }], .4, E],
     pulse: [[{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], .5, 'ease-in-out'],
@@ -249,7 +279,7 @@ const STAGE_JS = String.raw`
     if ((e.p === 'draw' || e.p === 'check') && el.tagName !== 'path') target = el.querySelector('path') || el;
     // Entrances hold their first frame before they start (fill both); exits and accents must not (forwards / none),
     // or an exit's first keyframe would show the element from t = 0.
-    const exit = e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'cover-out' || e.p === 'dim' || e.p === 'hide' || e.p.startsWith('fx-');
+    const exit = e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'cover-out' || e.p === 'dim' || e.p === 'hide' || (e.p.startsWith('fx-') && e.p.endsWith('-out')) || e.p.endsWith('-out');
     const accent = e.p === 'pulse' || e.p === 'focus';
     const a = target.animate(kf, { duration: (e.dur || dur) * 1000, delay: e.t * 1000, easing, fill: accent ? 'none' : exit ? 'forwards' : 'both', composite: accent ? 'add' : 'replace' });
     a.pause();
@@ -395,7 +425,7 @@ export async function renderVideo(video, align, opts) {
       const box = { l: 30, r: 540 - 72, t: 120, b: 662 };
       document.querySelectorAll('.v-scene').forEach((sc, i) => {
         const inEv = tl.events.find((e) => e.id === sc.id && e.p === 'scene-in');
-        const outEv = tl.events.find((e) => e.id === sc.id && (e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'hide'));
+        const outEv = tl.events.find((e) => e.id === sc.id && (e.p === 'scene-out' || e.p === 'mask-out' || e.p === 'hide' || e.p.endsWith('-out')));
         const t = outEv ? outEv.t - 0.05 : tl.total - 0.1;
         window.__seek(t);
         for (const el of sc.querySelectorAll('h2,h3,li,.v-big,.v-item,.v-stat,.v-target,.v-src,.v-cta,.v-tag,.v-proof,.v-quote,.v-note,.v-col,.v-pt')) {

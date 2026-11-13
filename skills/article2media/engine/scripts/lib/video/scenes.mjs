@@ -324,15 +324,14 @@ const B = {
     const ev = [];
     const ti = id('t'), sub = id('s'), img = id('m');
     ev.push({ id: ti, p: 'rise', t: win.in + 0.05 });
-    // Keywords (**…**) get a marker sweep when spoken.
+    // Keywords (**…**) get a hand-drawn marker stroke when they are spoken (catalog: marker-highlight).
+    // The stroke is one wobbly SVG path revealed by dash offset, so it reads as ink rather than a highlight box.
     let k = 0;
     const html = md(s.title || plainText(s.lines?.[0] || '')).replace(/<b>([\s\S]+?)<\/b>/g, (m, w) => {
       const i = `${ti}k${k++}`;
       const wt = at(w.replace(/<[^>]+>/g, ''));
-      ev.push({ id: i, p: 'mark', t: wt });
-      // A light passes over the keyword once as it is said: the eye lands on the word the ear just heard.
-      ev.push({ id: `${i}s`, p: 'sweep', t: wt + 0.12, dur: 0.55 });
-      return `<b id="${i}">${w}<i class="v-sheen" id="${i}s"></i></b>`;
+      ev.push({ id: i, p: 'ink', t: wt + 0.04, dur: 0.62 });
+      return `<b class="mk"><svg class="v-ink" id="${i}" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M 3 24 C 22 20.5, 47 25.5, 68 22.5 C 79 21, 90 23, 97 21.5" pathLength="1" fill="none"/></svg><span class="mk-t">${w}</span></b>`;
     });
     if (s.sub) ev.push({ id: sub, p: 'rise', t: at(s.sub_cue, { line: 1 }) });
     if (s.image) ev.push({ id: img, p: 'pop', t: at(s.image.cue, { frac: 0.3 }) });

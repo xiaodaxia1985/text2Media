@@ -192,8 +192,13 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-bar em { font-family: var(--font-head); font-size: 24px; font-weight: 900; font-style: normal; color: var(--acc-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v-bar em small { font-size: .72em; font-weight: 700; opacity: .8; }
 
-/* A single light sweep across a keyword, timed to the word being spoken. */
+/* A keyword gets one hand-drawn marker stroke, timed to the word being spoken (catalog: marker-highlight).
+   The path is stretched into the word box, so its wobble scales with the type instead of looking like a box. */
 .v-headline b, .v-title b { position: relative; }
+.mk { display: inline-block; }
+.mk-t { position: relative; z-index: 1; }
+.v-ink { position: absolute; left: -3%; top: 8%; width: 104%; height: 74%; z-index: 0; overflow: hidden; }
+.v-ink path { stroke: var(--accent-2); stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
 .v-sheen { position: absolute; left: 0; top: -.1em; width: 46%; height: 1.2em; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 26%, transparent), transparent); opacity: 0; pointer-events: none; }
 
 /* quote */
