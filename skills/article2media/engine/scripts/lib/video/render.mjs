@@ -62,7 +62,10 @@ export function buildStage(video, align, themeCss, opts = {}) {
   const T = { ...TIMING, ...(opts.timing || {}) };
   const VO = T.coverHold + T.coverFade + T.voiceLead; // narration starts here
   const nAcc = Math.max(1, new Set(themeCss.match(/--accent-\d+\s*:/g) || []).size);
-  const acc = (k) => `var(--accent-${(k % nAcc) + 1})`;
+  // Statement scenes (a quote, the closing list) carry the brand colour instead of a
+  // rotating accent: a hue that appears for three seconds at the very end reads as a mistake.
+  const STATEMENT = new Set(['quote', 'checklist']);
+  const acc = (k, type) => (STATEMENT.has(type) ? 'var(--accent-2)' : `var(--accent-${(k % nAcc) + 1})`);
   const total = +(VO + align.duration + T.tail).toFixed(3);
   const scenes = video.scenes;
   const sa = (sc) => align.scenes.find((a) => a.id === sc.id);
@@ -130,7 +133,9 @@ export function buildStage(video, align, themeCss, opts = {}) {
     for (const k of built.karaoke || []) karaoke.push(k);
     if (sc.chip) events.push({ id: `${sid}chip`, p: 'pop', t: win.in + 0.02 });
     // Captions: phrases of each line, timed by the first and last spoken character.
-    (a?.lines || []).forEach((l, li) => {
+    // A scene whose whole point is one big sentence on screen (quote) can turn them off:
+    // otherwise the same words show twice, once huge and once at the bottom.
+    (sc.captions === false ? [] : (a?.lines || [])).forEach((l, li) => {
       const ranges = keyRanges(sc.lines[li]);
       for (const ph of captionPhrases(sc.lines[li])) {
         const s = l.chars[ph.from]?.[0], e = l.chars[Math.max(ph.from, ph.to - 1)]?.[1];
@@ -150,7 +155,7 @@ export function buildStage(video, align, themeCss, opts = {}) {
     }
     // Content scenes sit on the image-card surface; headline/image scenes stay full-bleed so the video keeps a rhythm.
     return (
-      `<section class="v-scene${sc.chip ? ' has-chip' : ''}${sheet ? ' sheet' : ''} acc" id="${sid}" style="--acc:${acc(i)}">${deco}` +
+      `<section class="v-scene${sc.chip ? ' has-chip' : ''}${sheet ? ' sheet' : ''} acc" id="${sid}" style="--acc:${acc(i, sc.type)}">${deco}` +
       (sc.chip ? `<div class="v-chip" id="${sid}chip" style="top:-40px;left:0">${md(sc.chip)}</div>` : '') +
       `<div class="v-cam" id="${sid}cam">${built.html}</div></section>`
     );
@@ -161,7 +166,7 @@ export function buildStage(video, align, themeCss, opts = {}) {
       if (name === 'wipe') return `<div class="fx-p${k + 1}" id="${id}"></div>`;
       return `<div class="fx-b" id="${id}" style="top:${(k * 100) / n}%;height:${100 / n}%"></div>`;
     }).join('');
-    return `<div class="v-fx" style="--acc:${acc(i + 1)}">${inside}</div>`;
+    return `<div class="v-fx" style="--acc:${acc(i + 1, scenes[i + 1]?.type)}">${inside}</div>`;
   }).join('\n');
   captions.sort((a, b) => a.t - b.t);
   // A caption stays up through short pauses until the next one replaces it (a hard cut, no blinking gap);

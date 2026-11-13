@@ -97,7 +97,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor
 | `bars` | 几个量比长短（代价、时长、比例） | `title`、`items[{label, value, suffix, cue}]`、`max`（不写就用最大值）、`decimals`、`emphasis`（第几条是重点，走品牌色并弹一下数字） |
 | `ring` | 一个数占整体的多少（98.7%、三成、七成） | `title`、`value`、`total`（默认 100）、`suffix`、`count_cue`、`label`（环心说明）、`note` |
 | `board` | 一个要敲进记忆的数字，像机场翻牌（98.7%、200 家） | `title`、`value`、`suffix`、`count_cue`、`label`、`decimals`（一个镜头只用一次，多用就不稀罕了） |
-| `quote` | 一句有力的原话 | `quote`（可含 `\n`）、`quote_line`（哪一行在念它，逐字点亮）、`by` |
+| `quote` | 一句有力的原话 | `quote`（断行交给 balance，不用手写 `\n`）、`quote_line`（哪一行在念它，逐字点亮）、`by`、`captions`（这句大字本身就是字幕，写 `false` 关掉底部字幕，别让同一句出现两遍） |
 | `checklist` | 收尾回顾 | `title`、`items[{text, cue}]`、`cta`+`cta_cue` |
 | `title` | 一个判断、一个转场 | `title`（`**词**` 说到时划荧光）、`sub`、`image` |
 | `image` | 原文配图、截图 | `src`（网络地址，或相对 video.json 的本地路径）、`title`、`caption`、`cue` |

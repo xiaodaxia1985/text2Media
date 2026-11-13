@@ -71,6 +71,25 @@ const ok = (cmd, args, opts = {}) => {
   try { return spawnSync(cmd, args, { encoding: 'utf8', timeout: 20000, ...opts }).status === 0; } catch { return false; }
 };
 
+/**
+ * A Python that can import edge_tts, outside `uv run`.
+ * `uv run --with edge-tts` dies on Windows when the uv cache holds a .pth with non-GBK bytes:
+ * site.py reads it with the locale codec and the interpreter fails before our script runs.
+ * A plain venv under the project's `.runtime/` sidesteps that.
+ * Candidates: env var, then `.runtime/tts-venv` found by walking up from the engine dir, then the data dir.
+ */
+function findEdgePython() {
+  const rel = ['Scripts', 'python.exe'];
+  const cands = [process.env.ARTICLE2MEDIA_TTS_PYTHON];
+  let dir = SKILL;
+  for (let i = 0; i < 5; i++) {
+    dir = path.dirname(dir);
+    cands.push(path.join(dir, '.runtime', 'tts-venv', ...rel));
+  }
+  cands.push(path.join(DATA_DIR, 'tts-venv', ...rel));
+  return cands.filter(Boolean).find((p) => fs.existsSync(p) && ok(p, ['-c', 'import edge_tts'])) || null;
+}
+
 /** Find a Python that can import `mod`. */
 function findPython(mod, envVars) {
   const cands = [
@@ -109,10 +128,12 @@ export function detectVoice({ fresh = false } = {}) {
   const asrModel = process.env.ARTICLE2MEDIA_ASR_MODEL || 'mlx-community/whisper-large-v3-turbo';
   const whisperPy = (mlxPy && ok(mlxPy, ['-c', 'import mlx_whisper'], { timeout: 60000 }) ? mlxPy : null) || findPython('mlx_whisper', ['ARTICLE2MEDIA_ASR_PYTHON']);
   const uvx = ok('uv', ['--version']);
+  const edgePy = findEdgePython();
   DETECTED = {
     voxcpm: mlxPy && model ? { python: mlxPy, model } : null,
     whisper: whisperPy && hfCached(asrModel) ? { python: whisperPy, model: asrModel } : null,
-    edge: uvx ? { cmd: 'uv' } : null,
+    // A plain venv is preferred over `uv run` (see findEdgePython); uv stays as the fallback.
+    edge: edgePy ? { python: edgePy } : uvx ? { cmd: 'uv' } : null,
     say: process.platform === 'darwin' && ok('say', ['-v', '?']) ? { cmd: 'say' } : null,
   };
   DETECTED.best = DETECTED.voxcpm ? 'voxcpm' : DETECTED.edge ? 'edge' : DETECTED.say ? 'say' : null;
@@ -177,7 +198,7 @@ function toWav48(src, out) {
   if (r.status !== 0) throw new Error(`ffmpeg 转换失败：${r.stderr}`);
 }
 
-function runEdge(voiceName, rate, items, dir) {
+function runEdge(edge, voiceName, rate, items, dir) {
   for (const it of items) {
     if (fs.existsSync(it.out)) continue;
     const mp3 = it.out.replace(/\.wav$/, '.mp3');
@@ -194,7 +215,10 @@ async def main():
             elif ch["type"] == "WordBoundary": words.append([ch["text"], ch["offset"] / 1e7, (ch["offset"] + ch["duration"]) / 1e7])
     json.dump(words, open(sys.argv[5], "w"), ensure_ascii=False)
 asyncio.run(main())`;
-    const r = spawnSync('uv', ['run', '--no-project', '--quiet', '--with', 'edge-tts', 'python', '-c', code, it.text, voiceName, rate, mp3, words], { encoding: 'utf8', timeout: 180000 });
+    // venv python when available, `uv run` otherwise.
+    const r = edge?.python
+      ? spawnSync(edge.python, ['-c', code, it.text, voiceName, rate, mp3, words], { encoding: 'utf8', timeout: 180000 })
+      : spawnSync('uv', ['run', '--no-project', '--quiet', '--with', 'edge-tts', 'python', '-c', code, it.text, voiceName, rate, mp3, words], { encoding: 'utf8', timeout: 180000 });
     if (r.status !== 0) throw new Error(`edge-tts 失败（需要联网）：${(r.stderr || '').slice(-400)}`);
     toWav48(mp3, it.out);
     fs.rmSync(mp3, { force: true });
@@ -325,8 +349,11 @@ export async function synthesize(scenes, dir, opts = {}) {
   const cdir = path.join(dir, 'chunks');
   fs.mkdirSync(cdir, { recursive: true });
   const refSha = backend === 'voxcpm' ? crypto.createHash('sha1').update(fs.readFileSync(voice.reference_audio)).digest('hex').slice(0, 10) : '';
-  const ident = { backend, voice: voice.id, ref: refSha, steps: voice.steps || 16, model: backend === 'voxcpm' ? path.basename(det.voxcpm.model) : backend === 'edge' ? voice.edge_fallback || 'zh-CN-YunxiNeural' : 'Tingting', v: 3 };
-  log(`配音：${backend === 'voxcpm' ? `本地 VoxCPM2 · ${voice.name}（${voice.scope === 'local' ? '本机音色库' : '公开音色'}）` : backend === 'edge' ? `edge-tts · ${voice.edge_fallback || 'zh-CN-YunxiNeural'}` : 'macOS 系统语音（效果有限）'}，${chunks.length} 段`);
+  // edge speaks fast by default: 90 written chars came out at 5.7 字/秒 at rate 0 (target 4.5, cap 5.2).
+  // -12% lands the neutral voices at 4.4–4.9, so no atempo correction is needed afterwards.
+  const edgeRate = opts.rate || voice.edge_rate || '-12%';
+  const ident = { backend, voice: voice.id, ref: refSha, steps: voice.steps || 16, model: backend === 'voxcpm' ? path.basename(det.voxcpm.model) : backend === 'edge' ? `${voice.edge_fallback || 'zh-CN-YunxiNeural'}@${edgeRate}` : 'Tingting', v: 3 };
+  log(`配音：${backend === 'voxcpm' ? `本地 VoxCPM2 · ${voice.name}（${voice.scope === 'local' ? '本机音色库' : '公开音色'}）` : backend === 'edge' ? `edge-tts · ${voice.edge_fallback || 'zh-CN-YunxiNeural'}（${edgeRate}）` : 'macOS 系统语音（效果有限）'}，${chunks.length} 段`);
 
   const fileFor = (c, seed) => path.join(cdir, `${hash({ ...ident, text: c.spoken, style: c.style || '', seed })}.wav`);
   // Lines with English terms get more tries: a voice may need several seeds to pronounce a word recognizably.
@@ -383,7 +410,7 @@ export async function synthesize(scenes, dir, opts = {}) {
     else if (attempt === 0) log('  全部段落已缓存，直接复用');
     if (fresh) {
       if (backend === 'voxcpm') runVoxcpm(det, voice, items.filter((it) => !fs.existsSync(it.out)), cdir);
-      else if (backend === 'edge') runEdge(voice.edge_fallback || 'zh-CN-YunxiNeural', opts.rate || '+0%', items, cdir);
+      else if (backend === 'edge') runEdge(det.edge, voice.edge_fallback || 'zh-CN-YunxiNeural', edgeRate, items, cdir);
       else runSay(items);
     }
     const asr = runAsr(det, items.map((it) => it.out));

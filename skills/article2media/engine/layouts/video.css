@@ -95,7 +95,7 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 
 /* The checklist sweep reads as a selection box on a big white card; make it a marker underline instead. */
 .v-scene.sheet .v-checks li > span {
-  background: linear-gradient(transparent calc(100% - 9px), color-mix(in srgb, var(--acc) 55%, transparent) calc(100% - 9px)) 0 0 / 0% 100% no-repeat;
+  background: linear-gradient(transparent calc(100% - 7px), color-mix(in srgb, var(--acc) 42%, transparent) calc(100% - 7px)) 0 0 / 0% 100% no-repeat;
 }
 
 .v-title { font-family: var(--font-head); font-weight: var(--w-h2, 900); font-size: 46px; line-height: 1.22; margin: 0 0 22px; color: var(--title-ink, var(--ink)); letter-spacing: .01em; }
@@ -215,19 +215,20 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-ink path { stroke: var(--accent-2); stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
 .v-sheen { position: absolute; left: 0; top: -.1em; width: 46%; height: 1.2em; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 26%, transparent), transparent); opacity: 0; pointer-events: none; }
 
-/* quote */
-.sc-quote { padding: 0 6px; }
-.v-qmark { font-family: Georgia, serif; font-size: 120px; line-height: .8; color: var(--acc-text); height: 64px; }
-.v-quote { margin: 0; font-family: var(--font-head); font-weight: 900; font-size: 56px; line-height: 1.32; }
+/* quote：一句话撑起一屏。字号按"最长一行放得下"收敛（56 号在 438px 里一行只放得下 7 字，
+   会把句子切成碎块），断行交给 balance，不让人自己数 \n。 */
+.sc-quote { padding: 0 10px 0 22px; border-left: 6px solid var(--acc); }
+.v-qmark { font-family: Georgia, serif; font-size: 104px; line-height: .8; color: var(--acc); height: 56px; opacity: .55; }
+.v-quote { margin: 0; font-family: var(--font-head); font-weight: 900; font-size: 44px; line-height: 1.36; letter-spacing: -.01em; text-wrap: balance; }
 .v-quote span { opacity: .18; }
 .v-by { margin-top: 26px; font-size: 21px; color: var(--muted); font-weight: 700; }
 
 /* checklist */
-.v-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
-.v-checks li { display: flex; align-items: center; gap: 16px; font-family: var(--font-head); font-size: 36px; font-weight: 900; background: var(--card); border-radius: var(--radius, 16px); padding: 14px 18px; box-shadow: var(--card-shadow, none); border: var(--card-border, 0); }
-.v-box { flex: none; width: 40px; height: 40px; border-radius: 10px; border: 3px solid var(--acc-line); display: grid; place-items: center; }
-.v-box > i { width: 28px; height: 28px; display: block; }
-.v-checks li > span { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--acc) 34%, transparent) 62%) 0 0 / 0% 100% no-repeat; padding: 0 2px; }
+.v-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.v-checks li { display: flex; align-items: center; gap: 14px; font-family: var(--font-head); font-size: 33px; font-weight: 900; line-height: 1.28; background: var(--card); border-radius: var(--radius, 16px); padding: 13px 16px; box-shadow: var(--card-shadow, none); border: var(--card-border, 0); }
+.v-box { flex: none; width: 38px; height: 38px; border-radius: 10px; border: 3px solid var(--acc-line); display: grid; place-items: center; }
+.v-box > i { width: 26px; height: 26px; display: block; }
+.v-checks li > span { text-wrap: balance; background: linear-gradient(transparent 74%, color-mix(in srgb, var(--acc) 30%, transparent) 74%) 0 0 / 0% 100% no-repeat; padding: 0 2px; }
 .v-cta { align-self: center; margin-top: 12px; font-family: var(--font-head); font-size: 28px; font-weight: 900; color: var(--on-acc); background: var(--acc); padding: 10px 26px; border-radius: 999px; box-shadow: 0 16px 30px -16px rgba(0,0,0,.5); }
 .sc-check { display: flex; flex-direction: column; }
 
