@@ -278,15 +278,19 @@ const B = {
     // Precision is per value (15 stays 15%, 98.7 keeps its one decimal) unless the scene forces one for all.
     const sceneDec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : null;
     if (s.title) ev.push({ id: ti, p: 'rise', t: win.in + 0.06 });
-    const rows = items.map((it) => {
-      const i = id('b'), bar = id('b');
+    // `emphasis` marks the datum the sentence is about: it takes the brand accent, the rest stay grey.
+    const hot = Number.isInteger(s.emphasis) ? s.emphasis : -1;
+    const rows = items.map((it, idx) => {
+      const i = id('b'), bar = id('b'), num = id('b');
       const t = at(it.cue ?? it.label);
       const dec = sceneDec ?? (Number.isFinite(Number(it.decimals)) ? Math.max(0, Number(it.decimals)) : decOf(it.value));
       ev.push({ id: i, p: 'rise', t: t - 0.15 });
       ev.push({ id: bar, p: 'grow', t: t, dur: 0.55 });
+      if (idx === hot) ev.push({ id: num, p: 'pop', t: t + 0.42 });
       const pct = Math.max(2, Math.min(100, (Number(it.value) / max) * 100));
       const { sym, unit } = splitSuffix(it.suffix);
-      return `<li class="v-bar" id="${i}"><b>${md(it.label)}</b><span class="v-bar-track"><i class="v-bar-fill" id="${bar}" style="width:${pct.toFixed(1)}%"></i></span><em>${esc(fmtNum(it.value, dec) + sym)}${unit ? ` <small>${esc(unit)}</small>` : ''}</em></li>`;
+      const cls = idx === hot ? 'v-bar hot' : 'v-bar';
+      return `<li class="${cls}" id="${i}"><b>${md(it.label)}</b><span class="v-bar-track"><i class="v-bar-fill" id="${bar}" style="width:${pct.toFixed(1)}%"></i></span><em id="${num}">${esc(fmtNum(it.value, dec) + sym)}${unit ? ` <small>${esc(unit)}</small>` : ''}</em></li>`;
     }).join('');
     return { events: ev, html: `<div class="sc-bars">${s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : ''}<ul class="v-bars">${rows}</ul></div>` };
   },
@@ -316,6 +320,47 @@ const B = {
         `<div class="v-flaps" id="${wrap}">${tiles}</div>` +
         (unit ? `<div class="v-flap-unit">${esc(unit)}</div>` : '') +
         (s.label ? `<div class="v-label" id="${lab}" style="margin-top:22px">${md(s.label)}</div>` : '') +
+        `</div>`,
+    };
+  },
+
+  /** 环图（抄自 chart-story 的 donut）：一个占比套在一个整环上，圆弧按口播扫过去，中心落数字。 */
+  ring(s, at, win) {
+    const ev = [], counters = [];
+    const ti = id('r'), fig = id('r'), arc = id('r'), lab = id('r'), note = id('r');
+    const val = Number(s.value ?? s.to ?? 0);
+    const total = Number(s.total ?? 100);
+    const share = Math.min(1, Math.max(0, val / (total || 100)));
+    const dec = Number.isFinite(Number(s.decimals)) ? Math.max(0, Number(s.decimals)) : decOf(s.value ?? s.to);
+    const { sym, unit } = splitSuffix(s.suffix);
+    const t = at(s.count_cue ?? String(s.value ?? s.to));
+    const R = 84, CX = 100, CY = 100;
+    const deg = share * 360;
+    // Same geometry as the catalog's polar/arcPath: start at 12 o'clock, sweep clockwise.
+    const ex = CX + R * Math.cos(((deg - 90) * Math.PI) / 180);
+    const ey = CY + R * Math.sin(((deg - 90) * Math.PI) / 180);
+    const d = `M ${CX} ${CY - R} A ${R} ${R} 0 ${deg > 180 ? 1 : 0} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+    if (s.title) ev.push({ id: ti, p: 'rise', t: win.in + 0.05 });
+    ev.push({ id: arc, p: 'draw', t: t - 0.1, dur: Math.max(0.5, Math.min(1.1, 0.5 + share * 0.5)) });
+    ev.push({ id: fig, p: 'flip', t: t - 0.05 });
+    counters.push({ id: `${fig}v`, from: 0, to: val, t, dur: 1.05, prefix: s.prefix || '', suffix: sym, dec });
+    if (s.label) ev.push({ id: lab, p: 'rise', t: t + 0.35 });
+    if (s.note) ev.push({ id: note, p: 'rise', t: t + 0.7 });
+    return {
+      events: ev, counters,
+      html:
+        `<div class="sc-ring">` +
+        (s.title ? `<h2 class="v-title" id="${ti}">${md(s.title)}</h2>` : '') +
+        `<div class="v-ringwrap">` +
+        `<svg class="v-ring" viewBox="0 0 200 200">` +
+        `<circle class="v-ring-track" cx="${CX}" cy="${CY}" r="${R}"/>` +
+        `<path class="v-ring-arc" id="${arc}" d="${d}" pathLength="1"/>` +
+        `</svg>` +
+        `<div class="v-ring-mid">` +
+        `<div class="v-big sm" id="${fig}"><span id="${fig}v">${esc((s.prefix || '') + fmtNum(0, dec) + sym)}</span>${unit ? `<em class="v-unit">${esc(unit)}</em>` : ''}</div>` +
+        (s.label ? `<div class="v-ring-lab" id="${lab}">${md(s.label)}</div>` : '') +
+        `</div></div>` +
+        (s.note ? `<div class="v-ring-note" id="${note}">${md(s.note)}</div>` : '') +
         `</div>`,
     };
   },

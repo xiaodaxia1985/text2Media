@@ -191,6 +191,20 @@ html, body { margin: 0; width: 540px; height: 960px; overflow: hidden; backgroun
 .v-bar-fill { display: block; height: 100%; border-radius: 13px; background: var(--acc); transform-origin: 0 50%; }
 .v-bar em { font-family: var(--font-head); font-size: 24px; font-weight: 900; font-style: normal; color: var(--acc-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v-bar em small { font-size: .72em; font-weight: 700; opacity: .8; }
+/* The datum a sentence is actually about: brand accent plus a beat on the number (catalog: chart-story). */
+.v-bar.hot .v-bar-fill { background: var(--accent-2); }
+.v-bar.hot em { color: var(--accent-2); transform-origin: 50% 50%; }
+
+/* Ring: one share on a full ring, arc sweeping, figure in the middle (catalog: chart-story donut). */
+.sc-ring { display: flex; flex-direction: column; align-items: center; }
+.v-ringwrap { position: relative; width: 296px; height: 296px; margin: 10px 0 2px; }
+.v-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.v-ring-track { fill: none; stroke: var(--well-bg); stroke-width: 17; }
+.v-ring-arc { fill: none; stroke: var(--accent-2); stroke-width: 17; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.v-ring-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.v-ring-mid .v-big { margin: 0; font-size: 58px; color: var(--ink); }
+.v-ring-lab { font-size: 22px; font-weight: 800; color: var(--accent-2); }
+.v-ring-note { margin-top: 20px; font-size: 23px; font-weight: 700; color: var(--ink); opacity: .68; text-align: center; }
 
 /* A keyword gets one hand-drawn marker stroke, timed to the word being spoken (catalog: marker-highlight).
    The path is stretched into the word box, so its wobble scales with the type instead of looking like a box. */

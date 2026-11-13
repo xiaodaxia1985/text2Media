@@ -340,6 +340,17 @@ body { width: max-content; background: var(--sheet-bg, #9a9a96); }
 .c-metric-x { display: flex; justify-content: space-between; width: 100%; margin-top: 8px;
   font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
 .c-metric-note { font-size: 13px; line-height: 1.8; color: var(--muted); margin-top: 18px; max-width: 92%; }
+/* 环图当数字卡的主角外壳：数字在环心，比例由环摊开（抄 chart-story donut，静态不做扫圆）。 */
+.c-ring { position: relative; width: 100%; max-width: 330px; margin: 18px 0 6px; }
+.c-ring svg { width: 100%; height: auto; display: block; }
+.c-ring-track { fill: none; stroke: var(--well-bg); stroke-width: 14; }
+.c-ring-arc { fill: none; stroke: var(--acc); stroke-width: 14; stroke-linecap: butt; }
+.c-ring-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 34px; }
+.c-ring-fig { display: flex; align-items: baseline; }
+.c-ring-fig b { font-family: var(--font-head); font-weight: 900; font-size: 64px; line-height: 1.04; letter-spacing: -.03em; color: var(--acc-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-ring-fig em { font-style: normal; font-size: 24px; font-weight: 800; margin-left: 4px; color: var(--acc-text); opacity: .78; }
+.c-ring-lab { font-size: 12.5px; font-weight: 700; color: var(--muted); text-align: center; line-height: 1.5; max-width: 190px; }
+.r-1x1 .c-ring { max-width: 230px; }
 .c-metriccard .c-take { margin-top: 20px; }
 .r-1x1 .c-metric-fig b { font-size: 62px; }
 .r-1x1 .c-metric-spark svg { height: 66px; }

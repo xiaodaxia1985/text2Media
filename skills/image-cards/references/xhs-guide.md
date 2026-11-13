@@ -18,6 +18,7 @@
 |---|---|---|
 | 1 | 封面 | `cover`，没有就用 `title` + 第一页 `intro` + 各页 `part` |
 | 2… | 每节一张 | label、heading、`card.text`（缺省用第一段）、一张图（自动放大填满剩余空间）、takeaway |
+| … | 数字卡 | 节里写 `metric: { value, suffix 或 unit, label, note }`；要强调"占整体的多少"再加 `"ring": true` + `total`，数字会被包进一个环里，环只走一遍比例，不做动画 |
 | … | 清单 2–3 张 | checklist 节的阶段自动分到几张卡里，"护栏"放在最后一张 |
 | 末张 | 全文要点 | 最后一页 `closing` + 每节 takeaway 列表 + 来源 + 收藏提示 |
 

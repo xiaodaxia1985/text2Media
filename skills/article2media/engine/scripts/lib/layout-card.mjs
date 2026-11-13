@@ -319,6 +319,17 @@ function metricSpark(vals) {
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polygon points="${pts} ${W - pad},${H - 8} ${pad},${H - 8}"/><polyline points="${pts}"/></svg>`;
 }
 
+// 环图（抄 chart-story 的 donut）：把「一个数占整体的多少」画成真实圆弧。
+// 数字放在环心里，环只是把比例摊开，不再是数字旁边一个多余的圈。静态卡不做扫圆动画。
+function ringShapes(share) {
+  const R = 76, C = 100;
+  const deg = Math.min(1, Math.max(0, share)) * 360;
+  const ex = C + R * Math.cos(((deg - 90) * Math.PI) / 180);
+  const ey = C + R * Math.sin(((deg - 90) * Math.PI) / 180);
+  const d = `M ${C} ${C - R} A ${R} ${R} 0 ${deg > 180 ? 1 : 0} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+  return `<circle class="c-ring-track" cx="${C}" cy="${C}" r="${R}"/><path class="c-ring-arc" d="${d}"/>`;
+}
+
 function metricCard(it) {
   const s = it.s;
   const m = s.metric || {};
@@ -332,12 +343,18 @@ function metricCard(it) {
   const sym = unit ? '' : (m.suffix || '');
   const vals = (m.values || []).map(Number).filter((v) => Number.isFinite(v));
   const labels = (m.labels || []).map((l) => `<span>${md(l)}</span>`).join('');
+  const ringBody = m.ring
+    ? `<div class="c-ring"><svg viewBox="0 0 200 200" role="img" aria-label="${esc(m.label || fig + sym)}">${ringShapes(Number(m.value) / (Number(m.total) || 100))}</svg>` +
+      `<div class="c-ring-mid"><div class="c-ring-fig"><b>${md((m.prefix || '') + fig + sym)}</b>${unit ? `<em>${md(unit)}</em>` : ''}</div>` +
+      (m.label ? `<div class="c-ring-lab">${md(m.label)}</div>` : '') +
+      `</div></div>`
+    : '';
   return (
     roleLabel(it) +
     roleHead(it) +
     `<div class="c-metric">` +
-    `<div class="c-metric-fig"><b>${md((m.prefix || '') + fig + sym)}</b>${unit ? `<em>${md(unit)}</em>` : ''}</div>` +
-    (m.label ? `<div class="c-metric-label">${md(m.label)}</div>` : '') +
+    (ringBody || `<div class="c-metric-fig"><b>${md((m.prefix || '') + fig + sym)}</b>${unit ? `<em>${md(unit)}</em>` : ''}</div>`) +
+    (!ringBody && m.label ? `<div class="c-metric-label">${md(m.label)}</div>` : '') +
     (vals.length >= 2 ? `<div class="c-metric-spark"${drop(6, '走势图')}>${metricSpark(vals)}</div>` : '') +
     (labels ? `<div class="c-metric-x"${drop(7, '走势标签')}>${labels}</div>` : '') +
     (m.note ? `<p class="c-metric-note" data-qa-text${drop(5, '数字说明')}>${md(m.note)}</p>` : '') +
