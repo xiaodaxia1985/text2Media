@@ -1,6 +1,6 @@
 ---
 name: image-cards
-description: 卡片：固定比例的图文卡片组——小红书 3:4（1080×1440）、Instagram 4:5、方图 1:1、竖屏 9:16，附总览图和发帖文案。两种输入：改写稿 content.json → 总结卡片（封面 + 每节一卡 + 清单 + 要点总结，7 套主题）；文章 article.md（原文、译文、逐字稿）→ 原文卡片（整篇按顺序分页成卡片，一字不改，逐块校验）。可以单独用，也可以接在抓取、改写、翻译后面。Use when the user wants 小红书图文, 轮播卡片, 知识卡片, 3:4 / 4:5 / 1:1 / 9:16 cards, Instagram carousel, 朋友圈方图, or 原文卡片 / 全文卡片 / 把全文做成小红书 — from an article or an existing content.json.
+description: 卡片：固定比例的图文卡片组——小红书 3:4（1080×1440）、Instagram 4:5、方图 1:1、竖屏 9:16，附总览图和发帖文案。两种输入：改写稿 content.json → 总结卡片（封面 + 每节一卡 + 清单 + 要点总结，7 套主题）；文章 article.md（原文、译文、逐字稿）→ 原文卡片（整篇按顺序分页成卡片，一字不改，逐块校验）。可以单独用，也可以接在抓取、改写、翻译后面。Use when the user wants 小红书图文, 轮播卡片, 知识卡片, 3:4 / 4:5 / 1:1 / 9:16 cards, Instagram carousel, 朋友圈方图, or 原文卡片 / 全文卡片 / 把全文做成小红书 — from an article or an existing content.json. 也负责小红书/抖音的**品牌脱敏（默认执行）**：隐去厂商名、域名、主机名，封面品牌 ICON 换中性图标，出图前扫描、出图后复核 0 命中；站点原文与公众号不脱敏。
 argument-hint: <content.json|article.md|目录> [--ratio 3:4|4:5|1:1|9:16 或 小红书/IG] [--theme 主题名|a,b|all] [--out 目录]
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/*)
 version: "2.0.1"
@@ -90,6 +90,18 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --t
 - **装不下时按四档阶梯走**：≤40px 整块上移；40–90px 压块间距；90–160px 收标题字号；160px 以上才自动省略可选内容。用了哪一档会写进版面检查（"靠压间距才装下""靠收字号才装下"），看到这类提示说明这页内容已经在上限，别再往里塞。
 - **检查（最多 2 轮）**：先看 `overview.jpg`，有问题再打开单张卡。✗ 必须修；报「居中的说明段落排成了长排」（最宽一行占卡宽 ≥86%）说明说明段横铺了整卡，居中已经失效——收窄容器宽度或在内容里手动断行；报「内容只占卡高 X%」「上段/中段/下段有 Npx 连续空白」「底部空 Npx」「内容整体偏上/偏下」时，是引擎按内容块坐标量出来的空洞或偏心，处理办法只有两条：回 content.json 补证据（优先），或换更贴内容的卡型；**不要靠加空行、拉行高、加装饰把它盖住**。报「内容超出」「已自动省略」「图只放大到 x 倍」时，按 xhs-guide.md 第 2 节的顺序处理（缩短 `card.text`、改 `split`、`skip` 次要的节）。只改 content.json 再重渲，不手改 HTML。
 
+## 1.9 平台合规：品牌脱敏（小红书 / 抖音默认必做）
+
+**不用问、不用等用户提，出小红书和抖音的卡片默认脱敏。** 平台不允许引导到站外、也不允许图上露出第三方平台与厂商品牌（阿里云、ECS、域名、`root@iZ…Z` 这类主机名）；正文写好了才发现品牌，等于整组白做。所以在 `--plan` 通过之后、渲染之前先脱敏，渲染完再复核一遍，0 命中才交付。
+
+**范围**：只按目的地判断——小红书、抖音图卡默认脱敏；站点 `article.md`、`rewrite.md` 和公众号（站点原文排版）**不脱敏**，厂商名与域名在站内是有效信息。
+
+- 读 `references/brand-scrub.md`：字段级扫描清单、替换对照、截图脱敏（主机名 / `AliYunDun` / 客户端按钮）、封面 ICON 换中性图标、复核脚本。
+- **改的是新文件**：`content-合规.json` + 新产物目录 `<渠道>/<slug>-合规版/<主题>-<平台>-<比例>/`；原 `content.json` 和已经发过的旧套一个字节都不动。
+- 图卡里的截图按 `.c-figcard .c-fig-box { aspect-ratio: 300/190 }` 的比例给（≈1.579），否则 cover 填充会把两侧裁掉（"维度"列、详情文字被切，换画布尺寸也救不回来）。
+- 封面品牌 ICON 换掉，但**封面仍要有配图**；叠完图标必须重拼 `overview.jpg`。
+- 交付时列出：脱敏了哪些、故意保留哪些（如 `GitHub Actions`）及理由、截图是重排还是遮盖。
+
 ## 2. 原文卡片（article.md）
 读 `references/original-cards.md` 和 `../article2media/references/verbatim.md`。
 ```bash
@@ -97,6 +109,17 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4 --theme paper-editorial   # 用主题的颜色与字体
 ```
 全文校验未通过就是错误，不能靠目测放行。看 `overview.jpg` 检查断开的位置；张数超过上限时按 original-cards.md 处理，不删原文。
+
+## 2.9 出视频：卡片出完，视频从卡片长出来
+
+用户要"出片 / 做成视频"时，**不要另起一套版式**。卡片已经是画面，走 `card-video`：
+
+```bash
+node ${CLAUDE_SKILL_DIR}/../card-video/scripts/cardvideo.mjs --cards <主题>-<平台>-<比例>/cards.html --probe=all --report
+```
+
+- 出片前先跑一次 `--report`：它会列出每张卡能识别到哪些图原子（柱 / 横条 / 数字 / 连线 / 条目）。哪张该有图却没识别到，先回上面补卡型或图，别等渲完才发现。
+- 口播稿 `script.json` 与配音、渲染全流程见 `../card-video/SKILL.md`。视频张数按内容需要，不受本 skill 的平台张数上限约束。
 
 ## 3. 交付
 - 卡片目录、张数、每张的尺寸；`overview.jpg` 路径；

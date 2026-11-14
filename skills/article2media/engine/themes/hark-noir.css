@@ -146,6 +146,27 @@
 .end-cta { border-radius: 999px; padding: 14px; font-size: 16px; font-weight: 600; }
 .end-src { color: #8B97AB; }
 
+/* ---------- 章节页：跟整组同面，不反白 ----------
+   2026-11-13：用户要求整组统一深色，章节页不再用 --ink 做白底反相。
+   标题、分隔线、幕标一并改回深底上的浅色，层级靠字号和留白，不靠反相。 */
+.c-openercard {
+  background: var(--bg);
+  background-image: var(--bg-image, none);
+  background-size: var(--bg-size, auto);
+  background-repeat: var(--bg-repeat, no-repeat);
+}
+.c-openercard .c-top, .c-openercard .c-foot { color: var(--muted); }
+.c-openercard .c-top-t { color: var(--acc-text, var(--acc)); }
+.c-openercard .sec-label {
+  background: rgba(255, 255, 255, .10);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+}
+.c-openercard .c-open-kicker { color: #8FB4FF; opacity: 1; }
+.c-openercard .c-open-h { color: var(--ink); }
+.c-openercard .c-open-rule { background: var(--ink); }
+.c-openercard .c-open-lead { color: #A9B4C8; }
+
 /* 9:16：底部 132px 留给抖音 UI；图高固定，避免玻璃面被拉成空场 */
 .r-9x16 .card { padding-bottom: 132px; }
 .r-9x16 .c-cover .c-body { padding-top: 80px; }
