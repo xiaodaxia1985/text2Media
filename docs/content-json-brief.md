@@ -111,9 +111,32 @@
 | `opener` | `heading` + 第一段（导语） |
 | `fig` | `figures` + `card.text`，可选 `stats` |
 
-**界格 `grid` 已于 2026-11-11 下线**，写了会直接报错。并列的短词改写成 `claim`，或并进相邻卡。
+**数字卡 `metric`**（节级可选字段，不在 `role` 里）：写了就自己排成一张数字卡，**优先于 role**（只有 `kind: "checklist"` 在它前面），也**优先于 figures**（图不会画在卡上）。
 
-**平台张数上限**（以 `../engine/scripts/lib/platforms.mjs` 为准）：
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `value` | 是 | 主数字，小数位照写（98.7 不会变 99） |
+| `label` | 是 | 口径小字（≤14 字） |
+| `unit` / `suffix` / `prefix` | 否 | 单位（另起小号）/ 紧跟符号（% ×）/ 前置符号（$ ¥）；`unit` 与 `suffix` 二选一 |
+| `decimals` | 否 | 强制小数位 |
+| `values` / `labels` | 否 | 走势（≥2 个数才画）与横轴标签，个数要对齐 |
+| `note` | 否 | 数字说明（≤24 字） |
+| `ring` + `total` | 否 | 表达"占整体的多少"，环只画比例、不做动画 |
+
+```jsonc
+{ "label": "验证", "heading": "两周跑完\n五十组样张",
+  "metric": { "value": "50", "unit": "组", "label": "两周内出图总量",
+              "values": [8, 19, 31, 42, 50], "labels": ["一", "三", "五", "七", "九"] },
+  "takeaway": "产量不是靠加班，是靠模板。" }
+```
+
+- 校验会拦：缺 `value`、`values` 有非数字、`labels` 与 `values` 个数不符。
+- `metric` 与 `figures` 或 `role` 并存只提示：图和 role 都不会生效，别写。
+- **3:4 上数字卡中段会留 22–24% 空白**（版式天生偏松），灰模描红时先补 `note` / 加 `values`，仍不过就改用 `stat` 或 `bar`。
+
+**界格 `role: "grid"` 已于 2026-11-11 下线**，写了会直接报错。并列的短词改写成 `claim`，或并进相邻卡。注意：`figures` 里的**图型 `grid`**（4–9 项并列概念）仍然可用，两者不是一回事。
+
+**平台张数上限**（以 `engine/scripts/lib/platforms.mjs` 为准）：
 
 | 平台 | 比例 | 单篇上限 |
 |---|---|---|
@@ -131,7 +154,7 @@
 node skills/article-rewrite/scripts/check.mjs <工作目录>/content.json
 
 # 出版式方案 + 灰模：把空卡、薄卡、卡型重复、超上限、内容覆盖不足全部点出来
-node ../engine/scripts/render.mjs <工作目录>/content.json --platform 小红书 --plan
+node engine/scripts/render.mjs <工作目录>/content.json --platform 小红书 --plan
 ```
 
 `--plan` 会写 `plan.json` / `plan.png`，逐张列卡型、信息量、覆盖率与最大空带；灰模上描红的卡必须回改。
