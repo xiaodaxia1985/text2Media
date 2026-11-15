@@ -31,6 +31,7 @@ const ROLE_CN = {
   checklist: '清单',
   opener: '章节页',
   sec: '常规',
+  metric: '数字',
   end: '收尾',
 };
 
@@ -153,7 +154,7 @@ export function planLayout(content, ratio = '3:4') {
   const needLight = Math.ceil(inner.length / 4);
   // A card with almost nothing on it can only be centred and hoped for; the real fix is content.
   // 只判"靠正文撑场"的卡：主张/章节页/引文/数据/图证本来就是少字卡，字少不是病（图证的主体是图）。
-  const thin = inner.filter((c) => !['claim', 'opener', 'quote', 'stat', 'fig'].includes(c.role) && c.chars > 0 && c.chars < 45);
+  const thin = inner.filter((c) => !['claim', 'opener', 'quote', 'stat', 'fig', 'metric'].includes(c.role) && c.chars > 0 && c.chars < 45);
   // 写了 role 但证据撑不起来：会被降级成常规卡，必须在灰模阶段就让人看见。
   const downgraded = inner.filter((c) => c.downgrade);
   // 超出容量上限：这页装了两页的内容，排得下也是挤的。
@@ -250,7 +251,7 @@ function measurePlanCards() {
   return out;
 }
 
-const CENTRED = new Set(['claim', 'opener', 'timeline', 'stat', 'list', 'end']);
+const CENTRED = new Set(['claim', 'opener', 'timeline', 'stat', 'list', 'end', 'metric']);
 
 /** 把实测数字挂回每张卡，并合成一条"逐卡空档"闸门。 */
 export function attachMeasure(plan, rows) {

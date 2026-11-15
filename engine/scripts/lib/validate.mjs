@@ -98,6 +98,7 @@ export function validate(c, { layout = 'long', ratio = '3:4', md = '', limit = n
       ...(s.compare ? [...(s.compare.left?.items || []), ...(s.compare.right?.items || [])] : []),
       ...(s.timeline || []).flatMap((t) => [t?.title, t?.note]),
       ...(s.stats || []).flatMap((x) => [x?.value, x?.label, x?.note]),
+      ...(s.metric ? [s.metric.value, s.metric.label, s.metric.note].filter((v) => v !== undefined && v !== null).map((v) => String(v)) : []),
     ].filter((v) => typeof v === 'string');
     const n = vlen(parts.join(''));
     if (n < FLOOR) warn(S, `内容只有约 ${n} 字，这一张卡会显得空：把相邻的薄节并进来，或补一条说明，不要靠留白凑版式`);
@@ -165,9 +166,39 @@ export function validate(c, { layout = 'long', ratio = '3:4', md = '', limit = n
       }
       (s.bullets || []).forEach((t, i) => len(`${S}.bullets[${i}]`, t, LIMITS.bullet, '要点'));
       len(`${S}.takeaway`, s.takeaway, LIMITS.takeaway, '金句');
+
+      // 数字卡（metric）：声明了就自己成一张数字卡，优先于 role（只有 checklist 在它前面）。
+      const M = `${S}.metric`;
+      if (s.metric !== undefined) {
+        const m = s.metric || {};
+        const mn = Number(m.value);
+        if (!(isStr(m.value) || Number.isFinite(mn))) err(M, '数字卡缺少 metric.value');
+        else if (!Number.isFinite(mn)) warn(`${M}.value`, `value 是「${m.value}」，不是数字：走势和环图都算不出来，只会按原文字排`);
+        if (!isStr(m.label) && !isStr(m.note)) warn(`${M}.label`, '数字卡没有 label：只给一个数，读者不知道它是什么');
+        len(`${M}.label`, m.label, 14, '数字口径');
+        len(`${M}.note`, m.note, 24, '数字说明');
+        if (m.values !== undefined) {
+          if (!Array.isArray(m.values) || m.values.length < 2) warn(`${M}.values`, 'values 少于 2 个数，走势图不会画');
+          else if (m.values.some((v) => !Number.isFinite(Number(v)))) err(`${M}.values`, 'values 必须全是数字');
+        }
+        if (m.labels !== undefined) {
+          if (!Array.isArray(m.labels)) err(`${M}.labels`, 'labels 必须是数组');
+          else {
+            if (Array.isArray(m.values) && m.labels.length !== m.values.length) warn(`${M}.labels`, `labels ${m.labels.length} 个、values ${m.values.length} 个，横轴对不上`);
+            m.labels.forEach((l, i) => len(`${M}.labels[${i}]`, l, 8, '横轴标签'));
+          }
+        }
+        if (m.ring) {
+          if (!Number.isFinite(mn)) warn(`${M}.value`, 'ring 需要数字 value，否则画不出比例');
+          if (m.total !== undefined && !(Number(m.total) > 0)) warn(`${M}.total`, 'total 必须是正数，否则环会按 100 当分母');
+        }
+        if ((s.figures || []).length) warn(`${S}.figures`, '这一节声明了 metric，会排成数字卡，figures 不会画在卡上');
+        if (s.role && ['claim', 'compare', 'timeline', 'stat', 'fig', 'opener'].includes(s.role)) warn(`${S}.role`, `metric 优先于 role，这一节的 role=${s.role} 不会生效`);
+      }
+
       if ((s.figures || []).length > 2) warn(`${S}.figures`, '最多显示 2 张图，多余的会被忽略');
       const roleShapesCard = ['claim', 'compare', 'timeline', 'stat', 'opener', 'divider', 'keyword'].includes(s.role);
-      if (!s.figures?.length && !s.panel && !roleShapesCard) warn(S, '没有图也没有面板，这一节会只有文字');
+      if (!s.figures?.length && !s.panel && !roleShapesCard && !s.metric) warn(S, '没有图也没有面板，这一节会只有文字');
 
       (s.figures || []).forEach((f, fi) => checkFigure(f, `${S}.figures[${fi}]`));
 

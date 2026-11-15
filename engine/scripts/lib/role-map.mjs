@@ -65,6 +65,8 @@ export function evidenceForm(s, card = {}) {
 /** 由证据形态 + 显式 role 决定 role（显式 role 优先）。 */
 export function deriveRole(s, card = {}) {
   if (s.kind === 'checklist') return s.guard ? 'checklist' : 'process';
+  // 数字卡：声明了 metric 的节自己成一张卡，优先级与 planCards 保持一致（只在 checklist 之后）。
+  if (s.metric) return 'metric';
   if (s.role) return s.role === 'divider' ? 'opener' : s.role;
   const form = evidenceForm(s, card);
   const role = EVIDENCE_ROLE[form] || 'sec';
