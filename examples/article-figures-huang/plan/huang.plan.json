@@ -1,0 +1,127 @@
+{
+  "article": {"path": "lab/huang-figures/plan/huang.md", "title": "深挖才看懂，卸任英伟达的黄仁勋，千亿身家背后的真实生活有多壕", "source": "https://open.toutiao.com/a7707538255645786687/"},
+  "scale": "web",
+  "count_policy": {"mode": "structure"},
+  "derived_structure": true,
+  "blocks_file": "huang-blocks.json",
+  "pages": [
+    {"id": "01-event", "kind": "figure", "blocks": ["b01"]},
+    {"id": "02-cash", "kind": "figure", "blocks": ["b03", "b04", "b05"]},
+    {"id": "03-trust", "kind": "figure", "blocks": ["b06"]},
+    {"id": "04-crash", "kind": "figure", "blocks": ["b08", "b09"]},
+    {"id": "05-cuda", "kind": "figure", "blocks": ["b10"]},
+    {"id": "06-life", "kind": "figure", "blocks": ["b12"]},
+    {"id": "07-contrast", "kind": "figure", "blocks": ["b14"]},
+    {"id": "08-charity", "kind": "figure", "blocks": ["b17", "b18"]},
+    {"id": "09-bind", "kind": "figure", "blocks": ["b21", "b22"]},
+    {"id": "10-truth", "kind": "figure", "blocks": ["b25"]}
+  ],
+  "article_map": [
+    {"section": "导语·一纸辞职公告", "derived": true, "claim": "11 月 12 日，33 年的 CEO 突然全辞，股价盘中跳水", "figures": ["01-event"], "reason": ""},
+    {"section": "千亿是账面，不是现金", "derived": true, "claim": "股票进了信托、受交易限制，千亿随股价起伏", "figures": ["02-cash", "03-trust"], "reason": ""},
+    {"section": "两次濒死，一次长坡", "derived": true, "claim": "1993 年现金只够三十天，靠世嘉一笔钱活下来，再用十几年赌 CUDA", "figures": ["04-crash", "05-cuda"], "reason": ""},
+    {"section": "顶配生活与一碗炸酱面", "derived": true, "claim": "上亿的飞机与八元的饮品同时成立", "figures": ["06-life", "07-contrast"], "reason": ""},
+    {"section": "慈善的双层账本", "derived": true, "claim": "捐自家股票，公益与税负两头都成立", "figures": ["08-charity"], "reason": ""},
+    {"section": "卸任之后，什么还绑着", "derived": true, "claim": "职务卸了，股权与生态仍绑在英伟达身上", "figures": ["09-bind"], "reason": ""},
+    {"section": "结尾·三条真相", "derived": true, "claim": "财富是枷锁，长期下注才抓风口，顶配与朴素可以并存", "figures": ["10-truth"], "reason": ""}
+  ],
+  "figures": [
+    {
+      "id": "01-event", "figure_type": "timeline",
+      "claim": "11 月 12 日夜里，执掌 33 年的 CEO 把总裁、CEO、董事一起辞了",
+      "anchor_quote": "执掌公司33年的黄仁勋突然辞去总裁、CEO、董事全部职务",
+      "reads_as": "一条时间轴，末端一个断点，旁边是接棒的 CFO",
+      "why_not_table": "辞职是一个断点事件，表格写不出「33 年忽然断在这里」",
+      "variant": "单点断点＋股价一跳",
+      "focal": "11 月 12 日那个断点", "budget": {"nodes": 4, "arrows": 3, "accents": 1},
+      "honesty_flags": [], "data": [{"label": "任期", "value": "33 年"}, {"label": "接任", "value": "CFO 科莱特·克雷斯"}]
+    },
+    {
+      "id": "02-cash", "figure_type": "delta",
+      "claim": "千亿不是卡里的钱，是实时股价算出来的账面数字；而且大部分在信托里，卖不了",
+      "anchor_quote": "他手里绝大部分英伟达股票都放进了家族信托架构",
+      "reads_as": "左侧现金，右侧账面，中间一道锁",
+      "why_not_table": "「看着有、动不了」的落差是论点，两列文字说不出来",
+      "focal": "那把锁", "budget": {"nodes": 3, "arrows": 1, "accents": 1},
+      "variant": "现金对账面＋一把锁",
+      "honesty_flags": [], "data": []
+    },
+    {
+      "id": "03-trust", "figure_type": "unit-grid",
+      "claim": "信托同时办三件事：锁股权、隔资产避遗产税、保证不被快速抛售",
+      "anchor_quote": "这套信托安排，不只是锁住股权",
+      "reads_as": "三格并排，一句话一件事",
+      "why_not_table": "三个目的互相支撑，格子比三行文字更能看出「一起做掉的」",
+      "focal": "资产隔离那一格", "budget": {"nodes": 3, "arrows": 0, "accents": 1},
+      "honesty_flags": [], "data": []
+    },
+    {
+      "id": "04-crash", "figure_type": "waterfall",
+      "claim": "1993 年那次，账上只剩三十天，裁掉七成，靠世嘉一笔转款才活下来",
+      "anchor_quote": "账上的钱只够维持三十天运转",
+      "reads_as": "从满仓跌到三十天，再被一笔款托起来",
+      "why_not_table": "这是「从多少跌到多少再回来」的过程，表格只能并列三个状态",
+      "focal": "三十天那一格", "budget": {"nodes": 4, "arrows": 3, "accents": 1},
+      "honesty_flags": ["原文只说「启动资金不多」，没有具体金额；跌幅按叙述画，不补数"], "data": [{"label": "现金可撑", "value": "三十天"}, {"label": "裁员", "value": "七成"}]
+    },
+    {
+      "id": "05-cuda", "figure_type": "timeline",
+      "claim": "CUDA 投了十几年不见收益，直到 AI 浪潮才变成护城河",
+      "anchor_quote": "CUDA才成为英伟达碾压同行的护城河",
+      "reads_as": "一条长平线，末端突然抬起来",
+      "why_not_table": "十几年的沉默期是这段的份量，表格压不出时间长度",
+      "focal": "AI 浪潮那个拐点", "budget": {"nodes": 4, "arrows": 2, "accents": 1},
+      "variant": "长平十几年，末端才抬头",
+      "honesty_flags": ["「十几年」是原文的模糊量，不换算成年份区间"], "data": [{"label": "投入", "value": "十几年"}]
+    },
+    {
+      "id": "06-life", "figure_type": "bar",
+      "claim": "私人飞机上亿美元、旧金山豪宅数千万美元、豪车若干，都是这套生活的配套",
+      "anchor_quote": "他持有庞巴迪环球7500私人飞机",
+      "reads_as": "三根不等长的条，最长的那个远超其余",
+      "why_not_table": "量级差本身是内容；三行文字读不出「上亿对千万」",
+      "focal": "飞机那一根", "budget": {"nodes": 3, "arrows": 0, "accents": 1},
+      "honesty_flags": ["豪宅只说「数千万美元」，没有确切数字，条形按文字量级示意"], "data": [{"label": "私人飞机", "value": "上亿美元"}, {"label": "旧金山豪宅", "value": "数千万美元"}]
+    },
+    {
+      "id": "07-contrast", "figure_type": "dumbbell",
+      "claim": "上亿美元的私人飞机旁边，放着一杯八元饮品",
+      "anchor_quote": "在小店吃三十多块一碗的炸酱面",
+      "reads_as": "一根哑铃，两头差到荒诞",
+      "why_not_table": "反差的长度就是论点",
+      "focal": "八元那一端", "budget": {"nodes": 2, "arrows": 1, "accents": 1},
+      "honesty_flags": [], "data": [{"label": "炸酱面", "value": "三十多块"}, {"label": "饮品", "value": "八元"}]
+    },
+    {
+      "id": "08-charity", "figure_type": "venn",
+      "claim": "捐自家股票这件事，公益与税负两个圈真的叠在一起",
+      "anchor_quote": "主要捐赠标的就是自家英伟达股票",
+      "reads_as": "两个圈，交集写着「捐股票」",
+      "why_not_table": "「两件事并行不悖」是交集关系，两行文字会被读成因果",
+      "focal": "交集", "budget": {"nodes": 3, "arrows": 0, "accents": 1},
+      "honesty_flags": [], "data": []
+    },
+    {
+      "id": "09-bind", "figure_type": "nested",
+      "claim": "职务卸了，股权仍在信托里，生态、渠道、路线仍在他搭的骨架里",
+      "anchor_quote": "信托里的大量股权依旧和英伟达深度绑定",
+      "reads_as": "外层是公司，内层是股权，再内层是生态",
+      "why_not_table": "层层包住是形状，三行并列会读成并列关系",
+      "focal": "最内层的生态", "budget": {"nodes": 4, "arrows": 0, "accents": 1},
+      "honesty_flags": [], "data": []
+    },
+    {
+      "id": "10-truth", "figure_type": "kanban",
+      "claim": "全文收成三条：财富是枷锁、长期下注才抓风口、顶配与朴素可以并存",
+      "anchor_quote": "撕开了顶级富豪财富游戏的真相",
+      "reads_as": "三列，每列一句",
+      "why_not_table": "这三条要并排读；表格会让人以为它们有先后",
+      "focal": "第三条", "budget": {"nodes": 3, "arrows": 0, "accents": 1},
+      "honesty_flags": [], "data": []
+    }
+  ],
+  "dropped": [
+    {"claim": "33 年征程的转折点、AI 产业链的新起点", "block": "b24", "reason": "收束判断，画出来就是一句口号"},
+    {"claim": "反差不是表演，是长期形成的习惯", "block": "b16", "reason": "解释性判断，放 07 的 callout 就够"}
+  ]
+}

@@ -3,6 +3,7 @@ article2media-out/
 examples-work/
 experiments/
 output/
+examples/*/out/
 
 # 依赖与构建
 node_modules/
