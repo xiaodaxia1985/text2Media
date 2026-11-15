@@ -4,7 +4,7 @@
 // 产物：<workDir>/voice/narration.wav、<workDir>/voice/alignment.json、<workDir>/voice/chunks/*.wav
 //
 // script.json 里可选 "say": {"写法":"读法"}、"styles": {"句子":"情绪"} —— 与 video.mjs 同格式；
-// 音色清单跑 `node ../article2media/engine/scripts/video.mjs voices`。
+// 音色清单跑 `node ../../../engine/scripts/video.mjs voices`。
 //
 // 为什么这里要多一步预热：engine 的 detectVoice 给 `import voxcpm` 只有 60 秒窗口，而本机首次冷启动
 // 实测 233 秒（torch CUDA 初始化），会被误判成「本机没有 VoxCPM」并静默退到 edge-tts。
@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ENGINE = path.resolve(HERE, '../../article2media/engine/scripts/lib');
+const ENGINE = path.resolve(HERE, '../../../engine/scripts/lib');
 
 const ARGV = process.argv.slice(2);
 const arg = (name, dflt) => {

@@ -23,8 +23,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// 共享库（浏览器 / ffmpeg / sfx）在 article2media/engine/scripts/lib 下，按技能目录相对定位
-const ENGINE = path.resolve(HERE, '../../article2media/engine/scripts/lib');
+// 共享库（浏览器 / ffmpeg / sfx）在 engine/scripts/lib 下，按技能目录相对定位
+const ENGINE = path.resolve(HERE, '../../../engine/scripts/lib');
 const ARGV = process.argv.slice(2);
 const arg = (name, dflt) => {
   for (let i = 0; i < ARGV.length; i++) {

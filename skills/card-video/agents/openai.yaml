@@ -1,0 +1,4 @@
+interface:
+  display_name: "卡片视频"
+  short_description: "已有卡片组 → 口播 + 卡内动画 → MP4，画幅与卡数自动适配"
+  default_prompt: "使用 $card-video 把这几张卡片做成竖屏视频。"

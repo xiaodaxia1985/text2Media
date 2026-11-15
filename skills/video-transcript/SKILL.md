@@ -35,4 +35,4 @@ node ${CLAUDE_SKILL_DIR}/scripts/transcribe.mjs ./talk.mp4 --title "标题" --au
 
 ## 4. 交付
 单独使用时：`article.md` 和 `transcript/segments.md` 的绝对路径、平台、时长、文字来源（人工字幕 / 自动字幕 / 本地识别）、段数与字数，以及拿不准的专有名词。
-在组合里：把目录交给下一个能力（见 `../article2media/references/pipeline.md`）。发布由逐字稿做成的图文或视频时，来源写成「内容整理自 <作者> 的<平台>视频《标题》」。
+在组合里：把目录交给下一个能力（见 `../../references/pipeline.md`）。发布由逐字稿做成的图文或视频时，来源写成「内容整理自 <作者> 的<平台>视频《标题》」。

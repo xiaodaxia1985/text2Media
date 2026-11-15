@@ -15,13 +15,13 @@ version: "2.0.1"
 参数：`$ARGUMENTS`
 
 ## 0. 输入
-- 文章 `article.md`（原文、译文、逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../article2media/references/pipeline.md`）。
+- 文章 `article.md`（原文、译文、逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../../references/pipeline.md`）。
 - 同目录已有 `content.json` 时，直接用它的事实、数字和结构，不必重新提炼。没有也不需要先改写：口播稿本身就是一种改写，由你在 video.json 里完成。
 - 外文原文直接写中文口播即可，不需要先全文翻译。
 
 ## 1. 流程
 1. `node ${CLAUDE_SKILL_DIR}/scripts/video.mjs doctor` 看本机能力（配音、对齐、插画、ffmpeg），按 `references/video-guide.md` 第 1 节决定要不要问用户（通常不用问）。
-2. **完整读一遍**文章，再读 `references/video-guide.md`，写 `<目录>/video/video.json`：定调（受众、核心、开场策略）→ 封面 → 每镜口播和画面 → 选音色、选主题（按 `../article2media/references/styles.md`）。首句 ≤ 19 字、5 秒内说完；解说最忌急，说不完就删字，不加快语速。
+2. **完整读一遍**文章，再读 `references/video-guide.md`，写 `<目录>/video/video.json`：定调（受众、核心、开场策略）→ 封面 → 每镜口播和画面 → 选音色、选主题（按 `../../references/styles.md`）。首句 ≤ 19 字、5 秒内说完；解说最忌急，说不完就删字，不加快语速。
 3. `video.mjs check` 修完提示，再 `video.mjs make`（配音、可选插画、渲染、混音、审片一步完成；配音按句缓存，改口播只重配改动的句子）。
 4. 按指南第 4 节审片：看 `contact-sheet.jpg` 和检查项，改 `video.json` 重渲，最多 2 轮。
 5. 按指南第 5 节交付：视频、封面、镜头大纲、音色（公开 / 本机个人）、缺了哪些能力、发布前的 AI 声明提醒。

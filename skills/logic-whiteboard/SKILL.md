@@ -13,7 +13,7 @@ version: "2.0.1"
 参数：`$ARGUMENTS`
 
 ## 0. 输入
-文章 `article.md`（原文、译文或逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../article2media/references/pipeline.md`）。不需要先改写。
+文章 `article.md`（原文、译文或逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../../references/pipeline.md`）。不需要先改写。
 
 第一次使用先跑 `node ${CLAUDE_SKILL_DIR}/scripts/doctor.mjs`（Node 22+、Chrome）。
 

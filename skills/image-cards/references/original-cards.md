@@ -1,6 +1,6 @@
 # 原文卡片：把整篇文章分页成卡片，一字不改
 
-`cards.mjs <article.md> --ratio <比例>` 把完整文章（原文、译文、逐字稿或 `rewrite.md`）排进一组固定比例的卡片。规则和校验与所有原文排版相同，见 `../../article2media/references/verbatim.md`。
+`cards.mjs <article.md> --ratio <比例>` 把完整文章（原文、译文、逐字稿或 `rewrite.md`）排进一组固定比例的卡片。规则和校验与所有原文排版相同，见 `../../../references/verbatim.md`。
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md                      # 3:4，白底阅读面 → <目录>/full-3x4/

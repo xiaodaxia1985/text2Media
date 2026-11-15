@@ -31,7 +31,7 @@ node <wechat-layout>/scripts/wechat.mjs article.md --theme apple-hark        # �
 要恢复某一套，从 git 历史取回即可：
 
 ```bash
-git show 657774a:skills/article2media/engine/themes/legacy/editorial.css > skills/article2media/engine/themes/editorial.css
+git show 657774a:skills/article2media/engine/themes/legacy/editorial.css > engine/themes/editorial.css
 ```
 
 现在 `--list` 列出的是 7 套在册主题。新增主题仍按上文「新建主题」复制一套改名。

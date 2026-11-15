@@ -139,7 +139,7 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 | 文章转口播 | 取原文 → 口播视频 |
 | 白板 / 漫画 | 取原文 → 白板 / 漫画 |
 
-没说要原文还是总结时：长图和卡片默认总结，公众号默认原文排版，外文走原文路径时先翻译。说了"排版 / 原文 / 一字不改"就走原文，说了"总结 / 提炼"就走改写。完整规则见 [`pipeline.md`](skills/article2media/references/pipeline.md)。
+没说要原文还是总结时：长图和卡片默认总结，公众号默认原文排版，外文走原文路径时先翻译。说了"排版 / 原文 / 一字不改"就走原文，说了"总结 / 提炼"就走改写。完整规则见 [`pipeline.md`](references/pipeline.md)。
 
 ### 产出一览
 
@@ -224,7 +224,7 @@ flowchart LR
   - 公众号用本地 Chrome；
   - 视频：字幕用 yt-dlp 获取，没有字幕时用本地 Whisper 识别。
 - **分工**：Claude 负责理解和写作（改写稿、译文、口播脚本、白板账本、分镜）；脚本负责一切确定性的工作：抓取、排版、截图、配音、对齐、混音和验收。
-- **交接**：每个能力都是独立的 skill，只靠工作目录里的文件交接，共用 `skills/article2media/engine/` 里的脚本、版式和主题。
+- **交接**：每个能力都是独立的 skill，只靠工作目录里的文件交接，共用 `engine/` 里的脚本、版式和主题。
 - **渲染**：内容、版式 CSS 和主题 CSS 合成 HTML，再通过 DevTools 协议驱动无头 Chrome 截图，输出 2 倍分辨率。
 - **图表**：15 种参数化图表，包括柱状、条形、堆叠、流程、矩阵、合流、树、数据、等式、路径、对比、循环、金句、图片和手写 SVG，颜色全部取自主题。另有可选的 AI 插画。
 
@@ -237,7 +237,7 @@ flowchart LR
 
 ## 主题
 
-7 套主题，同一份内容可以用任意主题渲染。没有指定时，Claude 依次按「明确偏好 → 题材 → 投放场景」选一个，规则见 [`references/styles.md`](skills/article2media/references/styles.md)。
+7 套主题，同一份内容可以用任意主题渲染。没有指定时，Claude 依次按「明确偏好 → 题材 → 投放场景」选一个，规则见 [`references/styles.md`](references/styles.md)。
 
 ![7 套主题的封面和第一张内容卡](docs/themes.jpg)
 
@@ -256,7 +256,7 @@ flowchart LR
 
 </details>
 
-部分标题字体从 Google Fonts 和 jsDelivr 在线加载。离线时会退回系统字体，版式不变，只是风格感弱一些。新建一个主题只需要写一个 CSS 变量文件，见 [`references/styles.md`](skills/article2media/references/styles.md)。
+部分标题字体从 Google Fonts 和 jsDelivr 在线加载。离线时会退回系统字体，版式不变，只是风格感弱一些。新建一个主题只需要写一个 CSS 变量文件，见 [`references/styles.md`](references/styles.md)。
 
 ## 口播视频
 
@@ -304,7 +304,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 ### 字幕
 
-单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设（pill / sticker / block / ink / marker / cinema / glass）分给 8 套主题，关键词用主题色，配置见 [`engine/themes/caption-styles.json`](skills/article2media/engine/themes/caption-styles.json)。
+单行显示，同一句里的短语合并，换字幕时硬切，短停顿里字幕一直保留，所以不会闪烁。7 种样式预设（pill / sticker / block / ink / marker / cinema / glass）分给 8 套主题，关键词用主题色，配置见 [`engine/themes/caption-styles.json`](engine/themes/caption-styles.json)。
 
 ### 审片与交付
 
@@ -326,7 +326,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 - **原文块账本**：每个可见文本块都登记进账本，渲染后在浏览器里逐块读回比对。改一个字、调一次顺序、漏一块或重复一块，都会失败。
 - **卡片怎么分页**：放不下的段落在行与行之间断开、下一张接上，列表在项间断开，表格在行间断开并重复表头；小标题不落单，续页不会只剩一行。跨卡的两截拼起来比对。
 - **附加检查**：解析器有没有漏掉原文，来源文件在渲染期间有没有被改动；同时报告浏览器实际用上的字体。
-- **详细说明**：见 [`verbatim.md`](skills/article2media/references/verbatim.md)、[`original-long.md`](skills/long-image/references/original-long.md)、[`original-cards.md`](skills/image-cards/references/original-cards.md)。
+- **详细说明**：见 [`verbatim.md`](references/verbatim.md)、[`original-long.md`](skills/long-image/references/original-long.md)、[`original-cards.md`](skills/image-cards/references/original-cards.md)。
 
 **全文翻译**（`article-translate`）
 - **做法**：Claude 逐块翻译，块的种类和顺序不变；代码和图片原样保留，front matter 记下原文出处。
@@ -434,7 +434,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 ## 安装
 
-11 个 skill 要装在同一个 skills 目录里：各能力的脚本都在 `article2media/engine/`，所以**至少装 `article2media` 加上你要用的能力**，最省事是全部装上。
+11 个 skill 共用仓库根目录的 `engine/`（脚本、版式、主题、音色）。插件安装会把 `engine/`、`references/`、`skills/` 一起装好；手动安装时这三个目录要保持在同一个仓库根下，不能只拷 `skills/` 里的单个能力。
 
 **Claude Code 插件**（推荐，一次装好全部）
 
@@ -466,11 +466,11 @@ rsync -a ~/code/article2media/skills/ ~/.claude/skills/     # Claude Code
 rsync -a ~/code/article2media/skills/ ~/.agents/skills/     # Codex
 ```
 
-只拷了某个能力、旁边没有 `article2media` 时，脚本会提示"找不到共享引擎"；也可以用环境变量 `ARTICLE2MEDIA_ENGINE=/path/to/skills/article2media/engine` 指过去。
+只拷了某个能力、仓库根下没有 `engine/` 时，脚本会提示"找不到共享引擎"；也可以用环境变量 `ARTICLE2MEDIA_ENGINE=/path/to/engine` 指过去。
 
 在本仓库里打开 Claude Code 时，`.claude/skills/` 下 11 个 skill 都已经软链接好，可以直接使用。
 
-**从 1.x 升级**：插件更新即可。手动或 skills CLI 安装的，把新增的 10 个 skill 一起装上；以前直接调用的 `skills/article2media/scripts/*.mjs` 现在在 `skills/article2media/engine/scripts/`，或用各 skill 自己的入口（见下）。
+**从 1.x 升级**：插件更新即可。手动或 skills CLI 安装的，把新增的 10 个 skill 一起装上；以前直接调用的 `skills/article2media/scripts/*.mjs` 现在在 `engine/scripts/`，或用各 skill 自己的入口（见下）。
 
 ### 依赖
 

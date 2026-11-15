@@ -19,7 +19,7 @@ version: "2.0.1"
 - 已有 `content.json` → 杂志长图；用户只给了文章、又说"原文 / 全文 / 一字不改 / -f" → 原文长图。
 - 给的是链接、文件、粘贴的正文或视频 → 先用 `article-fetch` / `video-transcript` 取原文。
 - 只有文章、用户没说原文还是总结 → 长图默认**改写**：先用 `article-rewrite` 写 content.json。原文是外文、又要原文长图 → 先用 `article-translate`。
-- 判断规则、工作目录和调用其他能力的方式：`../article2media/references/pipeline.md`。
+- 判断规则、工作目录和调用其他能力的方式：`../../references/pipeline.md`。
 
 第一次使用先跑 `node ${CLAUDE_SKILL_DIR}/scripts/doctor.mjs`（Node 22+、Chrome）。
 
@@ -31,7 +31,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/content.json --theme all     
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs --list                                 # 列出主题
 ```
 - 每页输出 PNG 和同名 `.html`、`qa.json`，一页大约 4 秒。其他参数：`--page 1,3`、`--scale 2`、`--format jpeg --quality 90`、`--max-height 4400`、`--brand brand.json`、`--out 目录`。
-- content.json 没写主题、用户也没指定时，按 `../article2media/references/styles.md` 选一个，写进 content.json。
+- content.json 没写主题、用户也没指定时，按 `../../references/styles.md` 选一个，写进 content.json。
 - 有 AI 插画还没生成时会出占位框并提示：用 `article-rewrite` 的 `illustrate.mjs` 生成，生成不了就去掉插画字段。
 
 **检查与修正（最多 2 轮）**
@@ -44,7 +44,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/long.mjs --list                                
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md                  # 白底阅读面
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md --theme paper-editorial    # 用主题的颜色与字体
 ```
-读 `references/original-long.md`（阅读面规格）和 `../article2media/references/verbatim.md`（允许与禁止、逐块校验）。全文校验未通过（改字、调序、漏块、重复）就是错误，按提示修，不能靠目测放行。看 `full/review/` 里的重叠切片，逐张看完再交付。
+读 `references/original-long.md`（阅读面规格）和 `../../references/verbatim.md`（允许与禁止、逐块校验）。全文校验未通过（改字、调序、漏块、重复）就是错误，按提示修，不能靠目测放行。看 `full/review/` 里的重叠切片，逐张看完再交付。
 
 ## 3. 交付
 - 每张图的绝对路径（原文长图加像素尺寸）；

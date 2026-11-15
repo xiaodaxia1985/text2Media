@@ -1,6 +1,6 @@
 # 原文长图：一字不改的长图
 
-把**完整文章**（原文、译文或 `rewrite.md`）排成一张（或几张）可连续阅读的长图。规则和校验与所有原文排版相同，见 `../../article2media/references/verbatim.md`：每一句按原顺序只出现一次，生成图 0 张，逐块读回比对。
+把**完整文章**（原文、译文或 `rewrite.md`）排成一张（或几张）可连续阅读的长图。规则和校验与所有原文排版相同，见 `../../../references/verbatim.md`：每一句按原顺序只出现一次，生成图 0 张，逐块读回比对。
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/long.mjs <目录>/article.md                  # 白底阅读面 → <目录>/full/full.png

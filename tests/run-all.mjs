@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// End-to-end self test for the article2media skills (10 capabilities + the article2media entry and its shared engine).
+// End-to-end self test for the text2Media skills (11 capabilities sharing the engine at the repo root).
 //
 //   node tests/run-all.mjs            # skills + CLI behaviour + 公众号/插画/原文/翻译 checks + full matrix (every example × layout × theme)
 //   node tests/run-all.mjs --quick    # same checks, one theme per layout
@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS = path.join(ROOT, 'skills');
-const SKILL = path.join(SKILLS, 'article2media', 'engine'); // shared engine: scripts, layouts, themes, assets
+const SKILL = path.join(ROOT, 'engine'); // shared engine: scripts, layouts, themes, assets
 const RENDER = path.join(SKILL, 'scripts', 'render.mjs');
 const EXDIR = path.join(SKILLS, 'article-rewrite', 'examples');
 const EXAMPLES = fs.readdirSync(EXDIR).filter((f) => f.endsWith('.json')).map((f) => path.join(EXDIR, f));
@@ -65,6 +65,7 @@ console.log('== Skills');
   const wrappers = dirs.flatMap((d) => fs.existsSync(path.join(SKILLS, d, 'scripts')) ? fs.readdirSync(path.join(SKILLS, d, 'scripts')).filter((x) => x.endsWith('.mjs')).map((x) => path.join(SKILLS, d, 'scripts', x)) : []);
   const broken = wrappers.filter((w) => {
     const src = fs.readFileSync(w, 'utf8');
+    if (!/A2M_CLI/.test(src)) return false; // 自带逻辑的技能（card-video 等）不是薄包装
     const target = src.match(/new URL\('(\w+\.mjs)', engine\)/)?.[1];
     return !target || !fs.existsSync(path.join(SKILL, 'scripts', target));
   });

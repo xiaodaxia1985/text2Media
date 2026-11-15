@@ -13,7 +13,7 @@ version: "2.0.1"
 参数：`$ARGUMENTS`
 
 ## 0. 输入与能力
-- 文章 `article.md`（原文、译文或逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../article2media/references/pipeline.md`）。
+- 文章 `article.md`（原文、译文或逐字稿）。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../../references/pipeline.md`）。
 - **先确认有出图能力**：`node ${CLAUDE_SKILL_DIR}/scripts/doctor.mjs` 的 `ai-illustration` 一行。没有就告诉用户做不了漫画，建议改用长图（`long-image`）或白板（`logic-whiteboard`）。
 
 ## 1. 流程

@@ -8,7 +8,7 @@
 | `article.zh.md` | 全文翻译 | 外文搬运 |
 | `rewrite.md` | 改写稿导出（`article-rewrite` 的 `export.mjs`） | 公众号总结 |
 
-三种都按原文规则排：正文一字不改，逐块读回校验（`../../article2media/references/verbatim.md`）。要删改内容，改源头（改 article.md，或改 content.json 再导出），不要改排版结果。
+三种都按原文规则排：正文一字不改，逐块读回校验（`../../../references/verbatim.md`）。要删改内容，改源头（改 article.md，或改 content.json 再导出），不要改排版结果。
 
 ## 输出
 

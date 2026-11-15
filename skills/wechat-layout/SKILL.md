@@ -22,7 +22,7 @@ version: "2.0.1"
 | 原文是外文，读者是中文 | 先用 `article-translate` 出 `article.zh.md`，排译文 |
 | 只说"发公众号"，没说原文还是总结 | 默认**原文排版**；一篇别人的长文、结果差别又大时，问一句"原文排版还是总结后再排" |
 
-给的是 `content.json` 时脚本会拒绝：公众号排版只吃文章，先导出 `rewrite.md`。判断规则和工作目录见 `../article2media/references/pipeline.md`。
+给的是 `content.json` 时脚本会拒绝：公众号排版只吃文章，先导出 `rewrite.md`。判断规则和工作目录见 `../../references/pipeline.md`。
 
 第一次使用先跑 `node ${CLAUDE_SKILL_DIR}/scripts/doctor.mjs`（Node 22+、Chrome）。
 
@@ -33,7 +33,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --theme paper-ed
 node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/rewrite.md                        # 主题默认用 rewrite.md 里记录的（图表按它截的图）
 node ${CLAUDE_SKILL_DIR}/scripts/wechat.mjs <目录>/article.md --title "公众号标题" --digest "摘要" --cover-title "两行\n标题"
 ```
-- 主题：用户指定 > 文章 front matter 的 `theme` > 按 `../article2media/references/styles.md` 选（没选时是 editorial）。`rewrite.md` 的图表是按导出时的主题截的图，换主题要先重新导出。
+- 主题：用户指定 > 文章 front matter 的 `theme` > 按 `../../references/styles.md` 选（没选时是 editorial）。`rewrite.md` 的图表是按导出时的主题截的图，换主题要先重新导出。
 - 标题、摘要、封面标题的写法和限制见 `references/wechat-guide.md`。
 
 ## 2. 检查（最多 2 轮）

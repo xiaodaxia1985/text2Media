@@ -8,7 +8,7 @@
 // 目标文件：<内容目录>/illustrations/<key>.<照片扩展名>
 import fs from 'node:fs';
 import path from 'node:path';
-import { themeStyle, keyFor } from '../skills/article2media/engine/scripts/lib/illustrations.mjs';
+import { themeStyle, keyFor } from '../../engine/scripts/lib/illustrations.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (k, d = null) => {

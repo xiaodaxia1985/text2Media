@@ -113,7 +113,7 @@
 
 **界格 `grid` 已于 2026-11-11 下线**，写了会直接报错。并列的短词改写成 `claim`，或并进相邻卡。
 
-**平台张数上限**（以 `skills/article2media/engine/scripts/lib/platforms.mjs` 为准）：
+**平台张数上限**（以 `../engine/scripts/lib/platforms.mjs` 为准）：
 
 | 平台 | 比例 | 单篇上限 |
 |---|---|---|
@@ -131,7 +131,7 @@
 node skills/article-rewrite/scripts/check.mjs <工作目录>/content.json
 
 # 出版式方案 + 灰模：把空卡、薄卡、卡型重复、超上限、内容覆盖不足全部点出来
-node skills/article2media/engine/scripts/render.mjs <工作目录>/content.json --platform 小红书 --plan
+node ../engine/scripts/render.mjs <工作目录>/content.json --platform 小红书 --plan
 ```
 
 `--plan` 会写 `plan.json` / `plan.png`，逐张列卡型、信息量、覆盖率与最大空带；灰模上描红的卡必须回改。

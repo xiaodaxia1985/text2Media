@@ -19,7 +19,7 @@ version: "2.0.1"
 
 ## 输入
 
-`article.md`（原文、译文或逐字稿）。给的是链接或文件时，先用 `article-fetch`（视频用 `video-transcript`）取原文；调用方式和工作目录见 `../article2media/references/pipeline.md`。同一篇已有 `content.json` 时**不要重写**：只补新版式需要的字段。
+`article.md`（原文、译文或逐字稿）。给的是链接或文件时，先用 `article-fetch`（视频用 `video-transcript`）取原文；调用方式和工作目录见 `../../references/pipeline.md`。同一篇已有 `content.json` 时**不要重写**：只补新版式需要的字段。
 
 逐字稿是**口语**：去掉口头禅和重复，事实、数字、人名以视频为准；识别可能出错的专有名词对照 `transcript/segments.md` 判断，拿不准的交付时说明。来源写成「内容整理自 <作者> 的<平台>视频《标题》」。
 
@@ -30,7 +30,7 @@ version: "2.0.1"
 - 核心主张（一句话）；
 - 页数和每页的 `part`，按 `references/content-schema.md` 末尾的密度表定（`--pages` 可强制 1–4 页）；
 - 每节的标题、两张图的类型、面板类型；
-- 主题：用户没指定时，按 `../article2media/references/styles.md` 选一个，写进 `theme`。
+- 主题：用户没指定时，按 `../../references/styles.md` 选一个，写进 `theme`。
 
 不需要先把大纲给用户确认，除非用户要求先看大纲。
 

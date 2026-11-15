@@ -27,7 +27,7 @@ const SR = 48000;
 // ffmpeg/ffprobe are resolved once in ./ffmpeg.mjs — PATH misses them on some Windows setups.
 
 // Two voice libraries:
-//   public  skills/article2media/assets/voices/  — shipped with the skill: designed voices or explicitly consented ones only
+//   public  engine/assets/voices/  — shipped with the repo: designed voices or explicitly consented ones only
 //   local   ~/.local/share/article2media/voices/ — personal references (platform voices, clips from the web, celebrities…);
 //           never distributed, never committed. Each entry records its source and rights.
 // Local data root. Before 1.5.0 the project was called article2img; keep using that folder if it is the only one present.

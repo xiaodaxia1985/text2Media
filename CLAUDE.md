@@ -4,7 +4,7 @@ Guidance for Claude Code when working on this repository (not when using the ski
 
 ## Overview
 
-A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). Since 2.0 it holds **11 skills**: ten independent capabilities and one entry skill that chains them into recommended combos. Articles or videos → Chinese visual content (long images, fixed-ratio cards, 公众号, explainer video, whiteboard, comic) with 7 themes.
+A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). It holds **11 skills**, all independent capabilities that share one engine at the repo root (`engine/`). Articles or videos → Chinese visual content (long images, fixed-ratio cards, 公众号, explainer video, card video, whiteboard, comic) with 7 themes.
 
 | skill | capability | input → output |
 |---|---|---|
@@ -18,24 +18,22 @@ A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./ski
 | `explainer-video` | 9:16 video | article (+ `content.json`) → `video.json` → MP4 |
 | `logic-whiteboard` | argument whiteboard | `article.md` → `whiteboard.json` → PNG |
 | `article-comic` | comic | `article.md` → `comic.json` → panels + PNG + 3:4 cards |
-| `article2media` | entry + shared engine | recommended combos; `engine/` holds all code, layouts, themes, voices |
+| `card-video` | card → video (the default way to make a video) | `cards.html` + `content.json` → TTS → animated MP4 |
 
 ## Repository structure
 
 ```
-article2media/
+text2Media/
 ├── .claude-plugin/              # plugin.json, marketplace.json, icon.png
 ├── .claude/skills/<name>        # symlinks to skills/<name> for local use in this repo
+├── engine/                      # shared engine, used by every capability
+│   ├── scripts/                 # Node 22 CLIs, zero npm deps: fetch, render, export, translate, illustrate, video, comic, doctor; lib/
+│   ├── layouts/                 # structure CSS per layout (long, card, full, cards-article, wechat, wechat-article, whiteboard, comic, video)
+│   ├── themes/                  # 7 themes (first-line comment = name | description); illustration-styles.json, caption-styles.json
+│   └── assets/                  # voices/ (VoxCPM2 designed voices, catalog.json), fonts/
+├── references/                  # shared: pipeline.md (handoff files, 原文 vs 改写 table, calling siblings), verbatim.md, styles.md
 ├── skills/
-│   ├── article2media/           # entry skill + shared engine
-│   │   ├── SKILL.md             # combos and routing
-│   │   ├── references/          # shared: pipeline.md (handoff files, 原文 vs 改写 table, calling siblings), verbatim.md, styles.md
-│   │   └── engine/
-│   │       ├── scripts/         # Node 22 CLIs, zero npm deps: fetch, render, export, translate, illustrate, video, comic, doctor; lib/
-│   │       ├── layouts/         # structure CSS per layout (long, card, full, cards-article, wechat, wechat-article, whiteboard, comic, video)
-│   │       ├── themes/          # 7 themes (first-line comment = name | description); illustration-styles.json, caption-styles.json
-│   │       └── assets/voices/   # VoxCPM2 designed voices (catalog.json)
-│   └── <capability>/            # SKILL.md, agents/openai.yaml, references/, scripts/ (thin wrappers into the engine)
+│   └── <capability>/            # SKILL.md, agents/openai.yaml, references/, scripts/ (thin wrappers into ../../../engine)
 │       └── …                    # article-rewrite/examples/: content.json fixtures used by tests and as model examples
 ├── tests/                       # run-all.mjs (self-test matrix), theme-sheet.mjs
 ├── scripts/install.sh           # dependency check; prints commands, downloads nothing
@@ -45,7 +43,7 @@ article2media/
 
 ## Architecture
 
-- **Skills share one engine, hand off through files.** Every capability skill's `scripts/*.mjs` is a ~10-line wrapper that locates `../../article2media/engine/scripts/` (or `$ARTICLE2MEDIA_ENGINE`), sets `A2M_CLI` (its own name for usage text) and preset args (`--layout card`, `--kind video` …), then imports the engine script. Skills never import each other; they exchange `article.md`, `article.zh.md`, `content.json`, `rewrite.md` in one working directory (`skills/article2media/references/pipeline.md`). Installing a capability without `article2media` next to it fails with a clear message (tested).
+- **Skills share one engine, hand off through files.** Every capability skill's `scripts/*.mjs` is a ~10-line wrapper that locates `../../../engine/scripts/` (or `$ARTICLE2MEDIA_ENGINE`), sets `A2M_CLI` (its own name for usage text) and preset args (`--layout card`, `--kind video` …), then imports the engine script. Skills never import each other; they exchange `article.md`, `article.zh.md`, `content.json`, `rewrite.md` in one working directory (`references/pipeline.md`). Installing a capability without the repo root's `engine/` next to it fails with a clear message (tested).
 - **The input decides the pipeline** in `render.mjs`: an article (`.md`) is laid out verbatim (`render-full.mjs`, `render-cards-article.mjs`, `render-wechat-article.mjs`); a `content.json` is designed (long pages, cards). `--layout wechat` accepts articles only — a rewrite reaches 公众号 via `export.mjs` → `rewrite.md` (figures captured as PNGs in the exported theme, front matter `kind: rewrite`).
 - **Content and style are separate.** Layout CSS + theme CSS (variables plus small structural overrides, loaded last), screenshotted in headless Chrome via the DevTools protocol (`lib/chrome.mjs`).
 - **Verbatim pipelines share one ledger** (`lib/layout-full.mjs`): `loadArticle` (front matter, `parseBlocks`, parser-coverage check), `readbackInPage` (DOM text per `data-source-block`, `[data-deco]` ignored, `merge` joins a block split across cards), `compareLedger` (`looseBreaks` for 公众号, where newlines are `<br>`). Original cards flow blocks in the page (`flowInPage`) and split paragraphs / lists / tables at line, item or row boundaries.

@@ -14,7 +14,7 @@ version: "2.0.1"
 
 ## 输入
 
-`article.md`。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../article2media/references/pipeline.md`）。默认译成简体中文；用户要别的语言时，文件名用对应代码（`article.en.md`），规则相同。
+`article.md`。给的是链接、文件或视频时，先用 `article-fetch` / `video-transcript` 取原文（见 `../../references/pipeline.md`）。默认译成简体中文；用户要别的语言时，文件名用对应代码（`article.en.md`），规则相同。
 
 ## 1. 看清原文
 ```bash

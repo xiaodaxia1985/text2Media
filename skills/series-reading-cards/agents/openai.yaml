@@ -1,0 +1,4 @@
+interface:
+  display_name: "系列精读卡片"
+  short_description: "外文长文 → 小红书/抖音 原文精读系列卡片组 + 总览图 + 发帖文案"
+  default_prompt: "使用 $series-reading-cards 把这篇外文长文做成精读卡片组。"

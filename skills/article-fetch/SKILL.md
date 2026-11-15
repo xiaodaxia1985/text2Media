@@ -40,4 +40,4 @@ node ${CLAUDE_SKILL_DIR}/scripts/fetch.mjs "<url>" --out <目录>      # 指定�
 
 ## 4. 交付
 单独使用时：给出 `article.md` 的绝对路径、标题、作者、平台、字数，以及上面发现的缺漏。
-在组合里：把目录交给下一个能力（见 `../article2media/references/pipeline.md`）。
+在组合里：把目录交给下一个能力（见 `../../references/pipeline.md`）。

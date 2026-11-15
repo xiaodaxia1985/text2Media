@@ -40,7 +40,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --platform 小�
 - 已有 `content.json` → 总结卡片；用户只给了文章、又说"原文 / 全文 / 一字不改" → 原文卡片。
 - 给的是链接、文件、粘贴的正文或视频 → 先用 `article-fetch` / `video-transcript` 取原文。
 - 只有文章、用户没说原文还是总结 → 卡片默认**改写**：先用 `article-rewrite` 写 content.json（卡片专用字段按 `references/xhs-guide.md` 写）。原文是外文、又要原文卡片 → 先用 `article-translate`。
-- 判断规则、工作目录和调用其他能力的方式：`../article2media/references/pipeline.md`。
+- 判断规则、工作目录和调用其他能力的方式：`../../references/pipeline.md`。
 
 第一次使用先跑 `node ${CLAUDE_SKILL_DIR}/scripts/doctor.mjs`（Node 22+、Chrome）。
 
@@ -81,7 +81,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --c
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4           # 出图，一组大约 5 秒
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --theme signal-swiss
 ```
-- 主题：content.json 的 `theme`（可写成 `{"long": …, "cards": …}` 分开指定）；都没有时按 `../article2media/references/styles.md` 选。卡片场景的主题调整见 styles.md 第 3 步。
+- 主题：content.json 的 `theme`（可写成 `{"long": …, "cards": …}` 分开指定）；都没有时按 `../../references/styles.md` 选。卡片场景的主题调整见 styles.md 第 3 步。
 - **排版量纲是写死的**（`engine/scripts/lib/metrics.mjs`）：卡片四边留白 72 / 80 输出像素（CSS 40 / 36）；大标题按去标点字数走五档 132 / 108 / 96 / 84 / 72（6 字以内 / 7–10 字 / 两行且每行 ≤8 字 / 两行 / 三行）；节标题收在 48–76。改字号时改这个模块，不要在各处手写 px。
 - **大标题不带逗号句号**：封面标题、节标题、主张大字里的 ``，`` ``。`` ``、`` 只当断行用——写了也一样会被断成多行并把符号删掉（「能出图，不等于好看的图。」→ 三行）。断行位置要自己想清楚，别指望标点替你分段。
 - **中文断行自己写 `\n`**：引擎只按字形宽度断，会把词切开（"做得好的产／品"、"任／何多余"）。封面标题、章节页导语、主张大字里凡是希望断得干净的地方，都在 content 里写 `\n`；写了就按写的断，不会再自作主张。
@@ -103,7 +103,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/content.json --ratio 3:4 --t
 - 交付时列出：脱敏了哪些、故意保留哪些（如 `GitHub Actions`）及理由、截图是重排还是遮盖。
 
 ## 2. 原文卡片（article.md）
-读 `references/original-cards.md` 和 `../article2media/references/verbatim.md`。
+读 `references/original-cards.md` 和 `../../references/verbatim.md`。
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4
 node ${CLAUDE_SKILL_DIR}/scripts/cards.mjs <目录>/article.md --ratio 3:4 --theme paper-editorial   # 用主题的颜色与字体

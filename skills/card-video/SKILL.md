@@ -3,7 +3,7 @@ name: card-video
 description: 卡片视频：把已经做好的卡片组（cards.html）直接做成竖屏视频——每张卡按口播逐卡推进，卡内文字块逐块入场，图里的柱、横条、数字、连线、条目各自长出来。输入是 image-cards / series-reading-cards 产出的 `cards.html` + 一份口播稿 `script.json`，输出 mp4（画幅、卡数、字幕安全位全部按卡片自动适配，9:16 与 3:4 都不用改代码）。Use when the user wants 卡片视频, 卡片转视频, 把卡片做成视频, 图文转视频, 卡片加动画出片, 抖音竖版卡片视频, or "这几张卡片做成一个视频" — 已经有卡片、只想让它动起来并配上口播时用本 skill。**这是出视频的唯一入口**：文章要成片，先出卡片再走本 skill；不走分镜导演路线（那是 explainer-video，两套东西，别混）。
 argument-hint: <目录|cards.html> [--script 口播稿] [--probe] [--report] [--out 视频路径]
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/*)
-version: "1.0.0"
+version: "2.0.1"
 ---
 
 # 卡片视频（card-video）
