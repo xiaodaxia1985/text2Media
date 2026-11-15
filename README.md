@@ -116,6 +116,7 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 | `article-translate` | 全文翻译 | `article.md` → `article.zh.md`，结构逐块对应 |
 | `long-image` | 长图 | 改写稿 → 杂志长图；文章 → 一字不改的原文长图 |
 | `image-cards` | 卡片 | 改写稿 → 总结卡片；文章 → 原文卡片（3:4 / 4:5 / 1:1 / 9:16） |
+| `article-figures` | 图解 | 文章 → 张数由全文结构算出的图解页（HTML + 1080px PNG），逐页块级覆盖校验，字体全内联 |
 | `wechat-layout` | 公众号排版 | 文章（原文、译文或 `rewrite.md`）→ 可粘贴的图文 + 头图 + 封面 |
 | `explainer-video` | 口播视频 | 文章 → 1080×1920 竖屏讲解视频 |
 | `logic-whiteboard` | 白板论证 | 文章 → 纵向推理主干长图 |

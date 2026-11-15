@@ -1,0 +1,171 @@
+{
+  "article": {
+    "path": "site/XiaoBlog/src/content/insights/li-yanhong-next-act.md",
+    "title": "李彦宏说「下一幕」是智能组织，我关心的是验证和追责"
+  },
+  "count_policy": {
+    "mode": "structure",
+    "_note": "张数从 article_map 长出来，不从字数除出来。单套超过 12 张改 mode=split，在 batches 里写清每卷几张。"
+  },
+  "article_map": [
+    {"section": "一、他说的下一幕", "claim": "李彦宏把「智能组织」定为下一幕，但他给的是判断不是路径", "figures": ["01-timeline"], "reason": ""},
+    {"section": "二、验证", "claim": "233 亿经营利润被一笔减值打掉 162 亿", "figures": ["02-waterfall"], "reason": ""},
+    {"section": "三、组织怎么变", "claim": "从岗位记账改成任务记账", "figures": ["03-layers"], "reason": ""},
+    {"section": "四、四类角色的换位", "claim": "四类角色在智能组织里换了位置", "figures": ["05-quadrant"], "reason": ""},
+    {"section": "五、代价与追责", "claim": "责任要跟着任务走，不能留在岗位上", "figures": ["04-loop", "07-delta"], "reason": ""},
+    {"section": "六、落地顺序", "claim": "先记任务，再谈组织", "figures": ["06-steps"], "reason": ""},
+    {"section": "附：数字口径", "claim": "原文给的百分比与绝对额口径不一", "figures": [], "reason": "口径问题是一句话的事，画图会把差异放大成结论"}
+  ],
+  "figures": [
+    {
+      "id": "01-timeline",
+      "claim": "十二年四次表态，方向没变，变的是账本的日期",
+      "anchor_quote": "2016 年，“下一幕” 这个说法是分几步升级的",
+      "figure_type": "timeline",
+      "type_choice": {
+        "chosen": "timeline",
+        "candidates": [
+          {"type": "timeline", "shows": "表态落在哪一年", "why": "断轴能同时装下 2016 的密集与 2020–2024 的空窗", "loses": "表态之间的因果", "cost": "两段不同比例 + 断轴标注"},
+          {"type": "steps", "shows": "顺序", "why": "最省事", "loses": "那七年空窗正是论点", "cost": "低"},
+          {"type": "gantt", "shows": "每件事持续多久", "why": "能显示并行", "loses": "原文没有可信的起止月", "cost": "要编日期，不诚实"}
+        ],
+        "rejected_because": "steps 抹掉空窗；gantt 需要原文没有的日期"
+      },
+      "reads_as": "2016 一整年挤在左边，中间断了七年，2025 的账本一个人站在右边",
+      "why_not_table": "四次表态的间距本身是信息：2016 挤在半年里、后面空了七年，表格会把这段空白抹平",
+      "focal": "2025 账本",
+      "budget": {"nodes": 8, "arrows": 0, "accents": 1},
+      "honesty_flags": ["断轴：左段 2016 放大、右段 2023–2025 压缩，两段比例不同"],
+      "data": [
+        {"label": "2016.06", "value": "联盟峰会：下一幕是人工智能"},
+        {"label": "2016.08", "value": "亚布力：互联网的下一幕"},
+        {"label": "2016.09", "value": "百度世界：AI is the new electricity"},
+        {"label": "2016.11", "value": "乌镇：移动互联网时代结束"},
+        {"label": "2023.03", "value": "文心一言邀测"},
+        {"label": "2025", "value": "营收 −3%、净利 −76%"}
+      ]
+    },
+    {
+      "id": "02-waterfall",
+      "claim": "233 亿的经营利润，被一笔减值打掉 162 亿，最后剩 56 亿",
+      "anchor_quote": "归母净利润 56 亿元，同比下降 76%",
+      "figure_type": "waterfall",
+      "reads_as": "一根高柱、一根空心的大落柱、一小段残差，落到 56 亿",
+      "why_not_table": "读者要看见的是「掉下去的那一段有多长」，三个数字排成行没有这个重量",
+      "focal": "减值 162 亿",
+      "budget": {"nodes": 4, "arrows": 3, "accents": 1},
+      "honesty_flags": [
+        "推断：2024 年归母净利 233 亿按 2025 年 56 亿、同比 −76% 反推，原文未直接给出",
+        "残差：其他变动 −15 亿为 233−162−56 的差值，原文未列为科目"
+      ],
+      "data": [
+        {"label": "2024 归母净利", "value": "233"},
+        {"label": "长期资产减值", "value": "−162"},
+        {"label": "其他变动", "value": "−15"},
+        {"label": "2025 归母净利", "value": "56"}
+      ]
+    },
+    {
+      "id": "03-layers",
+      "claim": "技术栈十年前就成型了，真正没变的是最上面那层组织",
+      "anchor_quote": "很多企业 Token 花费越来越多，收入利润却没有跟着涨，原因是只换了电机，没有重新设计工厂。",
+      "figure_type": "layers",
+      "reads_as": "六层横带，只有最上面一层被标了颜色",
+      "why_not_table": "六层是包含关系不是并列关系，表格会把「谁托着谁」画丢",
+      "focal": "L5 组织",
+      "budget": {"nodes": 6, "arrows": 1, "accents": 1},
+      "honesty_flags": ["层内数字为百度自述口径，未独立核实"],
+      "data": [
+        {"label": "L5", "value": "组织：4300 Workspace、2 万 Skill"},
+        {"label": "L4", "value": "体：DAA 0.5 万→3.7 万"},
+        {"label": "L3", "value": "模：每任务 token 更多，账单降得慢"},
+        {"label": "L2", "value": "云：同性能模型每年降到 1/10"},
+        {"label": "L1", "value": "芯：十年形成的四层之一"},
+        {"label": "L0", "value": "电：上游是能源，下游是组织"}
+      ]
+    },
+    {
+      "id": "04-loop",
+      "claim": "流程闭环里唯一不能外包的一步是定标准",
+      "anchor_quote": "他的概括是 “可衡量加 Looping 等于持续进化”。",
+      "figure_type": "loop",
+      "reads_as": "五道工序绕一圈，每圈都往中间那本账上写一笔",
+      "why_not_table": "闭环的要点是「回到第一步」，列表天然是单向的，会把这个回环画死",
+      "focal": "01 定标准",
+      "budget": {"nodes": 6, "arrows": 5, "accents": 1},
+      "honesty_flags": ["五道工序按「以任务为中心」改写自他的三条原则，非原文逐条对应"],
+      "data": [
+        {"label": "01", "value": "定标准：可衡量的好"},
+        {"label": "02", "value": "派任务：以任务为中心"},
+        {"label": "03", "value": "做出来：人＋智能体"},
+        {"label": "04", "value": "记结果：出错率、耗时、成本"},
+        {"label": "05", "value": "改标准：按结果循环"},
+        {"label": "hub", "value": "组织账本：2 万个已沉淀 Skill"}
+      ]
+    },
+    {
+      "id": "05-quadrant",
+      "claim": "冲击集中在入门岗、替代型工作，落差 19 个百分点",
+      "anchor_quote": "22 到 25 岁的工作者，在最易受 AI 影响的职业里，就业比相对不受影响的同龄人低 19%",
+      "figure_type": "quadrant",
+      "reads_as": "四个观察点散在四个角，只有左下角那个是红的",
+      "why_not_table": "四条发现各自的坐标位置（替代/辅助、入门/资深）才是信息，表格会退化成四行字",
+      "focal": "22–25 岁·替代型 −19%",
+      "budget": {"nodes": 4, "arrows": 2, "accents": 1},
+      "honesty_flags": ["两轴为定性分类，点非连续刻度；研究者自述为描述性迹象"],
+      "data": [
+        {"label": "22–25 替代型", "value": "−19%"},
+        {"label": "22–25 辅助型", "value": "持平或上升"},
+        {"label": "替代型·资深", "value": "降幅不如入门明显"},
+        {"label": "默会知识·中高年资", "value": "增长更强"}
+      ]
+    },
+    {
+      "id": "06-steps",
+      "claim": "普通人能做的是把「能定义好」变成可签字的证据",
+      "anchor_quote": "下面的做法来自我的预测加上这份数据，是我的推断，没有被验证过。",
+      "figure_type": "steps",
+      "reads_as": "一条横轨五段，第一段被标红，其余四段等宽",
+      "why_not_table": "这五步有先后：先写标准，才谈审核和记账；表格会把顺序变成并列",
+      "focal": "01 写清标准",
+      "budget": {"nodes": 5, "arrows": 0, "accents": 1},
+      "honesty_flags": ["作者自称推断，未经检验；原文第五节"],
+      "data": [
+        {"label": "01", "value": "写清标准"},
+        {"label": "02", "value": "审核并记账"},
+        {"label": "03", "value": "攒默会判断"},
+        {"label": "04", "value": "在结果上署名"},
+        {"label": "05", "value": "用项目当证据"}
+      ]
+    },
+    {
+      "id": "07-delta",
+      "claim": "换的不是工具，是记账对象：从岗位换到一次任务",
+      "anchor_quote": "打破岗位边界，从以岗位为中心转向以任务为中心。",
+      "figure_type": "delta",
+      "variant": "parallel-two-column",
+      "reads_as": "左右两条同尺度的链路，左边三年评一次，右边每次任务都落账；底下三行说明哪三件事跟着变",
+      "why_not_table": "前后差异是拓扑差异：同一个人、同一个活，挂在不同节点上，责任和沉淀的归属全变；三行表格写不出「挂在哪」",
+      "focal": "组织账本（4300 个 Workspace 共用一本）",
+      "budget": {"nodes": 6, "arrows": 4, "accents": 1},
+      "honesty_flags": [
+        "左栏「岗位→部门指标→年度评审」为作者的归纳，原文未逐条直述",
+        "4300 Workspace 与 2 万 Skill 为百度自述口径，未独立核实"
+      ],
+      "data": [
+        {"label": "计量单位", "value": "岗位 → 一次任务"},
+        {"label": "沉淀物", "value": "流程文档 → Skill 库"},
+        {"label": "追责", "value": "部门 KPI → 结果上的签名"}
+      ]
+    }
+  ],
+  "dropped": [
+    {"claim": "AI 新业务 400 亿、增长 48%", "reason": "单个增长率撑不起一张图，并进 02 的脚注即可"},
+    {"claim": "加航聊天机器人被判赔 812 加元", "reason": "一个案例是轶事，画成流程图会把它抬成机制"},
+    {"claim": "Gartner 预测 40% 智能体项目会被取消", "reason": "预测数字，画成趋势线会显得像已发生"}
+  ],
+  "risks": [
+    "02 的第一根柱是反推值，若读者只看图不看脚注，会把 233 亿当成原文数字",
+    "05 的点位是定性摆放，容易被当成精确坐标"
+  ]
+}
