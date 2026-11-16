@@ -314,10 +314,15 @@ def choose(text, used):
 TEXT_RIGHT = {"A", "B", "C", "D", "E", "F", "G", "H", "J"}
 
 
-# ---------------------------------------------------- 通栏图族（图形区专用）
-# 视频专用页只留图形区，形状是宽而矮（933×215 这种）。A~L 是给整页（1080×800）排的，
-# 把宽条塞进"左页右文"会缩成一条看不清的细线。所以按素材形状换一族：图铺满横栏，
-# 一句话落在空白处。四套轮换靠图与字的位置，不靠改字号。
+# ---------------------------------------------------- 宽条族（图形区专用）
+# 视频专用页只留图形区，形状是宽而矮（749×217 这种，比例 2.0–4.3）。A~L 是按 1080×800
+# 整页排的，宽条塞进去只占 62%×32%，剩下全是纸色——这就是骨架图被一眼判空的原因。
+#
+# 定下的两条硬规矩（改之前先看这条）：
+#   1. 图按**高度**铺（strip_fit），不按宽度铺。按宽铺到 1752 只有 507 高，半屏必空。
+#   2. 图高锁在 0.38–0.62H：宽度 1856–2150，横裁 ≤10%。铺到 0.70H 以上会横裁 20–36%，
+#      时间线两端的年份、瀑布图首尾的柱子都会没（v2 版踩过）。
+# 半屏剩下的交给 96–124 号大字 + 结构线（细线 / 橙色短线 / 刻度 / 竖排编号 / 巨号垫底）。
 STRIP_DEF = 54
 
 
@@ -325,53 +330,211 @@ def strip_font():
     return ImageFont.truetype(FONT, STRIP_DEF)
 
 
+def _sf(sz):
+    return ImageFont.truetype(FONT, sz)
+
+
+def strip_fit(im, target_h, max_bleed=1.04):
+    """宽条按高度铺；宽度最多出血到 1.04 倍画布，再宽就反过来按宽度定高。
+
+    只按 target_h 铺会出事：03-trust 是 933×215（比例 4.34），铺到 0.52H 等于宽 2437，
+    横裁 21%，三块里最右那块直接切掉。
+    出血上限也不能放到 1.10：左右各裁 5% 已经会吃掉页内贴边的字，成片的运镜还要再放大
+    4–6%，两层叠起来 01 帧的「1993」、12 帧的「可」字就是这么没的。1.04 只裁 2%（38px），
+    小于页内 84px 的边距，运镜再推一档也切不到字。
+    """
+    k = target_h / im.height
+    if im.width * k > W * max_bleed:
+        k = W * max_bleed / im.width
+    return im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+
+
+def _strip_paste(c, s_, y, align="center"):
+    if align == "center":
+        x = (W - s_.width) // 2
+    elif align == "left":
+        x = PAD
+    else:
+        x = -80
+    c.paste(s_, (x, y))
+    return x
+
+
 @reg('S1')
 def S1_top(c, im, text, i, n, f, s):
-    """上图下文：图铺满横栏，字在下方，最稳的一套，开场用它立页。"""
-    f2 = strip_font(); d = ImageDraw.Draw(c)
-    fw = W - 2 * PAD
-    k = fw / im.width
-    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
-    y = 132
-    c.paste(s_, (PAD, y))
-    htext(d, text, PAD, f2, fw, y_top=y + s_.height + 64)
-    idx(d, i, n, W - PAD, H - 92, s, align='right')
+    """上图下文：图 0.52H 居中，细线压图底，104 号字在下。开场立页，最稳。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.52))
+    _strip_paste(c, s_, 104)
+    d.line([(PAD, 104 + s_.height + 26), (W - PAD, 104 + s_.height + 26)], fill=RULE, width=2)
+    htext(d, text, PAD, _sf(104), W - 2 * PAD, y_top=104 + s_.height + 62)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
 
 
 @reg('S2')
 def S2_bottom(c, im, text, i, n, f, s):
-    """上文下图：字先立，图在下方兜住，用于给数/收束。"""
-    f2 = strip_font(); d = ImageDraw.Draw(c)
-    fw = W - 2 * PAD
-    k = fw / im.width
-    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
-    htext(d, text, PAD, f2, fw, y_top=104)
-    c.paste(s_, (PAD, H - 96 - s_.height))
-    idx(d, i, n, W - PAD, H - 92, s, align='right')
+    """上文下图：104 号字先立在上，图 0.54H 兜底。给数、收束。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.54))
+    htext(d, text, PAD, _sf(104), W - 2 * PAD, y_top=84)
+    c.paste(s_, ((W - s_.width) // 2, H - 40 - s_.height))
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
 
 
 @reg('S3')
-def S3_fig_right(c, im, text, i, n, f, s):
-    """图右字左：图压到 0.78 宽贴右，字竖排在左，像边注。"""
-    f2 = strip_font(); d = ImageDraw.Draw(c)
-    fw = round((W - 2 * PAD) * 0.74)
-    k = fw / im.width
-    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
-    c.paste(s_, (W - PAD - s_.width, (H - s_.height) // 2))
-    vtext(d, text, 300, f2, cols=2)
-    idx(d, i, n, W - PAD, 60, s, align='right')
+def S3_tag_left(c, im, text, i, n, f, s):
+    """左题签：图 0.52H 居中，图下一条细线，镜号 90 号在左、112 号字在右。
+
+    镜号不能竖排贴左边缘——图按高度铺满后宽 1856–2150，左边缘压的就是图形本身，
+    第一版真帧里 06/16 两镜的编号全叠在图上。
+    """
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.52))
+    _strip_paste(c, s_, 96)
+    ly = 96 + s_.height + 24
+    d.line([(PAD, ly), (W - PAD, ly)], fill=RULE, width=2)
+    d.text((PAD, ly + 22), f"{i + 1:02d} / {n:02d}", font=_sf(56), fill=(186, 184, 181))
+    htext(d, text, PAD, _sf(112), W - 2 * PAD, y_top=ly + 96)
 
 
 @reg('S4')
-def S4_fig_left(c, im, text, i, n, f, s):
-    """图左字右：图贴左 0.78 宽，字竖排贴右。"""
-    f2 = strip_font(); d = ImageDraw.Draw(c)
-    fw = round((W - 2 * PAD) * 0.74)
-    k = fw / im.width
-    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
-    c.paste(s_, (PAD, (H - s_.height) // 2))
-    vtext(d, text, W - 138, f2, cols=2)
-    idx(d, i, n, PAD, H - 92, s, align='left')
+def S4_tag_right(c, im, text, i, n, f, s):
+    """右题签：112 号字在上，镜号在右上，图 0.52H 压底。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.52))
+    htext(d, text, PAD, _sf(112), W - 2 * PAD - 160, y_top=92)
+    d.text((W - PAD - 146, 98), f"{i + 1:02d}", font=_sf(74), fill=(190, 188, 185))
+    ly = H - 92 - s_.height - 24
+    d.line([(PAD, ly), (W - PAD, ly)], fill=RULE, width=2)
+    c.paste(s_, ((W - s_.width) // 2, H - 92 - s_.height))
+
+
+@reg('S5')
+def S5_bleed(c, im, text, i, n, f, s):
+    """出血压顶：图 0.58H 上下出血（横裁约 10%），96 号字压在图下缘的纸色条上。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.58))
+    _strip_paste(c, s_, -26)
+    col_w = W - 2 * PAD - 120
+    y0 = -26 + s_.height + 30
+    lines = wrap(d, text, _sf(96), col_w)
+    d.rectangle([PAD - 30, y0 - 26, PAD + col_w + 30, y0 + len(lines) * int(96 * 1.45) + 14], fill=PAPER)
+    htext(d, text, PAD, _sf(96), col_w, y_top=y0)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S6')
+def S6_jumbo(c, im, text, i, n, f, s):
+    """缩图巨字：图缩到 0.38H 居中，118 号字压细线下。结论句。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.38))
+    y = 132
+    x = _strip_paste(c, s_, y)
+    d.line([(x, y + s_.height + 30), (x + s_.width, y + s_.height + 30)], fill=RULE, width=2)
+    htext(d, text, PAD, _sf(118), W - 2 * PAD, y_top=y + s_.height + 66)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S7')
+def S7_duo(c, im, text, i, n, f, s):
+    """双裁块并置：同一页左右两半并排，块宽按高度算（总高锁 0.58H），中间留竖线。
+
+    块宽写死 900 会出事：06-life 是 800×343，切半后铺到 900 等于高 771，结论字直接被顶出画布。
+    """
+    d = ImageDraw.Draw(c)
+    h_ = round(H * 0.58)
+    left = im.crop((0, 0, im.width // 2, im.height))
+    right = im.crop((im.width // 2, 0, im.width, im.height))
+    l_ = strip_fit(left, h_)
+    r_ = strip_fit(right, h_)
+    gap = 60
+    x0 = (W - (l_.width + gap + r_.width)) // 2
+    y = 132
+    c.paste(l_, (x0, y))
+    c.paste(r_, (x0 + l_.width + gap, y))
+    d.line([(x0 + l_.width + gap // 2, y - 22), (x0 + l_.width + gap // 2, y + h_ + 22)], fill=RULE, width=2)
+    htext(d, text, PAD, _sf(96), W - 2 * PAD, y_top=y + h_ + 58)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S8')
+def S8_bleed_line(c, im, text, i, n, f, s):
+    """顶出血压线：图 0.62H 从顶出血，图下一条橙色短线，100 号字压在线下。转折镜。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.62))
+    _strip_paste(c, s_, -34)
+    ly = -34 + s_.height + 34
+    d.line([(PAD, ly), (PAD + 420, ly)], fill=ACCENT, width=6)
+    htext(d, text, PAD, _sf(100), W - 2 * PAD, y_top=ly + 34)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S9')
+def S9_tilt(c, im, text, i, n, f, s):
+    """斜置：图 0.50H 逆时针 2.2°，100 号字齐行压在图下。回忆/闪回。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.50))
+    s_ = s_.rotate(2.2, expand=True, resample=Image.BICUBIC, fillcolor=PAPER)
+    c.paste(s_, ((W - s_.width) // 2, 104))
+    htext(d, text, PAD, _sf(100), W - 2 * PAD, y_top=104 + s_.height + 54, mask=True)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S10')
+def S10_window(c, im, text, i, n, f, s):
+    """局部开窗：图 0.54H 铺开，右下开一扇放大窗（橙框）指着细节。
+
+    窄页（比例只有 1.99 的 04-crash）按高铺后只有 60% 宽，窗再压上去会把大字挤成两行，
+    所以窄页把窗放到画布右侧、图缩到 0.72 宽靠左，字仍在图下方通栏。
+    """
+    d = ImageDraw.Draw(c)
+    h_ = round(H * 0.54)
+    s_ = strip_fit(im, h_)
+    narrow = s_.width < W - 2 * PAD - 320
+    if narrow:
+        k = (W - 2 * PAD - 700) / im.width
+        s_ = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+        x, y = PAD, 120
+    else:
+        x, y = (W - s_.width) // 2, 112
+    c.paste(s_, (x, y))
+    win_w = 640 if not narrow else 620
+    crop = im.crop((int(im.width * .52), int(im.height * .30), im.width, im.height))
+    ch = round(crop.height * win_w / crop.width)
+    win = crop.resize((win_w, ch), Image.LANCZOS)
+    wx = (x + s_.width - win_w - 60) if not narrow else (W - PAD - win_w)
+    wy = (y + s_.height - ch - 28) if not narrow else (y + round((s_.height - ch) / 2))
+    c.paste(win, (wx, wy))
+    d.rectangle([wx - 2, wy - 2, wx + win_w + 1, wy + ch + 1], outline=ACCENT, width=3)
+    d.text((wx + 6, wy - 36), "放大", font=_sf(24), fill=ACCENT)
+    htext(d, text, PAD, _sf(96), W - 2 * PAD, y_top=y + s_.height + 54)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S11')
+def S11_scale(c, im, text, i, n, f, s):
+    """刻度线：图 0.46H 在上，实线八道齿，112 号字贴线写。给数、有量纲的镜。"""
+    d = ImageDraw.Draw(c)
+    s_ = strip_fit(im, round(H * 0.46))
+    y = 96
+    _strip_paste(c, s_, y)
+    line_y = y + s_.height + 92
+    d.line([(PAD, line_y), (W - PAD, line_y)], fill=RULE, width=4)
+    fw = W - 2 * PAD
+    for k in range(9):
+        d.line([(PAD + round(k * fw / 8), line_y - 12), (PAD + round(k * fw / 8), line_y + 12)], fill=RULE, width=2)
+    htext(d, text, PAD, _sf(112), fw, y_top=line_y + 30)
+    idx(d, i, n, W - PAD, H - 84, s, align='right')
+
+
+@reg('S12')
+def S12_index(c, im, text, i, n, f, s):
+    """巨号垫底：编号 150 号压左上，图 0.50H 居中偏下，96 号字一行压右下。换气镜。"""
+    d = ImageDraw.Draw(c)
+    d.text((PAD - 8, 12), f"{i + 1:02d}", font=_sf(150), fill=(226, 224, 221))
+    s_ = strip_fit(im, round(H * 0.50))
+    _strip_paste(c, s_, 322)
+    htext(d, text, PAD, _sf(96), W - 2 * PAD, y_top=322 + s_.height + 48)
 
 
 def zoom_variant(canvas, layout="", k=1.26):
@@ -413,9 +576,10 @@ def main(src, dst, head_path, only=None):
         name = hd.get("layout") or choose(hd["headline"], used)
         if only and name not in only:
             name = choose(hd["headline"], used)
-        # 素材形状决定版面族：宽条图形区走 S1~S4，整页才用 A~L
-        # 阈值 1.8：视频专用页最"方"的一张是 733×369（1.99），按整页那套排会缩成一条线
-        if im.width / im.height > 1.8:
+        # 素材形状决定版面族：没显式指定时才按形状自动选。
+        # 显式给了 layout 就尊重——18 镜匹配表要靠 12 套宽条版式轮换，
+        # 旧版这里无条件改成 S{1+i%4}，等于把表里所有 A~L 抹掉（2026-11-16 修）。
+        if not hd.get("layout") and im.width / im.height > 1.8:
             name = f"S{1 + i % 4}"
         LAYOUTS[name](canvas, im, hd["headline"], i, len(pages), f, s)
         out = dst_dir / (p.stem + ".png")
