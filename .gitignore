@@ -8,6 +8,10 @@ examples/*/out/
 # 依赖与构建
 node_modules/
 dist/
+# 字体包（155MB / 879 文件，由 skills/article-figures/scripts/fetch_fonts.ps1 现场下载）
+skills/article-figures/fonts/
+# 改代码前的本地快照
+*.bak*
 __pycache__/
 *.py[cod]
 .venv/
