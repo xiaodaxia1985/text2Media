@@ -12,16 +12,31 @@ metadata:
 
 **这个 skill 只做「构图 + 出帧 + 交给渲染」，不重新画图。** 页由 `article-figures` 出（已经验收过的那十页就是素材），也可以是任何同纸色的自建页；两条线**只共享输入文章**，不要求出图时顺便把页做成竖屏——那是让两边互相凑合。
 
-## 一、四步
+## 一、五步
 
 | 步 | 命令 | 产物 |
 |---|---|---|
-| 1. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json [--headlines heads.json]` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
-| 2. 出帧 | `python scripts/compose_layouts.py <页面目录> <帧输出目录> shotplan.json [--only A,B]` | 1920×1080 整帧 PNG，一帧一页；标了 `frames:2` 的镜多出一张 `<页名>b.png`（推近） |
-| 3. 拼渲染脚本 | `python scripts/build_script.py <帧目录> <alignment.json> out.script.json --media-prefix assets/media/<目录>/ --source-url …` | 渲染引擎要的 `script.json`：时长抄自配音对齐，运镜按版式映射 |
-| 4. 成片 | `node <repo>/video/make.mjs out.script.json --skip-voice` | `output/<日期>/抖音/.../video.mp4` |
+| 0. 写口播与大字 | `python scripts/talk.py talk.json --headlines heads.json` | 每镜 `headline`（屏幕大字）+ `line`（口播原句）；断言「大字是口播的逐字开头」 |
+| 1. 给视频取页 | `python scripts/videopage.py <页面目录> <视频页目录>` | 同一份 HTML，藏掉 h1/导语/图注/页脚，截出**图形区**（749×217 这种宽条） |
+| 2. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json --headlines heads.json` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
+| 3. 出帧 | `python scripts/compose_layouts.py <视频页目录> <帧输出目录> shotplan.json [--only A,B]` | 1920×1080 整帧；宽条页走 S1~S4，整页走 A~L；标了 `frames:2` 的镜多出一张 `<页名>b.png`（推近） |
+| 4. 拼渲染脚本 | `python scripts/build_script.py <帧目录> <alignment.json> out.script.json --lines talk.json [--estimate] --media-prefix …` | 渲染引擎要的 `script.json`：`line` 作字幕与配音，时长抄配音对齐（配音前用 `--estimate` 估） |
+| 5. 成片 | `node <repo>/video/make.mjs out.script.json` | `output/<日期>/抖音/.../video.mp4`（不给 `--skip-voice` 就顺手配音） |
 
-第 4 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：`build_script.py` 从帧的实际尺寸写出 `size:{w,h}`，`make.mjs` 透传 `--w/--h`，横页出 16:9、竖页出 9:16；`data-resolution` 自动切 landscape/portrait。
+第 5 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：`build_script.py` 从帧的实际尺寸写出 `size:{w,h}`，`make.mjs` 透传 `--w/--h`，横页出 16:9、竖页出 9:16。
+
+## 一·补、一屏只能有一套大字（2026-11-16 实拍踩到）
+
+第一版直接把图解页整页塞进画面，再在旁边叠一句提炼大字，口播又是第三套说法。**一屏三套字**：
+页首自己的 h1「锁住、隔开、稳住」、叠上去的「信托一次办三件事」、以及两者都不是的口播原句。
+观众听的、看的、图上写着的不是同一件事，看下来必然云里雾里。
+
+两条硬规矩，都是为了把三套字压成一套：
+
+1. **视频素材取图形区，不取整页**（`videopage.py`）。页是给人读的，h1 本身就是它的大字；视频的大字由我们写，页就别再带一个。
+2. **屏幕大字 = 这一镜口播的第一个分句，逐字相同**（`talk.py` 断言）。听完一句，看到的就是这句的开头，不需要观众自己做对齐。
+
+页只留图形区之后，素材形状变成宽条（宽高比 1.9~4.3）。A~L 那十二套是给 1080×800 整页排的，宽条塞进"左页右文"会缩成一条看不清的细线——所以按形状再分一族：`S1` 上图下文 / `S2` 上文下图 / `S3` 图右字左 / `S4` 图左字右，四套轮换。**版面先服从素材形状，再服从句子。**
 
 ## 二、版式由文章推，不由人选
 
@@ -120,10 +135,13 @@ article-video/
 - **字体**：屏幕大字用汇文明朝体（`.otf`）。不写死路径：`ARTICLE_VIDEO_FONT` 指文件，或 `FIGKIT_FONTS` 指字体根目录（与 `article-figures` 共用）。找不到会明确报错，不会静默换字。
 - **渲染**：需要 `video/` 抽屉（Node + HyperFrames + 本地 VoxCPM）。没配音时加 `--skip-voice` 复用已有 `narration.wav` / `alignment.json`。
 - **已知限制（都在代码里留了印记，不是"以后再说"）**：
-  - 推近帧按**整帧重心**裁，不是按某个元素推；图上要精确推某根柱，得在 shot plan 里手写 `focus:{x,y}`（字段还没实现）。
-  - `build_script.py` 要求帧数与配音镜数一致：改镜数就得重配音，这是引擎侧的约束，不是本 skill 能绕开的。
-  - 竖版（1080×1920）要改 `compose_layouts.py` 头部的 `W/H` 常量，还没做成 `--size 1080x1920` 参数。
-  - `K` 的巨号按镜次奇偶换角（左上 / 右下），但只支持这两个角。
+  - 推近帧按**整帧裁**，不是按某个元素推；图上要精确推某根柱，得在 shot plan 里手写 `focus:{x,y}`（字段还没实现）。
+  - `build_script.py` 要求帧数与配音镜数一致：改镜数就得重配音，这是引擎侧的约束。
+  - 竖版（1080×1920）要改 `compose_layouts.py` 头部的 `W/H` 常量，还没做成 `--size` 参数。
+  - `K` 的巨号按镜次奇偶换角（左上 / 右下），只支持这两个角。
+  - **`make.mjs` 会误判没有 VoxCPM**：本机首次加载 VoxCPM 实测 233s，而探测窗口 60s，`make.mjs` 直接报"没有可用的配音方式（要求 voxcpm）"。绕法：先单独跑
+    `node video/step2-voice/voice.mjs <script.json> --backend voxcpm --voice news-man`，成功后再 `make.mjs --skip-voice` 复用 `narration.wav` / `alignment.json`。
+  - 成片不带逐字字幕条：**屏幕大字自己就是那一句**（口播的首个分句），再加一条字幕会和它重复。
 
 ## 八、与其它 skill 的分工
 

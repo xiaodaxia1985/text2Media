@@ -19,6 +19,7 @@
   · 帧文件缺失 / 不是 16:9 或 9:16
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -57,8 +58,24 @@ def main(argv):
         return 2
     frames_dir, align_path, out_path = Path(pos[0]), Path(pos[1]), Path(pos[2])
     media_prefix = opt.get("media-prefix") or "assets/media/cards/"
+    rate = float(opt.get("rate") or 4.2)
 
-    align = json.loads(align_path.read_text(encoding="utf-8"))
+    talk = None
+    if opt.get("lines"):
+        talk = json.loads(Path(opt["lines"]).read_text(encoding="utf-8"))
+        talk = talk.get("pages") or talk.get("shots") or talk
+
+    # 配音前也要能出片：--estimate 时按时长估算，配音完成后再重跑一次拿精确对齐
+    if opt.get("estimate"):
+        if not talk:
+            print("FAIL  --estimate 需要 --lines：先写口播再估时长")
+            return 1
+        scenes = [{"id": p["id"],
+                   "start": 0, "end": len(re.sub(r"[，。、：；！？…\s]", "", p["line"])) / rate + 0.3,
+                   "lines": [{"text": p["line"]}]} for p in talk]
+        align = {"scenes": scenes}
+    else:
+        align = json.loads(align_path.read_text(encoding="utf-8"))
     scenes = align.get("scenes") or []
     if not scenes:
         print("FAIL  alignment.json 里没有 scenes：先跑配音")
@@ -91,6 +108,10 @@ def main(argv):
             size = Image.open(p).size
         dur = float(sc["end"]) - float(sc["start"])
         text = "".join(l.get("text", "") for l in sc.get("lines") or [])
+        if talk:
+            # 口播稿是唯一源头：配音对齐偶尔会切句，字幕仍用稿子里的原句
+            by_id = {p["id"]: p["line"] for p in talk}
+            text = by_id.get(sc["id"], text)
         shots = []
         parts = [(p, "push-in"), (zooms.get(p.stem), "kenburns")] if zooms.get(p.stem) else [(p, None)]
         each = dur / len(parts)
@@ -119,7 +140,8 @@ def main(argv):
         "source": {"author": opt.get("source-author") or "", "url": opt.get("source-url") or ""},
         "theme": {"name": "paper", "bg": opt.get("bg") or "#101317",
                   "accent": opt.get("accent") or "#BF4520", "accent2": "#2D3142"},
-        "voice": {"id": opt.get("voice") or "news-man", "backend": opt.get("voxcpm") or "voxcpm"},
+        "voice": {"id": opt.get("voice") or "news-man",
+                  "backend": opt.get("backend") or "voxcpm"},
         "size": {"w": size[0], "h": size[1]} if size else {"w": 1920, "h": 1080},
         "scenes": scenes_out,
     }

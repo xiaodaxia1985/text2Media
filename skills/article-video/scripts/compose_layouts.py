@@ -314,6 +314,66 @@ def choose(text, used):
 TEXT_RIGHT = {"A", "B", "C", "D", "E", "F", "G", "H", "J"}
 
 
+# ---------------------------------------------------- 通栏图族（图形区专用）
+# 视频专用页只留图形区，形状是宽而矮（933×215 这种）。A~L 是给整页（1080×800）排的，
+# 把宽条塞进"左页右文"会缩成一条看不清的细线。所以按素材形状换一族：图铺满横栏，
+# 一句话落在空白处。四套轮换靠图与字的位置，不靠改字号。
+STRIP_DEF = 54
+
+
+def strip_font():
+    return ImageFont.truetype(FONT, STRIP_DEF)
+
+
+@reg('S1')
+def S1_top(c, im, text, i, n, f, s):
+    """上图下文：图铺满横栏，字在下方，最稳的一套，开场用它立页。"""
+    f2 = strip_font(); d = ImageDraw.Draw(c)
+    fw = W - 2 * PAD
+    k = fw / im.width
+    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
+    y = 132
+    c.paste(s_, (PAD, y))
+    htext(d, text, PAD, f2, fw, y_top=y + s_.height + 64)
+    idx(d, i, n, W - PAD, H - 92, s, align='right')
+
+
+@reg('S2')
+def S2_bottom(c, im, text, i, n, f, s):
+    """上文下图：字先立，图在下方兜住，用于给数/收束。"""
+    f2 = strip_font(); d = ImageDraw.Draw(c)
+    fw = W - 2 * PAD
+    k = fw / im.width
+    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
+    htext(d, text, PAD, f2, fw, y_top=104)
+    c.paste(s_, (PAD, H - 96 - s_.height))
+    idx(d, i, n, W - PAD, H - 92, s, align='right')
+
+
+@reg('S3')
+def S3_fig_right(c, im, text, i, n, f, s):
+    """图右字左：图压到 0.78 宽贴右，字竖排在左，像边注。"""
+    f2 = strip_font(); d = ImageDraw.Draw(c)
+    fw = round((W - 2 * PAD) * 0.74)
+    k = fw / im.width
+    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
+    c.paste(s_, (W - PAD - s_.width, (H - s_.height) // 2))
+    vtext(d, text, 300, f2, cols=2)
+    idx(d, i, n, W - PAD, 60, s, align='right')
+
+
+@reg('S4')
+def S4_fig_left(c, im, text, i, n, f, s):
+    """图左字右：图贴左 0.78 宽，字竖排贴右。"""
+    f2 = strip_font(); d = ImageDraw.Draw(c)
+    fw = round((W - 2 * PAD) * 0.74)
+    k = fw / im.width
+    s_ = im.resize((fw, round(im.height * k)), Image.LANCZOS)
+    c.paste(s_, (PAD, (H - s_.height) // 2))
+    vtext(d, text, W - 138, f2, cols=2)
+    idx(d, i, n, PAD, H - 92, s, align='left')
+
+
 def zoom_variant(canvas, layout="", k=1.26):
     """同一帧推近一档：裁掉一角、放大回原尺寸。
 
@@ -339,7 +399,10 @@ def main(src, dst, head_path, only=None):
     data = json.loads(Path(head_path).read_text(encoding="utf-8"))
     heads = data.get("pages") or data.get("shots") if isinstance(data, dict) else data
     tallest = max(Image.open(p).height for p in pages)
-    k = PAGE_H / tallest
+    widest = max(Image.open(p).width for p in pages)
+    # 页要同时塞进 PAGE_H 与 PAGE_W：只按高度算是老假设（页≈1080×800）。
+    # 视频专用页是「图形区」，宽而矮（如 933×215），按高度缩会把画布撑爆。
+    k = min(PAGE_H / tallest, PAGE_W / widest)
     f = ImageFont.truetype(FONT, BIG)
     s = ImageFont.truetype(FONT, 24)
     used = []
@@ -350,6 +413,10 @@ def main(src, dst, head_path, only=None):
         name = hd.get("layout") or choose(hd["headline"], used)
         if only and name not in only:
             name = choose(hd["headline"], used)
+        # 素材形状决定版面族：宽条图形区走 S1~S4，整页才用 A~L
+        # 阈值 1.8：视频专用页最"方"的一张是 733×369（1.99），按整页那套排会缩成一条线
+        if im.width / im.height > 1.8:
+            name = f"S{1 + i % 4}"
         LAYOUTS[name](canvas, im, hd["headline"], i, len(pages), f, s)
         out = dst_dir / (p.stem + ".png")
         canvas.save(out)
