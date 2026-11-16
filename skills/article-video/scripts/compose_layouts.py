@@ -261,11 +261,20 @@ def J_split(c, im, text, i, n, f, s):
 
 @reg('K')
 def K_index(c, im, text, i, n, f, s):
-    """巨号编号垫底：编号当背景元素，页居中偏右，字在右下角。"""
+    """巨号编号垫底：编号当背景元素，页居中偏右，字在右下角。
+
+    编号位置按镜次奇偶换角：长片里 K 会用两次，钉死在左上会露馅。
+    """
     s_, x, y = page_at(im, 0.8, (520, None)); c.paste(s_, (x, y))
     d = ImageDraw.Draw(c)
     num = ImageFont.truetype(FONT, 190)
-    d.text((PAD + 20, 40), f"{i + 1:02d}", font=num, fill=(224, 222, 219))
+    label = f"{i + 1:02d}"
+    if i % 2 == 0:
+        d.text((PAD + 20, 40), label, font=num, fill=(224, 222, 219))
+    else:
+        # 右下角：页压不住的位置，编号从画面右下"漏"出来
+        wnum = tw(d, label, num)
+        d.text((W - PAD - wnum, H - 260), label, font=num, fill=(224, 222, 219))
     htext(d, text, 520, f, s_.width, y_top=y + s_.height + 46)
     idx(d, i, n, W - PAD, H - 96, s, align='right')
 
@@ -302,6 +311,27 @@ def choose(text, used):
     return PREFER[band][0]
 
 
+TEXT_RIGHT = {"A", "B", "C", "D", "E", "F", "G", "H", "J"}
+
+
+def zoom_variant(canvas, layout="", k=1.26):
+    """同一帧推近一档：裁掉一角、放大回原尺寸。
+
+    **裁哪一角由版面决定，不能按画面重心裁**——按重心裁会把屏幕上的那句话切掉
+    （实测 G 的右栏大字被裁成半句）。字在哪一侧，就保留那一侧，推的是页面。
+    """
+    w, h = canvas.size
+    cw, ch = round(w / k), round(h / k)
+    if layout in TEXT_RIGHT:
+        x = w - cw            # 字在右：保留右侧
+    elif layout:
+        x = 0                 # 字在左（I / L）：保留左侧
+    else:
+        x = (w - cw) // 2
+    y = h - ch if layout == "K" else (h - ch) // 2   # K 的字在页下方
+    return canvas.crop((x, y, x + cw, y + ch)).resize((w, h), Image.LANCZOS)
+
+
 def main(src, dst, head_path, only=None):
     src_dir, dst_dir = Path(src), Path(dst)
     dst_dir.mkdir(parents=True, exist_ok=True)
@@ -324,8 +354,18 @@ def main(src, dst, head_path, only=None):
         out = dst_dir / (p.stem + ".png")
         canvas.save(out)
         used.append(name)
-        print(out.name, name, len(hd["headline"]), "字")
+        extra = ""
+        if int(hd.get("frames") or 1) > 1:
+            # 一页两镜：第二帧是同一构图的推近，不是另排一版
+            zoom = zoom_variant(canvas, name)
+            zout = dst_dir / (p.stem + "b.png")
+            zoom.save(zout)
+            extra = f" + {zout.name}（推近）"
+        print(out.name, name, len(hd["headline"]), "字", extra)
     print("版式顺序:", " → ".join(used))
+    # 把 shot plan 一起落进帧目录：下一步 build_script.py 靠它把版式映射成运镜
+    (dst_dir / "shotplan.json").write_text(
+        Path(head_path).read_text(encoding="utf-8"), encoding="utf-8")
     return 0
 
 

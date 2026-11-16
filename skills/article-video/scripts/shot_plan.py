@@ -98,6 +98,25 @@ def candidates(f, beat, text):
     return cands
 
 
+def frames_of(f, beat, text):
+    """这一镜要几帧：一页一镜是底线，信息密的页拆两拍（全景 + 推近）。
+
+    两条理由都来自 plan 自己写的话：
+      · `reads_as` 说「细节 / 局部 / 一角」→ 这页有个点值得再看一眼
+      · 拆解类且 claim 超过 18 字 → 一页要装两层意思，一拍讲不完
+    首镜、末镜不拆：开场要一次立住整页，收束要一次到位。
+    """
+    if beat in {"起手", "收束"}:
+        return 1
+    if DETAIL.search(f.get("reads_as", "")) and beat == "拆解":
+        return 2
+    if beat == "拆解" and len(text) > 18:
+        return 2
+    if beat == "过程" and len(text) > 22:
+        return 2
+    return 1
+
+
 def plan_shots(figs, headlines=None, max_len=26):
     n = len(figs)
     cap = 1 if n <= 12 else 2
@@ -129,11 +148,19 @@ def plan_shots(figs, headlines=None, max_len=26):
             "page": i + 1, "id": f.get("id"), "layout": pick, "beat": beat,
             "headline": h, "why": WHY[pick],
             "alt": [c for c in cands if c != pick][:2],
+            "frames": frames_of(f, beat, h),
             "figure_type": f.get("figure_type"),
         })
         used.append(pick)
         prev = pick
 
+    # 两帧的镜不许太多：10 镜最多 2 处，否则成片全是推近，反而单调
+    cap2 = max(1, n // 4)
+    while sum(1 for s in shots if s["frames"] > 1) > cap2:
+        for s in reversed(shots):
+            if s["frames"] > 1:
+                s["frames"] = 1
+                break
     # 末镜的"收束"由 enforce() 统一处理（压边 or 出血）
     return shots
 
@@ -200,6 +227,14 @@ def check(shots):
         warns.append("全片没有重手法（切页/开窗/出血/巨号/压边）：节奏太平")
     if n >= 8 and "K" not in {s["layout"] for s in shots}:
         warns.append("8 镜以上没给巨号编号：中间少了一次呼吸")
+
+    # 帧数：拆两拍的镜不能是首末镜，也不能占太多
+    splits = [s for s in shots if int(s.get("frames") or 1) > 1]
+    if splits:
+        if shots[0] in splits or shots[-1] in splits:
+            fails.append("首镜/末镜被拆成两拍：开场要一次立住整页，收束要一次到位")
+        if len(splits) > max(1, n // 4):
+            fails.append(f"{len(splits)} 镜拆成两拍，{n} 镜最多 {max(1, n // 4)} 处：全是推近就不叫推近了")
     return fails, warns
 
 
@@ -229,17 +264,19 @@ def main(argv):
     shots = enforce(plan_shots(figs, headlines, max_len))
 
     out = {"meta": {"n": len(shots), "distinct": len({s["layout"] for s in shots}),
+                    "frames": sum(int(s.get("frames") or 1) for s in shots),
                     "order": " → ".join(s["layout"] for s in shots)}, "shots": shots}
     fails, warns = check(shots)
     Path(pos[1]).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 
     for s in shots:
-        print(f"{s['page']:02d} {s['layout']} {s['beat']:2s} {s['headline']}   〔{s['why']}〕")
+        tag = "｜两帧" if int(s.get("frames") or 1) > 1 else ""
+        print(f"{s['page']:02d} {s['layout']} {s['beat']:2s} {s['headline']}{tag}   〔{s['why']}〕")
     for w in warns:
         print("WARN  " + w)
     for f in fails:
         print("FAIL  " + f)
-    print(f"\nSHOT {len(shots)} · 版式 {out['meta']['distinct']} 套 · 顺序 {out['meta']['order']}")
+    print(f"\nSHOT {len(shots)} · 帧 {out['meta']['frames']} · 版式 {out['meta']['distinct']} 套 · 顺序 {out['meta']['order']}")
     print(f"{len(fails)} fail, {len(warns)} warn")
     return 1 if fails else 0
 

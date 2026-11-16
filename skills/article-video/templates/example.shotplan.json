@@ -2,8 +2,8 @@
  "meta": {
   "n": 10,
   "distinct": 10,
-  "order": "C → I → G → D → E → A → J → H → K → L",
-  "note": "样例：每镜的 layout 由 shot_plan.py 从 plan 的 claim / reads_as / figure_type 推出，why 必填，alt 是被否掉的候选"
+  "frames": 11,
+  "order": "C → I → G → D → E → A → J → H → K → L"
  },
  "shots": [
   {
@@ -17,6 +17,7 @@
     "B",
     "A"
    ],
+   "frames": 1,
    "figure_type": "timeline"
   },
   {
@@ -30,6 +31,7 @@
     "J",
     "B"
    ],
+   "frames": 1,
    "figure_type": "delta"
   },
   {
@@ -43,6 +45,7 @@
     "H",
     "E"
    ],
+   "frames": 2,
    "figure_type": "unit-grid"
   },
   {
@@ -56,6 +59,7 @@
     "E",
     "B"
    ],
+   "frames": 1,
    "figure_type": "waterfall"
   },
   {
@@ -68,6 +72,7 @@
    "alt": [
     "B"
    ],
+   "frames": 1,
    "figure_type": "timeline"
   },
   {
@@ -81,6 +86,7 @@
     "H",
     "I"
    ],
+   "frames": 1,
    "figure_type": "bar"
   },
   {
@@ -94,6 +100,7 @@
     "I",
     "B"
    ],
+   "frames": 1,
    "figure_type": "dumbbell"
   },
   {
@@ -107,6 +114,7 @@
     "G",
     "E"
    ],
+   "frames": 1,
    "figure_type": "venn"
   },
   {
@@ -120,6 +128,7 @@
     "G",
     "H"
    ],
+   "frames": 1,
    "figure_type": "nested"
   },
   {
@@ -133,6 +142,7 @@
     "I",
     "K"
    ],
+   "frames": 1,
    "figure_type": "kanban"
   }
  ]

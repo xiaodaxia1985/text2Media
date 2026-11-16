@@ -12,15 +12,16 @@ metadata:
 
 **这个 skill 只做「构图 + 出帧 + 交给渲染」，不重新画图。** 页由 `article-figures` 出（已经验收过的那十页就是素材），也可以是任何同纸色的自建页；两条线**只共享输入文章**，不要求出图时顺便把页做成竖屏——那是让两边互相凑合。
 
-## 一、三步
+## 一、四步
 
 | 步 | 命令 | 产物 |
 |---|---|---|
-| 1. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json [--headlines heads.json]` | 每镜 `layout / beat / why / alt`，附 0-fail 断言结果 |
-| 2. 出帧 | `python scripts/compose_layouts.py <页面目录> <帧输出目录> shotplan.json [--only A,B]` | 1920×1080 整帧 PNG，一帧一页 |
-| 3. 成片 | `node <repo>/video/make.mjs <script.json> --skip-voice` | `output/<日期>/抖音/.../video.mp4` |
+| 1. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json [--headlines heads.json]` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
+| 2. 出帧 | `python scripts/compose_layouts.py <页面目录> <帧输出目录> shotplan.json [--only A,B]` | 1920×1080 整帧 PNG，一帧一页；标了 `frames:2` 的镜多出一张 `<页名>b.png`（推近） |
+| 3. 拼渲染脚本 | `python scripts/build_script.py <帧目录> <alignment.json> out.script.json --media-prefix assets/media/<目录>/ --source-url …` | 渲染引擎要的 `script.json`：时长抄自配音对齐，运镜按版式映射 |
+| 4. 成片 | `node <repo>/video/make.mjs out.script.json --skip-voice` | `output/<日期>/抖音/.../video.mp4` |
 
-第 3 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：脚本 `size:{w,h}` 透传给 `build.mjs --w/--h`，横页出 16:9、竖页出 9:16；`data-resolution` 自动切 landscape/portrait。
+第 4 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：`build_script.py` 从帧的实际尺寸写出 `size:{w,h}`，`make.mjs` 透传 `--w/--h`，横页出 16:9、竖页出 9:16；`data-resolution` 自动切 landscape/portrait。
 
 ## 二、版式由文章推，不由人选
 
@@ -46,6 +47,17 @@ metadata:
 | 8 镜以上要有一次巨号编号 | 中段给观众一次节奏点 |
 | ≤12 镜时一套版只用一次 | 库里有 12 套，够轮；重复是懒 |
 | 每镜必须写 `why` | 说不出它服务哪句话，就别用这套 |
+
+### 一页两拍（`frames`）
+
+一页一镜是底线。信息密的页给两拍：**第一拍全景，第二拍推近**（`compose_layouts.py` 按画面重心裁 1/1.26 再放回原尺寸，音频仍是同一段、时长对半分，不用重配）。
+
+什么时候拆，也由 plan 里的话决定：
+
+- `reads_as` 写了「细节 / 局部 / 一角」且是拆解类 → 这页有个点值得再看一眼；
+- 拆解类 claim 超过 18 字、过程类超过 22 字 → 一页要装两层意思，一拍讲不完。
+
+首镜、末镜永不拆（开场要一次立住整页，收束要一次到位）；10 镜最多 2 处拆拍——全是推近，就不叫推近了。这两条都是 FAIL，不是建议。
 
 同一篇文章，机器排出来的顺序和人手排的会不一样，这是好事——**这一步的价值就是不用人再做一遍审美决策**。
 
@@ -92,13 +104,14 @@ metadata:
 article-video/
   SKILL.md
   scripts/
-    shot_plan.py       从 plan 推每镜 beat + 版式 + why，自带 FAIL 断言
-    compose_layouts.py 十二套版面 + primitives（page_at/htext/vtext/idx/rule）
+    shot_plan.py       从 plan 推每镜 beat + 版式 + 帧数 + why，自带 FAIL 断言
+    compose_layouts.py 十二套版面 + primitives（page_at/htext/vtext/idx/rule）+ 推近帧
+    build_script.py    帧目录 + alignment.json → script.json（时长抄配音，运镜按版式）
     conclusions.py     claim → 屏幕大字的机械压缩（兜底用）
   references/
     layouts.md         十二套手法详解、参数、三处踩过的坑
   templates/
-    example.shotplan.json  一份完整 shot plan（含 why / alt）
+    example.shotplan.json  一份完整 shot plan（含 why / alt / frames）
 ```
 
 ## 七、依赖与已知限制
@@ -106,7 +119,11 @@ article-video/
 - **Python**：`pillow` 足够，不需要浏览器。
 - **字体**：屏幕大字用汇文明朝体（`.otf`）。不写死路径：`ARTICLE_VIDEO_FONT` 指文件，或 `FIGKIT_FONTS` 指字体根目录（与 `article-figures` 共用）。找不到会明确报错，不会静默换字。
 - **渲染**：需要 `video/` 抽屉（Node + HyperFrames + 本地 VoxCPM）。没配音时加 `--skip-voice` 复用已有 `narration.wav` / `alignment.json`。
-- **已知限制**：一页一镜，还没做「一页拆多镜」（同一页连续推近/平移）；`K` 的巨号位置固定左上，长片里连用两次会显眼。
+- **已知限制（都在代码里留了印记，不是"以后再说"）**：
+  - 推近帧按**整帧重心**裁，不是按某个元素推；图上要精确推某根柱，得在 shot plan 里手写 `focus:{x,y}`（字段还没实现）。
+  - `build_script.py` 要求帧数与配音镜数一致：改镜数就得重配音，这是引擎侧的约束，不是本 skill 能绕开的。
+  - 竖版（1080×1920）要改 `compose_layouts.py` 头部的 `W/H` 常量，还没做成 `--size 1080x1920` 参数。
+  - `K` 的巨号按镜次奇偶换角（左上 / 右下），但只支持这两个角。
 
 ## 八、与其它 skill 的分工
 
