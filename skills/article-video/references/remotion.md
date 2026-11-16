@@ -109,7 +109,8 @@ Set-Location "E:\t2m-remotion"; $env:TEMP="E:\t2m-temp"; $env:TMP="E:\t2m-temp"
 
 ```powershell
 python video\step4-motion\join_full.py --audio
-# 顺序写死在 SEQUENCE 里，帧数对不上就 FAIL；音频 = 片头 wav + 0.21s 静音 + 正文 wav + 尾部补齐
+# 顺序写死在 SEQUENCE 里，帧数对不上就 FAIL；
+# 音频 = 片头 wav（补 0.21s 静音）+ 正文 wav（delay 到片头结束）+ 片尾 wav（delay 到正文结束）+ 尾部补齐
 ```
 
 ## 六、踩过的坑
@@ -120,3 +121,6 @@ python video\step4-motion\join_full.py --audio
 4. **推近超过 3 倍只剩一块色斑**：目标块放大 4 倍以后观众看不出「这是从一个阵列里推出来的」。倍数 ≤2.8，且目标块必须落在画面正中（阵列 5×5、每块 384×216，正中那块的中心就是画面中心）。
 5. **`-shortest` 会吃掉末帧**：2821 帧出成 2820。要看末帧完整性就直接数 `nb_frames`。
 6. **每个组件渲完抽末帧看一眼**：色阶反了（该灰的成了高亮粉）、数字压字、三层互压，这三类光读代码看不出来，全是看末帧抓到的。
+7. **深底镜头的字幕必须换浅色**：`CAPTION_STYLE` 的墨色是为浅纸底备的，反白满版那一镜直接套用，字幕压成`rgba(244,245,242,0.62)`之后才看得见。凡是背景不是纸色的镜，字幕颜色都要单独给。
+8. **片尾配音会覆盖正文配音**：`voice.mjs` 的产物路径不按 script 名分目录，跑片尾那条命令会直接写掉 `voice/narration.wav` 和 `voice/alignment.json`。**跑片尾之前先把两个文件改名存好**（`tail.wav` / `tail.alignment.json`），跑完再把正文那套跑回来（不帶 `--fresh` 会命中 chunks 缓存，音频字节不变）。正文回来之后还要过一遍 `scale_alignment.py` —— `voice.mjs` 的时间轴会超出 wav 实长，不归一会让末镜落在总长之外。
+9. **字幕压在字幕区那一行时**：`CAPTION_STYLE` 从底部 62 起，画面上所有元素的下沿都要在 940 以上，否则和字幕叠字。
