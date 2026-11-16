@@ -1,0 +1,139 @@
+{
+ "meta": {
+  "n": 10,
+  "distinct": 10,
+  "order": "C → I → G → D → E → A → J → H → K → L",
+  "note": "样例：每镜的 layout 由 shot_plan.py 从 plan 的 claim / reads_as / figure_type 推出，why 必填，alt 是被否掉的候选"
+ },
+ "shots": [
+  {
+   "page": 1,
+   "id": "01-event",
+   "layout": "C",
+   "beat": "起手",
+   "headline": "一夜之间，三个头衔一起交了",
+   "why": "竖排单列贴着页缘：像在页边写批注，语气短、断得快",
+   "alt": [
+    "B",
+    "A"
+   ],
+   "figure_type": "timeline"
+  },
+  {
+   "page": 2,
+   "id": "02-cash",
+   "layout": "I",
+   "beat": "对比",
+   "headline": "千亿不是卡里的钱，是股价算出来的",
+   "why": "巨字出血贴边：这句话就是全片结论，字要大到压过页面",
+   "alt": [
+    "J",
+    "B"
+   ],
+   "figure_type": "delta"
+  },
+  {
+   "page": 3,
+   "id": "03-trust",
+   "layout": "G",
+   "beat": "拆解",
+   "headline": "信托一次办三件事：锁股权，隔资产，避遗产税",
+   "why": "字块压进页右侧留白：字像从页里切出来，图文咬在一起",
+   "alt": [
+    "H",
+    "E"
+   ],
+   "figure_type": "unit-grid"
+  },
+  {
+   "page": 4,
+   "id": "04-crash",
+   "layout": "D",
+   "beat": "过程",
+   "headline": "账上只剩三十天，靠一笔转款活下来",
+   "why": "页在右、竖排在左：与上一镜的横排错开方向，画面立刻换气",
+   "alt": [
+    "E",
+    "B"
+   ],
+   "figure_type": "waterfall"
+  },
+  {
+   "page": 5,
+   "id": "05-cuda",
+   "layout": "E",
+   "beat": "过程",
+   "headline": "CUDA 亏了十几年，等到 AI 才成护城河",
+   "why": "竖排双列：句子本来就长，竖排能把它压成两条而不显得挤",
+   "alt": [
+    "B"
+   ],
+   "figure_type": "timeline"
+  },
+  {
+   "page": 6,
+   "id": "06-life",
+   "layout": "A",
+   "beat": "给数",
+   "headline": "上亿的飞机，数千万的豪宅",
+   "why": "页在左、字横排在右：这一镜先让人把页面读一遍，字只是跟着说",
+   "alt": [
+    "H",
+    "I"
+   ],
+   "figure_type": "bar"
+  },
+  {
+   "page": 7,
+   "id": "07-contrast",
+   "layout": "J",
+   "beat": "对比",
+   "headline": "上亿的飞机旁边，一杯八元饮品",
+   "why": "竖线分栏、字在左竖排：用一条线把两件事切开，转折有物理感",
+   "alt": [
+    "I",
+    "B"
+   ],
+   "figure_type": "dumbbell"
+  },
+  {
+   "page": 8,
+   "id": "08-charity",
+   "layout": "H",
+   "beat": "拆解",
+   "headline": "捐股票，公益和税负叠在一起",
+   "why": "右下开窗放大：页面里那个细节值得再看一眼，用放大代替重讲",
+   "alt": [
+    "G",
+    "E"
+   ],
+   "figure_type": "venn"
+  },
+  {
+   "page": 9,
+   "id": "09-bind",
+   "layout": "K",
+   "beat": "拆解",
+   "headline": "职务卸了，骨架还在",
+   "why": "巨号编号垫底：只用它调节奏，隔几镜给观众一次呼吸",
+   "alt": [
+    "G",
+    "H"
+   ],
+   "figure_type": "nested"
+  },
+  {
+   "page": 10,
+   "id": "10-truth",
+   "layout": "L",
+   "beat": "收束",
+   "headline": "财富是枷锁，长期下注才有风口",
+   "why": "页面右侧出画、字在左竖排：收束时让画面前倾，像翻过去一页",
+   "alt": [
+    "I",
+    "K"
+   ],
+   "figure_type": "kanban"
+  }
+ ]
+}

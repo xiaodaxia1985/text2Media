@@ -1,0 +1,342 @@
+"""16:9 视频构图库：十二套版面，含"图文互相咬合"的做法。
+
+不是把同一张页换几个位置，而是换**图文关系**：文字压页、文字被页遮、页面开窗放大、
+竖线分栏、双页并置、巨号编号垫底、字出血……每套一个手法。
+
+    python compose_layouts.py <页面目录> <输出目录> <headlines.json> [--only A,B]
+
+版式编号（A~L），另加竖排族变体；`--only` 可只渲某几套做样张。
+"""
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+PAPER = (245, 245, 245)
+INK = (45, 49, 66)
+MUTED = (79, 93, 117)
+SOFT = (110, 118, 134)
+RULE = (191, 192, 192)
+ACCENT = (191, 69, 32)
+W, H = 1920, 1080
+PAD = 84
+PAGE_W = 1184
+PAGE_H = 960
+BIG = 46
+COL_W = 440
+
+
+def find_font():
+    """屏幕大字用哪套字，不写死在脚本里。
+
+    顺序：`ARTICLE_VIDEO_FONT`（直接给 .otf/.ttf 文件）→ `FIGKIT_FONTS`（字体根目录，
+    与 article-figures 共用一个环境变量）→ 本机默认位置 → 报错。
+    汇文明朝体在 npm 包里是 `fontpkg-huiwen-mincho-*/package/Huiwen-mincho.otf`，
+    直接拼 `fonts-src/Huiwen-mincho.otf` 会 FileNotFound——已经踩过两次。
+    """
+    import os
+
+    env_file = os.environ.get("ARTICLE_VIDEO_FONT")
+    if env_file and Path(env_file).exists():
+        return env_file
+    roots = [os.environ.get("FIGKIT_FONTS"),
+             str(Path.home() / ".cache" / "design-kit" / "fonts-src"),
+             r"E:\works\New Journal\个人商业实战\.cache\design-kit\fonts-src"]
+    names = ("fontpkg-huiwen-mincho-1.0.0/package/Huiwen-mincho.otf",
+             "Huiwen-mincho.otf", "fonts/Huiwen-mincho.otf")
+    for root in roots:
+        if not root:
+            continue
+        for n in names:
+            p = Path(root) / n
+            if p.exists():
+                return str(p)
+        hits = sorted(Path(root).glob("**/Huiwen*.otf"))
+        if hits:
+            return str(hits[0])
+    raise SystemExit(
+        "找不到汇文明朝体：设 ARTICLE_VIDEO_FONT 指到 .otf 文件，或设 FIGKIT_FONTS 指到字体根目录"
+        "（article-figures 的 fetch_fonts.ps1 拉下来的那个）"
+    )
+
+
+FONT = find_font()
+
+LAYOUTS = {}
+
+
+def reg(*names):
+    def deco(fn):
+        for n in names:
+            LAYOUTS[n] = fn
+        return fn
+    return deco
+
+
+# ---------------------------------------------------------------- primitives
+def tw(d, s, f):
+    return d.textlength(s, font=f)
+
+
+def wrap(d, text, font, max_w):
+    lines, cur = [], ""
+    for ch in text:
+        if tw(d, cur + ch, font) <= max_w:
+            cur += ch
+        else:
+            lines.append(cur)
+            cur = ch
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def page_at(im, k, anchor):
+    """按系数 k 缩放页面；anchor = (x, y) 或 ('left'|'right'|'center', y)。"""
+    w, h = round(im.width * k), round(im.height * k)
+    s = im.resize((w, h), Image.LANCZOS)
+    ax, ay = anchor
+    if ax == 'left':
+        x = PAD
+    elif ax == 'right':
+        x = W - PAD - w
+    elif ax == 'center':
+        x = (W - w) // 2
+    else:
+        x = ax
+    y = (H - h) // 2 if ay is None else (ay if isinstance(ay, int) else (H - h) // 2)
+    return s, x, y
+
+
+def htext(d, text, x, font, col_w, y_top=None, align='left', color=INK, mask=False):
+    lines = wrap(d, text, font, col_w)
+    lh = int(font.size * 1.6)
+    y = (H - len(lines) * lh) // 2 - 16 if y_top is None else y_top
+    if mask:
+        pad = int(font.size * 0.7)
+        d.rectangle([x - pad, y - pad, x + col_w + pad, y + len(lines) * lh + pad], fill=PAPER)
+    for ln in lines:
+        xx = x + col_w - tw(d, ln, font) if align == 'right' else x
+        d.text((xx, y), ln, font=font, fill=color)
+        y += lh
+    return y
+
+
+def vtext(d, text, x_right, font, cols=1, gap=None, color=INK, y_top=None):
+    step = int(font.size * 1.16)
+    per = max(1, (H - 240) // step)
+    chunks = [text[i:i + per] for i in range(0, len(text), per)] or [text]
+    chunks = chunks[:cols]
+    gap = gap or int(font.size * 1.7)
+    x = x_right
+    for ch_chunk in chunks:
+        y = (H - len(ch_chunk) * step) // 2 - 8 if y_top is None else y_top
+        for ch in ch_chunk:
+            d.text((x, y), ch, font=font, fill=color)
+            y += step
+        x -= gap
+    return x
+
+
+def idx(d, i, total, x, y, font, align='left', color=SOFT):
+    t = f"{i + 1:02d} / {total:02d}"
+    if align == 'right':
+        d.text((x - tw(d, t, font), y), t, font=font, fill=color)
+    else:
+        d.text((x, y), t, font=font, fill=color)
+
+
+def rule(d, p0, p1):
+    d.line([p0, p1], fill=RULE, width=1)
+
+
+# ---------------------------------------------------------------- layouts
+@reg('A')
+def A_H_right(c, im, text, i, n, f, s):
+    s_, x, y = page_at(im, 1, ('left', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    end = htext(d, text, PAD + PAGE_W + 72, f, COL_W)
+    idx(d, i, n, PAD + PAGE_W + 72, end + 24, s)
+
+
+@reg('B')
+def B_H_left(c, im, text, i, n, f, s):
+    s_, x, y = page_at(im, 1, ('right', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    end = htext(d, text, PAD, f, COL_W)
+    idx(d, i, n, PAD, end + 24, s)
+
+
+@reg('C')
+def C_V_right(c, im, text, i, n, f, s):
+    s_, x, y = page_at(im, 1, ('left', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    size = BIG if len(text) <= 14 else 40 if len(text) <= 18 else 36
+    vtext(d, text, W - PAD - size, ImageFont.truetype(FONT, size), 1)
+    idx(d, i, n, PAD + PAGE_W + 72, H - 104, s)
+
+
+@reg('D')
+def D_V_left(c, im, text, i, n, f, s):
+    s_, x, y = page_at(im, 1, ('right', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    size = BIG if len(text) <= 14 else 40 if len(text) <= 18 else 36
+    vtext(d, text, PAD + COL_W - 40, ImageFont.truetype(FONT, size), 1)
+    idx(d, i, n, PAD, H - 104, s)
+
+
+@reg('E')
+def E_V_duo(c, im, text, i, n, f, s):
+    s_, x, y = page_at(im, 1, ('left', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    vtext(d, text, W - PAD - BIG, f, 2, gap=112)
+    idx(d, i, n, PAD + PAGE_W + 72, H - 104, s)
+
+
+@reg('F')
+def F_V_note(c, im, text, i, n, f, s):
+    """批注：字紧贴页右边缘，中间一条竖线分开。"""
+    s_, x, y = page_at(im, 1, ('left', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    x_edge = PAD + PAGE_W
+    rule(d, (x_edge + 26, 150), (x_edge + 26, H - 150))
+    tiny = ImageFont.truetype(FONT, 34)
+    vtext(d, text, x_edge + 96, tiny, 2, gap=54, color=MUTED)
+    idx(d, i, n, x_edge + 96, H - 96, s, align='right')
+
+
+@reg('G')
+def G_cut(c, im, text, i, n, f, s):
+    """字块切页：纸色底衬只压页面右侧留白（60px），不盖正文。"""
+    s_, x, y = page_at(im, 1, ('left', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    bx = PAD + PAGE_W - 58
+    end = htext(d, text, bx, f, 520, mask=True)
+    idx(d, i, n, bx, end + 24, s)
+
+
+@reg('H')
+def H_zoom(c, im, text, i, n, f, s):
+    """开窗放大：小页在左上，右下把页面的一块局部放大成"细节窗"。"""
+    s_, x, y = page_at(im, 0.66, (PAD, 46)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    win_x, win_y, win_w = 1060, 430, 760
+    crop = im.crop((int(im.width * .40), int(im.height * .48), int(im.width * .92), int(im.height * .96)))
+    ch = round(crop.height * win_w / crop.width)
+    crop = crop.resize((win_w, ch), Image.LANCZOS)
+    c.paste(crop, (win_x, win_y))
+    d.rectangle([win_x, win_y, win_x + win_w, win_y + ch], outline=RULE, width=1)
+    tag = ImageFont.truetype(FONT, 22)
+    d.text((win_x + 12, win_y - 34), "局部放大", font=tag, fill=SOFT)
+    htext(d, text, win_x, f, win_w, y_top=150)
+    idx(d, i, n, win_x, 96, s)
+
+
+@reg('I')
+def I_bleed(c, im, text, i, n, f, s):
+    """字出血：页在左上，大字贴右边缘出血压在下半幅，互不遮挡。"""
+    s_, x, y = page_at(im, 0.66, (PAD, 52)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    big = ImageFont.truetype(FONT, 92)
+    lines = wrap(d, text, big, W - 140)
+    y0 = H - 96 - len(lines) * 128
+    for ln in lines:
+        d.text((W - 44 - tw(d, ln, big), y0), ln, font=big, fill=INK)
+        y0 += 128
+    idx(d, i, n, PAD, H - 92, s)
+
+
+@reg('J')
+def J_split(c, im, text, i, n, f, s):
+    """竖线分栏：一条线切开画面，页在右、字在左竖排。"""
+    s_, x, y = page_at(im, 0.74, ('right', None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    split_x = 96 + 420
+    rule(d, (split_x, 90), (split_x, H - 90))
+    tiny = ImageFont.truetype(FONT, 40)
+    vtext(d, text, split_x - 42, tiny, 2, gap=62)
+    idx(d, i, n, PAD, H - 96, s)
+
+
+@reg('K')
+def K_index(c, im, text, i, n, f, s):
+    """巨号编号垫底：编号当背景元素，页居中偏右，字在右下角。"""
+    s_, x, y = page_at(im, 0.8, (520, None)); c.paste(s_, (x, y))
+    d = ImageDraw.Draw(c)
+    num = ImageFont.truetype(FONT, 190)
+    d.text((PAD + 20, 40), f"{i + 1:02d}", font=num, fill=(224, 222, 219))
+    htext(d, text, 520, f, s_.width, y_top=y + s_.height + 46)
+    idx(d, i, n, W - PAD, H - 96, s, align='right')
+
+
+@reg('L')
+def L_edge(c, im, text, i, n, f, s):
+    """出血压边：页面右半边出画，字在左侧竖排，像被裁掉一截的跨页。"""
+    w_, h_ = round(im.width * 0.9), round(im.height * 0.9)
+    s_ = im.resize((w_, h_), Image.LANCZOS)
+    c.paste(s_, (W - w_ + 62, (H - h_) // 2))
+    d = ImageDraw.Draw(c)
+    rule(d, (PAD + 300, 120), (PAD + 300, H - 120))
+    vtext(d, text, PAD + 268, ImageFont.truetype(FONT, 40), 2, gap=64)
+    idx(d, i, n, PAD, H - 96, s)
+
+
+# ---------------------------------------------------------------- 编排
+PREFER = {
+    'short': ['C', 'D', 'K', 'I', 'F'],
+    'mid': ['A', 'B', 'G', 'H', 'J'],
+    'long': ['E', 'G', 'J', 'A', 'B'],
+}
+
+
+def choose(text, used):
+    band = 'short' if len(text) <= 12 else 'mid' if len(text) <= 18 else 'long'
+    recent = used[-2:]
+    for name in PREFER[band]:
+        if name not in recent:
+            return name
+    for name in LAYOUTS:
+        if name not in recent:
+            return name
+    return PREFER[band][0]
+
+
+def main(src, dst, head_path, only=None):
+    src_dir, dst_dir = Path(src), Path(dst)
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    pages = sorted(src_dir.glob("*.png"))
+    data = json.loads(Path(head_path).read_text(encoding="utf-8"))
+    heads = data.get("pages") or data.get("shots") if isinstance(data, dict) else data
+    tallest = max(Image.open(p).height for p in pages)
+    k = PAGE_H / tallest
+    f = ImageFont.truetype(FONT, BIG)
+    s = ImageFont.truetype(FONT, 24)
+    used = []
+    for i, (p, hd) in enumerate(zip(pages, heads)):
+        im = Image.open(p).convert("RGB")
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+        canvas = Image.new("RGB", (W, H), PAPER)
+        name = hd.get("layout") or choose(hd["headline"], used)
+        if only and name not in only:
+            name = choose(hd["headline"], used)
+        LAYOUTS[name](canvas, im, hd["headline"], i, len(pages), f, s)
+        out = dst_dir / (p.stem + ".png")
+        canvas.save(out)
+        used.append(name)
+        print(out.name, name, len(hd["headline"]), "字")
+    print("版式顺序:", " → ".join(used))
+    return 0
+
+
+if __name__ == "__main__":
+    argv = sys.argv[1:]
+    only = None
+    if "--only" in argv:
+        pos = argv.index("--only")
+        only = set(argv[pos + 1].split(","))
+        argv = argv[:pos] + argv[pos + 2:]
+    if len(argv) != 3:
+        print(__doc__)
+        raise SystemExit(2)
+    raise SystemExit(main(argv[0], argv[1], argv[2], only))
