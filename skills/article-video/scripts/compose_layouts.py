@@ -325,6 +325,27 @@ TEXT_RIGHT = {"A", "B", "C", "D", "E", "F", "G", "H", "J"}
 # 半屏剩下的交给 96–124 号大字 + 结构线（细线 / 橙色短线 / 刻度 / 竖排编号 / 巨号垫底）。
 STRIP_DEF = 54
 
+# ── 无字模式（2026-11-16 改口径）────────────────────────────────────
+# 屏上大字挪走，文字交给渲染层的字幕条。理由是实测出来的：一镜一刀、一刀只一句
+# 16 字以内的大字，而口播在同一镜里讲 20–37 字、3–5 个信息点——念到第二个点以后，
+# 画面上没有任何东西在跟，听感就是「口播已说下一页，画面还停在上页」。
+#
+# 注意：宽条页受 max_bleed=1.04 限宽，图高最多到 0.536H（比例 3.45 的页）。
+# 所以「无字后把图放大」对宽条页无效——12 套之间的差异要靠位置、裁切、倾斜、
+# 双块、装饰线来撑，不能再靠字的排法。
+NO_HEAD = False
+SCR = round(H * 0.15)          # 底部留给字幕带的高度（帧图留白，字幕由渲染层画）
+
+
+def head_y(s_h, top=None):
+    """无字时图的纵向落点：底边贴字幕带上沿，留白集中到上方。
+
+    取中线（(H-SCR-h)//2）会让图飘在画面半空、图与字幕之间空出 200px；
+    贴底之后图与字幕连成一块，观众从字幕往上找内容只跳一层。
+    代价是镜号与装饰线不能放在图下方——那会落进字幕带，所以 12 套一律挂到图上方。
+    """
+    return H - SCR - s_h - 26 if top is None else top
+
 
 def strip_font():
     return ImageFont.truetype(FONT, STRIP_DEF)
@@ -334,15 +355,21 @@ def _sf(sz):
     return ImageFont.truetype(FONT, sz)
 
 
-def strip_fit(im, target_h, max_bleed=1.04):
-    """宽条按高度铺；宽度最多出血到 1.04 倍画布，再宽就反过来按宽度定高。
+def strip_fit(im, target_h, max_bleed=None):
+    """宽条按高度铺；宽度最多出血到画布 N 倍，再宽就反过来按宽度定高。
 
     只按 target_h 铺会出事：03-trust 是 933×215（比例 4.34），铺到 0.52H 等于宽 2437，
     横裁 21%，三块里最右那块直接切掉。
     出血上限也不能放到 1.10：左右各裁 5% 已经会吃掉页内贴边的字，成片的运镜还要再放大
     4–6%，两层叠起来 01 帧的「1993」、12 帧的「可」字就是这么没的。1.04 只裁 2%（38px），
     小于页内 84px 的边距，运镜再推一档也切不到字。
+
+    但视频页的「图形区」边距远小于 84px（藏掉 h1/导语后图形贴边），1.04 仍会切：
+    无字模式下实测 01-event 的「1993」「辞去…全部职务」都被裁——所以无字时收到 0.96，
+    给运镜留出不裁字的余量（推进 1.025 × 0.96 ≈ 0.984，仍在画布内）。
     """
+    if max_bleed is None:
+        max_bleed = 0.96 if NO_HEAD else 1.04
     k = target_h / im.height
     if im.width * k > W * max_bleed:
         k = W * max_bleed / im.width
@@ -362,8 +389,19 @@ def _strip_paste(c, s_, y, align="center"):
 
 @reg('S1')
 def S1_top(c, im, text, i, n, f, s):
-    """上图下文：图 0.52H 居中，细线压图底，104 号字在下。开场立页，最稳。"""
+    """上图下文：图 0.52H 居中，细线压图底，104 号字在下。开场立页，最稳。
+
+    无字时：图按 0.64H 要，受限宽仍是 0.536H，底边贴字幕带上沿；细线挂图上方、镜号再上一格。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.64))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(PAD, ly), (W - PAD, ly)], fill=RULE, width=2)
+        idx(d, i, n, W - PAD, ly - 46, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.52))
     _strip_paste(c, s_, 104)
     d.line([(PAD, 104 + s_.height + 26), (W - PAD, 104 + s_.height + 26)], fill=RULE, width=2)
@@ -373,8 +411,20 @@ def S1_top(c, im, text, i, n, f, s):
 
 @reg('S2')
 def S2_bottom(c, im, text, i, n, f, s):
-    """上文下图：104 号字先立在上，图 0.54H 兜底。给数、收束。"""
+    """上文下图：104 号字先立在上，图 0.54H 兜底。给数、收束。
+
+    无字时：图压到字幕带上沿，细线浮在图上方（与 S1 的「线压图顶、图在其下」同一锚点，
+    但 S1 通栏、S2 跟图宽），镜号挂细线右端——同一张页，S1 从右端起读，S2 从左端起读。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.56))
+        y = head_y(s_.height)
+        x = _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(x, ly), (x + s_.width, ly)], fill=RULE, width=2)
+        idx(d, i, n, W - PAD, ly - 46, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.54))
     htext(d, text, PAD, _sf(104), W - 2 * PAD, y_top=84)
     c.paste(s_, ((W - s_.width) // 2, H - 40 - s_.height))
@@ -387,8 +437,19 @@ def S3_tag_left(c, im, text, i, n, f, s):
 
     镜号不能竖排贴左边缘——图按高度铺满后宽 1856–2150，左边缘压的就是图形本身，
     第一版真帧里 06/16 两镜的编号全叠在图上。
+
+    无字时：编号升成主角——90 号压在细线左上，细线在图上方，橙短线再接细线下面一格。
     """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.54))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(PAD + 130, ly), (W - PAD, ly)], fill=RULE, width=2)
+        d.text((PAD, ly - 96), f"{i + 1:02d}", font=_sf(90), fill=(186, 184, 181))
+        d.line([(PAD, ly + 22), (PAD + 260, ly + 22)], fill=ACCENT, width=6)
+        return
     s_ = strip_fit(im, round(H * 0.52))
     _strip_paste(c, s_, 96)
     ly = 96 + s_.height + 24
@@ -399,8 +460,19 @@ def S3_tag_left(c, im, text, i, n, f, s):
 
 @reg('S4')
 def S4_tag_right(c, im, text, i, n, f, s):
-    """右题签：112 号字在上，镜号在右上，图 0.52H 压底。"""
+    """右题签：112 号字在上，镜号在右上，图 0.52H 压底。
+
+    无字时：图压底，橙短线右对齐挂图上方，镜号退到线的外右上角。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.54))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(W - PAD - 420, ly), (W - PAD, ly)], fill=ACCENT, width=6)
+        d.text((W - PAD - 150, ly - 86), f"{i + 1:02d}", font=_sf(74), fill=(190, 188, 185))
+        return
     s_ = strip_fit(im, round(H * 0.52))
     htext(d, text, PAD, _sf(112), W - 2 * PAD - 160, y_top=92)
     d.text((W - PAD - 146, 98), f"{i + 1:02d}", font=_sf(74), fill=(190, 188, 185))
@@ -411,8 +483,19 @@ def S4_tag_right(c, im, text, i, n, f, s):
 
 @reg('S5')
 def S5_bleed(c, im, text, i, n, f, s):
-    """出血压顶：图 0.58H 上下出血（横裁约 10%），96 号字压在图下缘的纸色条上。"""
+    """出血压顶：图 0.58H 上下出血（横裁约 10%），96 号字压在图下缘的纸色条上。
+
+    无字时：橙短线接在图上方表示「这一镜的落点」，图压到字幕带上沿。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.60))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(PAD, ly), (PAD + 420, ly)], fill=ACCENT, width=6)
+        idx(d, i, n, W - PAD, ly - 46, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.58))
     _strip_paste(c, s_, -26)
     col_w = W - 2 * PAD - 120
@@ -425,8 +508,19 @@ def S5_bleed(c, im, text, i, n, f, s):
 
 @reg('S6')
 def S6_jumbo(c, im, text, i, n, f, s):
-    """缩图巨字：图缩到 0.38H 居中，118 号字压细线下。结论句。"""
+    """缩图巨字：图缩到 0.38H 居中，118 号字压细线下。结论句。
+
+    无字时：图缩到 0.34H 压到底，细线挂图上方、镜号再上一格——整片里最「远」的一刀，
+    用来给一句总结性的话让位。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.34))
+        y = head_y(s_.height)
+        x = _strip_paste(c, s_, y)
+        d.line([(x, y - 30), (x + s_.width, y - 30)], fill=RULE, width=2)
+        idx(d, i, n, W - PAD, y - 58, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.38))
     y = 132
     x = _strip_paste(c, s_, y)
@@ -442,8 +536,25 @@ def S7_duo(c, im, text, i, n, f, s):
     只用于「页本身是左右两栏、句子不跨中线」的页。07-contrast 那种横跨两栏的长句
     （「跨了八个数量级」）切一半就会被切成两段、并溢出到画布外——实测已成片里露出。
     块宽写死 900 也会出事：06-life 是 800×343，切半后铺到 900 等于高 771，结论字直接顶出画布。
+
+    无字时：双块并置是这套的全部意义，块不动；竖线只向上出头（下出头会落进字幕带），
+    镜号挂竖线右上。
     """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        h_ = round(H * 0.54)
+        left = im.crop((0, 0, im.width // 2, im.height))
+        right = im.crop((im.width // 2, 0, im.width, im.height))
+        l_, r_ = strip_fit(left, h_), strip_fit(right, h_)
+        gap = 60
+        x0 = (W - (l_.width + gap + r_.width)) // 2
+        y = head_y(h_)
+        c.paste(l_, (x0, y))
+        c.paste(r_, (x0 + l_.width + gap, y))
+        cx = x0 + l_.width + gap // 2
+        d.line([(cx, y - 44), (cx, y + h_)], fill=RULE, width=2)
+        idx(d, i, n, W - PAD, y - 70, s, align='right')
+        return
     h_ = round(H * 0.58)
     left = im.crop((0, 0, im.width // 2, im.height))
     right = im.crop((im.width // 2, 0, im.width, im.height))
@@ -461,8 +572,20 @@ def S7_duo(c, im, text, i, n, f, s):
 
 @reg('S8')
 def S8_bleed_line(c, im, text, i, n, f, s):
-    """顶出血压线：图 0.62H 从顶出血，图下一条橙色短线，100 号字压在线下。转折镜。"""
+    """顶出血压线：图 0.62H 从顶出血，图下一条橙色短线，100 号字压在线下。转折镜。
+
+    无字时：顶边轻压 22px 保留「这张页没摆正」的语义，橙线挂图上方。不能压到 -58——
+    05-cuda 那种 L 形概念图顶上的「（定性）」标注会被切掉，拐点位置也就读不出来了。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.58))
+        y = head_y(s_.height) - 22
+        _strip_paste(c, s_, y)
+        ly = y - 34
+        d.line([(PAD, ly), (PAD + 420, ly)], fill=ACCENT, width=6)
+        idx(d, i, n, W - PAD, ly - 46, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.62))
     _strip_paste(c, s_, -34)
     ly = -34 + s_.height + 34
@@ -473,8 +596,21 @@ def S8_bleed_line(c, im, text, i, n, f, s):
 
 @reg('S9')
 def S9_tilt(c, im, text, i, n, f, s):
-    """斜置：图 0.50H 逆时针 2.2°，100 号字齐行压在图下。回忆/闪回。"""
+    """斜置：图 0.50H 逆时针 2.2°，100 号字齐行压在图下。回忆/闪回。
+
+    无字时：不再倾斜。宽条素材（比例 2–4.3）一转角，四角就露出纸色白边，看着像斜贴的纸条；
+    而时间轴这类图，水平线本身就是读方向的基准，斜 2.2° 等于把「哪边是起点」搞乱。
+    倾斜的手法靠别处补（镜号压线右端 + 通栏细线），身份还在。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.50))
+        y = head_y(s_.height)
+        x = (W - s_.width) // 2
+        c.paste(s_, (x, y))
+        d.line([(PAD, y - 34), (W - PAD, y - 34)], fill=RULE, width=2)
+        idx(d, i, n, W - PAD, y - 62, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.50))
     s_ = s_.rotate(2.2, expand=True, resample=Image.BICUBIC, fillcolor=PAPER)
     c.paste(s_, ((W - s_.width) // 2, 104))
@@ -488,17 +624,20 @@ def S10_window(c, im, text, i, n, f, s):
 
     窄页（比例只有 1.99 的 04-crash）按高铺后只有 60% 宽，窗再压上去会把大字挤成两行，
     所以窄页把窗放到画布右侧、图缩到 0.72 宽靠左，字仍在图下方通栏。
+
+    无字时：开窗是这套的全部意义，窗保留、位置不动，只是不再写字；图压到字幕带上沿，
+    镜号挂到图上方。
     """
     d = ImageDraw.Draw(c)
-    h_ = round(H * 0.54)
+    h_ = round(H * (0.60 if NO_HEAD else 0.54))
     s_ = strip_fit(im, h_)
     narrow = s_.width < W - 2 * PAD - 320
     if narrow:
         k = (W - 2 * PAD - 700) / im.width
         s_ = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
-        x, y = PAD, 120
+        x, y = PAD, head_y(s_.height, 120) if NO_HEAD else (PAD, 120)
     else:
-        x, y = (W - s_.width) // 2, 112
+        x, y = (W - s_.width) // 2, (112 if not NO_HEAD else head_y(s_.height))
     c.paste(s_, (x, y))
     win_w = 640 if not narrow else 620
     crop = im.crop((int(im.width * .52), int(im.height * .30), im.width, im.height))
@@ -509,14 +648,33 @@ def S10_window(c, im, text, i, n, f, s):
     c.paste(win, (wx, wy))
     d.rectangle([wx - 2, wy - 2, wx + win_w + 1, wy + ch + 1], outline=ACCENT, width=3)
     d.text((wx + 6, wy - 36), "放大", font=_sf(24), fill=ACCENT)
+    if NO_HEAD:
+        idx(d, i, n, W - PAD, y - 50, s, align='right')
+        return
     htext(d, text, PAD, _sf(96), W - 2 * PAD, y_top=y + s_.height + 54)
     idx(d, i, n, W - PAD, H - 84, s, align='right')
 
 
 @reg('S11')
 def S11_scale(c, im, text, i, n, f, s):
-    """刻度线：图 0.46H 在上，实线八道齿，112 号字贴线写。给数、有量纲的镜。"""
+    """刻度线：图 0.46H 在上，实线八道齿，112 号字贴线写。给数、有量纲的镜。
+
+    无字时：刻度线是这套的骨架，必须留——图缩到 0.44H 压到字幕带上沿，刻度线紧贴图上方，
+    镜号挂在刻度右端外侧，像一根标尺横在图上。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        s_ = strip_fit(im, round(H * 0.44))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        line_y = y - 88
+        d.line([(PAD, line_y), (W - PAD, line_y)], fill=RULE, width=4)
+        fw = W - 2 * PAD
+        for k in range(9):
+            d.line([(PAD + round(k * fw / 8), line_y - 14), (PAD + round(k * fw / 8), line_y + 14)],
+                   fill=RULE, width=2)
+        idx(d, i, n, W - PAD, line_y - 58, s, align='right')
+        return
     s_ = strip_fit(im, round(H * 0.46))
     y = 96
     _strip_paste(c, s_, y)
@@ -531,8 +689,18 @@ def S11_scale(c, im, text, i, n, f, s):
 
 @reg('S12')
 def S12_index(c, im, text, i, n, f, s):
-    """巨号垫底：编号 150 号压左上，图 0.50H 居中偏下，96 号字一行压右下。换气镜。"""
+    """巨号垫底：编号 150 号压左上，图 0.50H 居中偏下，96 号字一行压右下。换气镜。
+
+    无字时：150 号编号不退场——它退成左上角灰底纹，图压到字幕带上沿，图上方一条短细线收住。
+    """
     d = ImageDraw.Draw(c)
+    if NO_HEAD:
+        d.text((PAD - 8, 8), f"{i + 1:02d}", font=_sf(150), fill=(226, 224, 221))
+        s_ = strip_fit(im, round(H * 0.48))
+        y = head_y(s_.height)
+        _strip_paste(c, s_, y)
+        d.line([(PAD, y - 30), (PAD + 260, y - 30)], fill=RULE, width=2)
+        return
     d.text((PAD - 8, 12), f"{i + 1:02d}", font=_sf(150), fill=(226, 224, 221))
     s_ = strip_fit(im, round(H * 0.50))
     _strip_paste(c, s_, 322)
@@ -557,7 +725,9 @@ def zoom_variant(canvas, layout="", k=1.26):
     return canvas.crop((x, y, x + cw, y + ch)).resize((w, h), Image.LANCZOS)
 
 
-def main(src, dst, head_path, only=None):
+def main(src, dst, head_path, only=None, no_head=False):
+    global NO_HEAD
+    NO_HEAD = bool(no_head)
     src_dir, dst_dir = Path(src), Path(dst)
     dst_dir.mkdir(parents=True, exist_ok=True)
     pages = sorted(src_dir.glob("*.png"))
@@ -605,6 +775,9 @@ def main(src, dst, head_path, only=None):
 if __name__ == "__main__":
     argv = sys.argv[1:]
     only = None
+    no_head = "--no-head" in argv
+    if no_head:
+        argv.remove("--no-head")
     if "--only" in argv:
         pos = argv.index("--only")
         only = set(argv[pos + 1].split(","))
@@ -612,4 +785,4 @@ if __name__ == "__main__":
     if len(argv) != 3:
         print(__doc__)
         raise SystemExit(2)
-    raise SystemExit(main(argv[0], argv[1], argv[2], only))
+    raise SystemExit(main(argv[0], argv[1], argv[2], only, no_head))
