@@ -500,6 +500,8 @@ def main():
     ap.add_argument("--candidates", action="store_true",
                     help="抽取语义层候选（rename/cohesion/colon/iso3），不跑常规检测")
     ap.add_argument("--out", help="候选 JSON 输出路径（默认 stdout）")
+    ap.add_argument("--min-chars", type=int, default=500,
+                    help="最小汉字数；口播稿/文案这类短稿设 0 强制检测，密度类指标只作参照（默认 500）")
     args = ap.parse_args()
 
     p = Path(args.target)
@@ -532,9 +534,15 @@ def main():
         return
 
     r = measure_docs(docs)
-    if r["meta"]["万汉字"] < 0.05:
-        print("汉字过少（<500），检测无意义", file=sys.stderr)
+    n_chars = int(round(r["meta"]["万汉字"] * 10000))
+    if n_chars < args.min_chars:
+        print(f"汉字过少（{n_chars} < {args.min_chars}），检测无意义"
+              f"；短稿要强制跑就加 --min-chars 0", file=sys.stderr)
         sys.exit(1)
+    r["meta"]["短文本"] = n_chars < 500
+    if r["meta"]["短文本"]:
+        print(f"注意：{n_chars} 汉字，密度类指标（每千字）只作参照，"
+              f"显著性不成立；命中仍逐条复核", file=sys.stderr)
 
     if args.json:
         print(json.dumps(r, ensure_ascii=False, indent=1))

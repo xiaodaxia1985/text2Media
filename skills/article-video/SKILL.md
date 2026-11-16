@@ -16,7 +16,8 @@ metadata:
 
 | 步 | 命令 | 产物 |
 |---|---|---|
-| 0. 写口播与大字 | `python scripts/talk.py talk.json --headlines heads.json` | 每镜 `headline`（屏幕大字）+ `line`（口播原句）；断言「大字是口播的逐字开头」 |
+| 0. 写口播稿（**最重要，稿子不过不许往下走**） | 按 `references/voiceover.md` 写，然后 `python scripts/vo_check.py talk.json --subject <主角名> --article <原文.md>` | `talk.json`（每镜 `id / headline / line`）＋ 0-fail 体检报告 |
+| 0.5 定大字 | `python scripts/talk.py talk.json --headlines heads.json` | 每镜屏幕大字（必须是 `line` 的逐字开头） |
 | 1. 给视频取页 | `python scripts/videopage.py <页面目录> <视频页目录>` | 同一份 HTML，藏掉 h1/导语/图注/页脚，截出**图形区**（749×217 这种宽条） |
 | 2. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json --headlines heads.json` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
 | 3. 出帧 | `python scripts/compose_layouts.py <视频页目录> <帧输出目录> shotplan.json [--only A,B]` | 1920×1080 整帧；宽条页走 S1~S4，整页走 A~L；标了 `frames:2` 的镜多出一张 `<页名>b.png`（推近） |
@@ -24,6 +25,22 @@ metadata:
 | 5. 成片 | `node <repo>/video/make.mjs out.script.json` | `output/<日期>/抖音/.../video.mp4`（不给 `--skip-voice` 就顺手配音） |
 
 第 5 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：`build_script.py` 从帧的实际尺寸写出 `size:{w,h}`，`make.mjs` 透传 `--w/--h`，横页出 16:9、竖页出 9:16。
+
+## 一·零、顺序不可颠倒：稿子 → 匹配 → 出片
+
+**画面是为口播稿服务的，所以稿子必须先单独过审。** 一发现问题就直接往下渲，出来的必然是"按我的思路做完，却不是你要的效果"，而且耗时最长、返工最贵。
+
+| 阶段 | 出什么 | 出口条件 |
+|---|---|---|
+| ① 口播稿 | 只有文字（`talk.json`）＋`vo_check.py` 报告 | 人读完点头；机器 0 fail |
+| ② 画面匹配 | 每句配哪一页、大字取哪几个字、要不要推近（一张表） | 人看完这张表点头 |
+| ③ 出片 | `videopage → shot_plan → compose → build_script → make` | 上两阶段都过了才跑 |
+
+`vo_check.py` 查的是稿子层能机器判的部分：第一句必须出现主角名（不许拿"他"开场）、单句 12–38 字、每句开头要咬住上一句、数字口径必须回原文、时长估算。判不了的（讲没讲清楚、情绪对不对）会以 `NOTE` 列出来给人看——**NOTE 不是通过，是要人确认一次**。
+
+**去 AI 味交给 `skills/lieflat-less-ai-tone`，本 skill 不自建词表。** 稿子 ≥500 汉字时跑 `detect.py <稿.txt> --json` 出分级报告；60–90 秒的短稿（300–400 字）到不了它的检测门槛，就按它那 13 条规则人工过一遍、列候选给人点头，**报告出来不等于可以自己改**，按那边的「报告→等回复→改写→复测」走。
+
+写法与去 AI 味的完整清单在 `references/voiceover.md`。
 
 ## 一·补、一屏只能有一套大字（2026-11-16 实拍踩到）
 
