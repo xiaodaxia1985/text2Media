@@ -22,7 +22,7 @@ metadata:
 | 2. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json --headlines heads.json` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
 | 3. 出帧 | `python scripts/compose_layouts.py <视频页目录> <帧输出目录> shotplan.json [--only A,B] [--no-head]` | 1920×1080 整帧；宽条页走 S1~S12，整页走 A~L；标了 `frames:2` 的镜多出一张 `<页名>b.png`（推近）；`--no-head` 出无字帧（见「一·补二」） |
 | 4. 拼渲染脚本 | `python scripts/build_script.py <帧目录> <alignment.json> out.script.json --lines talk.json [--estimate] --media-prefix …` | 渲染引擎要的 `script.json`：`line` 作字幕与配音，时长抄配音对齐（配音前用 `--estimate` 估） |
-| 5. 成片 | `node <repo>/video/make.mjs out.script.json` | `output/<日期>/抖音/.../video.mp4`（不给 `--skip-voice` 就顺手配音） |
+| 5. 成片 | `remotion render src/index.ts <Id> "out\seq-<Id>" --sequence` 逐镜出 PNG 序列；`python video\step4-motion\join_full.py --audio` 拼整片 | `output/<日期>/抖音/.../整片_*.mp4`（片头 + 16 镜 + 片尾，音频按同一条时间轴拼） |
 
 第 5 步复用 `video/` 抽屉（HyperFrames 0.9.41 + 本地 VoxCPM 配音 + Whisper 对齐），`make.mjs` 一条命令走完：校验→配音→合成→混音→渲染。**画幅不写死**：`build_script.py` 从帧的实际尺寸写出 `size:{w,h}`，`make.mjs` 透传 `--w/--h`，横页出 16:9、竖页出 9:16。
 
@@ -41,6 +41,37 @@ metadata:
 **去 AI 味交给 `skills/lieflat-less-ai-tone`，本 skill 不自建词表。** 稿子 ≥500 汉字时跑 `detect.py <稿.txt> --json` 出分级报告；60–90 秒的短稿（300–400 字）到不了它的检测门槛，就按它那 13 条规则人工过一遍、列候选给人点头，**报告出来不等于可以自己改**，按那边的「报告→等回复→改写→复测」走。
 
 写法与去 AI 味的完整清单在 `references/voiceover.md`。
+
+## 一·零补、开篇先给主题和结论（2026-11-16 用户改稿后定）
+
+**开场不是推理番，观众不会等你铺垫到第 10 秒。** 之前 01 只给半句（「最缺的不再是把东西做出来」）、结论压到第 3 镜（第 11 秒）的写法已经被否，改法固定成三镜：
+
+| 镜 | 干的事 |
+|---|---|
+| 01 | 主题＋结论并进一句，最好逐字取原文标题的判断 |
+| 02 | 先一个 6–12 字短句交代为什么不是别的答案，再给证据 |
+| 03 | 给一句立场或转折，**不许复述 01 的结论** |
+
+整片骨架：**片头（账号介绍 ≤5 秒）→ 01 主题＋结论 → 02 为什么 → 03 判断 → 正文取证 → 片尾（CTA 2 秒）**。结论必须落在开场 15 秒内；片头不放在结论前面，否则钩子被 5 秒账号介绍打断。
+
+**片头、片尾这类新增段落，先把文字稿交人确认，确认前不写组件、不配音、不渲染。** 文字没定就开做，做几轮都是白做。
+反例、四条硬规矩与「为什么标题可以直接当 01」见 `references/voiceover.md` 的「二·补」。
+
+## 一·零补二、出片这一段用 Remotion 做元素级动画（2026-11-16 定型）
+
+**一镜一族，族里每个元素自己进场**：线长出来、点弹进来、条涨上去、卡推开、字遮罩升起、光束扫过去。页与页之间不做转场，靠上一镜的最后一个动作接下一镜的第一个动作。
+
+这一条是被否出来的：每镜一张整页图、页间淡入淡出或硬切，用户的原话是「进入和出去都很跳跃」「页面老是跳来跳去」「不就是在放 pdf 吗」「弱智的很」。长页滚动版同样被否。
+
+引擎三条路都试过，只这条通：HyperFrames 的整页思路已废；Revideo 0.11.0 在 Chrome 157 上渲染必崩；Motion Canvas 3.17.2 没有 headless CLI。**Remotion 4.0 可用，CLI 能 headless 出 PNG 序列。**
+
+三条不能破：
+
+1. **每镜帧数由配音实长决定**——`帧数_i = (start_{i+1} − start_i) × fps`，末镜到总长；段间静默里画面留上一句最后一帧，不提前切页。配音对齐要先按 wav 实长归一（VoxCPM 写完全局加过速，原时间戳末镜会超出总长）。
+2. **组件里的时点写秒，不写帧**——稿子一改、时长一变，全部要重排。这是已知代价，不是 bug。
+3. **每个组件渲完抽末帧看一次**——色阶反了、数字压字、三层互压，光读代码看不出来。
+
+16 族怎么落成代码、时点怎么排、整片怎么拼、六个工具坑，全在 `references/remotion.md`。
 
 ## 一·补、一屏只能有一套大字（2026-11-16 实拍踩到）
 
@@ -158,15 +189,19 @@ article-video/
     conclusions.py     claim → 屏幕大字的机械压缩（兜底用）
   references/
     layouts.md         十二套手法详解、参数、三处踩过的坑
+    voiceover.md       口播稿写法（含开篇三镜）
+    remotion.md        元素级动画出片：16 族语法、时点口径、整片拼接、六个坑
   templates/
     example.shotplan.json  一份完整 shot plan（含 why / alt / frames）
 ```
+
+另外三个脚本不在本 skill 目录里，属 `video/` 抽屉：`scale_alignment.py`（配音实长归一）、`seg_times.py`（分句帧）、`step4-motion/join_full.py`（整片拼接）。
 
 ## 七、依赖与已知限制
 
 - **Python**：`pillow` 足够，不需要浏览器。
 - **字体**：屏幕大字用汇文明朝体（`.otf`）。不写死路径：`ARTICLE_VIDEO_FONT` 指文件，或 `FIGKIT_FONTS` 指字体根目录（与 `article-figures` 共用）。找不到会明确报错，不会静默换字。
-- **渲染**：需要 `video/` 抽屉（Node + HyperFrames + 本地 VoxCPM）。没配音时加 `--skip-voice` 复用已有 `narration.wav` / `alignment.json`。
+- **渲染**：两个抽屉并存。`step4-motion`（Remotion，元素级动画，现在走这条）；`video/make.mjs`（HyperFrames + 本地 VoxCPM，留作旧路径）。没配音时复用已有 `narration.wav` / `alignment.json`。
 - **已知限制（都在代码里留了印记，不是"以后再说"）**：
   - 推近帧按**整帧裁**，不是按某个元素推；图上要精确推某根柱，得在 shot plan 里手写 `focus:{x,y}`（字段还没实现）。
   - `build_script.py` 要求帧数与配音镜数一致：改镜数就得重配音，这是引擎侧的约束。
