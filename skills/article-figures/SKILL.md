@@ -1,6 +1,6 @@
 ---
 name: article-figures
-description: 把一篇中文文章拆成若干张自包含的图解页（HTML → PNG），每张证明一个论断；图数由图能证明的论断数决定，不预设上限，长文可分卷；字体、字号、纸色走可被覆盖的 style.json，不写死。当用户要求「给这篇文章配图」「做几张图解」「把这篇文章做成信息图/卡片页」「文章配图要能直接发」「这篇要 20 张图」时使用。不用于封面图、纯图片生成、视频成片。
+description: 把一篇中文文章拆成若干张自包含的图解页（HTML → PNG），每张证明一个论断；图数由图能证明的论断数决定，不预设上限，长文可分卷；字体、字号、纸色走可被覆盖的 style.json，不写死；画幅两套页壳——16:9 横页与 3:4 竖版（小红书/抖音，含配套封面）。当用户要求「给这篇文章配图」「做几张图解」「把这篇文章做成信息图/卡片页」「文章配图要能直接发」「这篇要 20 张图」「适配抖音和小红书」时使用。不用于纯图片生成、视频成片。
 metadata:
   short-description: 文章 → 论断 → 图解页（数量随文章走）
 ---
@@ -116,18 +116,39 @@ python scripts/make.py            # 出 N 页 HTML
 
 `make.py` 里每个图型一个函数，**写这篇就照这篇的图改函数**；跨篇复用只复用图型函数，不要复用某篇的文案。改样式改 `style.json`，不要改 `make.py` 里的字面量。
 
+要手机画幅（小红书 / 抖音图文）就换成竖版页壳：`from shell34 import page, open_svg, txt, line, arrow_defs`，八个纵向图型与文案仍写在本文的 make 脚本里，坐标见 `references/size-3x4.md`。
+
 ### 5. 三道门禁
 
 ```powershell
+python scripts/shot.py out --size 1080x800    # 截图：横页报宽高，3:4 用默认 1080x1440
 python "$env:DIAGRAM_SKILL_DIR/scripts/verify_geometry.py" *.html   # 连接线 / 遮挡（diagram-design 自带，本 skill 只引用不复制）
 python scripts/trim.py                        # 按纸色裁掉每页底部空白（截图窗口比页面高）
 python scripts/verify_clean.py *.html         # 剥 @font-face 后跑 self_check
 python scripts/sheet.py                       # 拼总览，人眼再看一遍（格子按张数自动算行）
 ```
 
+`shot.py` 按固定画幅截，页面多高窗口就多高：**3:4 页高固定 1440，不需要 trim**（没有多余留白可裁）；横页仍要 trim，因为页高是算出来的。
+
 跑之前把 `DIAGRAM_SKILL_DIR` 指到 diagram-design skill 目录，否则第一条会找不到文件。
 
 `verify_clean.py` 存在的原因：`self_check` 把任何非 `#fragment` 的 `url()` 判成外部资源，**data: 字体也一起误杀**，不剥掉就永远一片 FAIL。
+
+## 画幅：横页 16:9 与竖页 3:4
+
+两套页壳，同一套样式机制。选哪个看发布渠道，不看内容。
+
+| 画幅 | 页壳 | 尺寸 | 用在哪 |
+|---|---|---|---|
+| 横页 | `scripts/make.py` | 1080×800，图内宽 952 | 公众号插图、网页正文、视频素材 |
+| 竖页 3:4 | `scripts/shell34.py` | 1080×1440，图内宽 952 | 小红书、抖音图文（两平台共用） |
+
+**3:4 不是把横图放大**：页高从 800 拉到 1440，横向的左右分栏会缩成细线，必须换纵向构图
+（百格网格、零轴横条、分叉树、泳道、汇流、能力阶梯、水平零轴柱、时间台阶……）。
+八种已跑通的图型、封面版式与踩过的坑都在 `references/size-3x4.md`，用它之前先读。
+
+封面走 `scripts/cover34.py`，出图截图走 `scripts/shot.py`（默认就是 1080×1440）：
+**小红书与抖音共用一张封面**，照片必填，标题三行短句每行 ≤6 字，不放目录。
 
 ## 样式：默认值 + 覆盖，不写死
 
@@ -147,7 +168,11 @@ python scripts/sheet.py                       # 拼总览，人眼再看一遍�
 }
 ```
 
-改一项就够的情况：换纸色只改 `paper` / `paper` 系；做 3:4 卡片只改 `page_width` 与 `pad`；换标题字体只改 `font_title` 并在 `font_kinds` 里加上对应族（族名见 `references/font-stack.md`）。**不要把某篇的字号抄进脚本**，抄进去下一篇就得回来改。
+改一项就够的情况：换纸色只改 `paper` / `paper` 系；换标题字体只改 `font_title` 并在 `font_kinds` 里加上对应族（族名见 `references/font-stack.md`）。**不要把某篇的字号抄进脚本**，抄进去下一篇就得回来改。
+
+**画幅不是改一项的事**：只把 `page_width` 与 `pad` 换成竖的，页高仍是 800，图和字会挤成一团。
+3:4 换的是页壳（`shell34.py`，页高 1440 + 纵向构图 + 整套竖版字号），键名与取值见
+`references/size-3x4.md` 第二节。
 
 ## 硬规矩（结构、诚实，这两类不许覆盖）
 
@@ -176,6 +201,9 @@ article-figures/
     doctor.py        体检 python / pillow / lxml / chrome / 字体 / diagram-design
     fetch_fonts.ps1  从 npmmirror 拉字体包（~160MB，不入 git）
     make.py          图型函数 + 页面壳（样式全部读 STYLE）
+    shell34.py       3:4 竖版页壳（1080×1440，样式同一套 STYLE）
+    cover34.py       3:4 封面页壳（小红书 / 抖音共用一张）
+    shot.py          按固定画幅截图（默认 1080×1440，自找 Chrome）
     fontkit.py       按页挑分片 / subset / base64 内联
     trim.py          按内容裁底部空白
     sheet.py         网格拼总览（列数、行数按张数算）
@@ -185,6 +213,7 @@ article-figures/
     figure-plan.md      配图规程 + 可粘提示词（含「多给候选」的要求）
     type-shortlist.md   50 种图型里常用的那二十来个
     font-stack.md       字体分工、旧字形授权、踩过的坑
+    size-3x4.md         3:4 竖版：画幅参数、纵向图型词典、封面规矩、像素回归
     style.example.json  样式全量键
   templates/
     example.plan.json   一份完整 plan（含 count_policy / type_choice 写法）
