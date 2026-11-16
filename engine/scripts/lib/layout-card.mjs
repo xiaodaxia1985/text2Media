@@ -159,7 +159,7 @@ function frame(inner, { idx, total, series, foot, cls = '', acc, kind, tag = '' 
   );
 }
 
-function coverCard(c, L, total) {
+function coverCard(c, L, total, series = '') {
   const cover = c.cover || {};
   const pages = c.pages || [];
   let points = cover.points;
@@ -170,11 +170,15 @@ function coverCard(c, L, total) {
   }
   // With an AI cover illustration the picture takes the TOC's place.
   const ill = coverIllustrationSrc(c);
+  // 真实照片（用户自己给的素材）不走插画那层径向遮罩：深色背景会在纸面上晕成一团雾。
+  const photo = !!cover.illustration?.photo;
+  // 页眉左侧已经在放 series，封面正文再打一遍同名小标就是重复——同字就只留页眉那一处。
+  const kick = cover.kicker || L.kicker(total);
   return (
-    `<div class="cv-kicker">${md(cover.kicker || L.kicker(total))}</div>` +
+    (plain(kick) === plain(series) ? '' : `<div class="cv-kicker">${md(kick)}</div>`) +
     `<h1 class="cv-title" data-qa-text style="--cv-fs:${titleTier(headText(cover.title || c.title))}px">${md(headText(cover.title || c.title))}</h1>` +
     `<div class="cv-rule"></div>` +
-    (ill ? `<div class="cv-ill"><img src="${esc(ill)}" style="aspect-ratio:${coverIllustrationAspect(c)}" alt=""></div>` : '') +
+    (ill ? `<div class="cv-ill${photo ? ' cv-ill-photo' : ''}"><img src="${esc(ill)}" style="aspect-ratio:${coverIllustrationAspect(c)}" alt=""></div>` : '') +
     ((cover.subtitle ?? pages[0]?.intro) ? `<p class="cv-sub" data-qa-text${drop(2, '封面副标题')}>${md(cover.subtitle ?? pages[0].intro)}</p>` : '') +
     (ill ? '' : `<div class="cv-toc"${drop(1, '封面目录')}><div class="cv-toc-h">${esc(L.toc)}</div><ol>${points
       .filter(Boolean)
@@ -476,7 +480,8 @@ export function buildCards(ctx) {
     const base = { idx, total, series, foot: credit, kind: it.kind };
     switch (it.kind) {
       case 'cover':
-        return frame(coverCard(c, L, total), { ...base, cls: 'c-cover', acc: accVar(0, nAcc), tag: lang === 'en' ? 'Overview' : '导读', foot: [credit, brandFoot].filter(Boolean).join('　') });
+        // credit 里已经带了作者名（原文｜author · platform），再拼 brandFoot 就是同一个名字写两遍。
+        return frame(coverCard(c, L, total, series), { ...base, cls: 'c-cover', acc: accVar(0, nAcc), tag: lang === 'en' ? 'Overview' : '导读', foot: credit || brandFoot });
       case 'sec':
         return frame(secCard(it, L), { ...base, cls: `c-sec${it.part === 2 ? ' c-sec-2' : ''}`, acc: accVar(it.k, nAcc), tag: tagOf(it) });
       case 'claim':

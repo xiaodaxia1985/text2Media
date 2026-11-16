@@ -107,6 +107,9 @@ body { width: max-content; background: var(--sheet-bg, #9a9a96); }
 .r-1x1 .cv-ill { --cv-ill-min: 120px; }
 .r-4x5 .cv-ill { --cv-ill-min: 170px; }
 .r-9x16 .cv-ill { --cv-ill-min: 300px; }
+/* 真实照片（cover.illustration.photo）：不要插画的径向遮罩，留一道细边收住画面 */
+.cv-ill-photo { justify-content: flex-start; padding: 4px 0 0; }
+.cv-ill-photo img { -webkit-mask-image: none; mask-image: none; border-radius: 1px; border: 1px solid var(--rule); }
 /* 目录不再是玻璃盒：三个条目 + 细线，和标题抢不了注意力 */
 .cv-toc { margin-top: 14px; background: none; border-radius: 0; padding: 0; box-shadow: none; }
 .cv-toc-h { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .16em; margin-bottom: 4px; }
