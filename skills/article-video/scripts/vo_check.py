@@ -9,7 +9,7 @@
   R3 首词回指：第 2 句起，句首要能咬住上一句或被上一句逼出来的疑问
   R4 稿子里不许混 markdown 标记（配音会念出来）
   R5 数字口径：阿拉伯数字必须在原文出现
-  R6 时长估算：4.2 字/秒 + 0.35s 一句停顿，>90s FAIL、>75s WARN
+  R6 时长估算：4.2 字/秒 + 0.35s 一句停顿；≤90s 通过、90–120s WARN（语速可调，按实际渲染定）、>120s FAIL
 
 **去 AI 味不在这里查。** 词表判断（空话、黑话、书面连接词）一律交给
 `skills/lieflat-less-ai-tone`（detect.py 分级报告 + 语义层判读）；本脚本自建词表
@@ -120,8 +120,12 @@ def main(argv):
 
     chars = sum(len(clean(l)) for _, l in units)
     est = chars / RATE + GAP * len(units)
-    if est > 90:
-        fails.append(f"估时 {est:.0f}s > 90s：太长了，砍句不加速")
+    if est > 120:
+        fails.append(f"估时 {est:.0f}s > 120s：按 4.2 字/秒已经念不动了，砍句或拆两集，别靠加速硬塞")
+    elif est > 90:
+        warns.append(
+            f"估时 {est:.0f}s 超 90s（4.2 字/秒口径）：过审前确认一次语速——"
+            f"1.2 倍速约 {est / 1.2:.0f}s、1.5 倍速约 {est / 1.5:.0f}s，按实际渲染定，别为凑时长砍句")
     elif est > 75:
         warns.append(f"估时 {est:.0f}s 偏长（75s 以上观众开始走）")
 
