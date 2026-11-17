@@ -18,7 +18,7 @@ metadata:
 
 | 步 | 命令 | 产物 |
 |---|---|---|
-| 0. 写口播稿（**最重要，稿子不过不许往下走**） | 按 `references/voiceover.md` 写，然后 `python scripts/vo_check.py talk.json --subject <主角名> --article <原文.md>` | `talk.json`（每镜 `id / headline / line`）＋ 0-fail 体检报告 |
+| 0. 写口播稿（**最重要，稿子不过不许往下走**） | 按 `references/voiceover.md` 的「正文通则十条」写 → `python scripts/vo_check.py talk.json --subject <主角名> --article <原文.md>` → `python ../lieflat-less-ai-tone/scripts/detect.py <稿.txt> --min-chars 0 --json` 去 AI 味并复测 | `talk.json`（每镜 `id / headline / line`）＋ 0-fail 体检 + detect 前后对比（A/B 清零） |
 | 0.5 定大字 | `python scripts/talk.py talk.json --headlines heads.json` | 每镜屏幕大字（必须是 `line` 的逐字开头） |
 | 1. 给视频取页 | `python scripts/videopage.py <页面目录> <视频页目录>` | 同一份 HTML，藏掉 h1/导语/图注/页脚，截出**图形区**（749×217 这种宽条） |
 | 2. 推每镜怎么拍 | `python scripts/shot_plan.py plan.json shotplan.json --headlines heads.json` | 每镜 `layout / beat / frames / why / alt`，附 0-fail 断言结果 |
@@ -34,13 +34,21 @@ metadata:
 
 | 阶段 | 出什么 | 出口条件 |
 |---|---|---|
-| ① 口播稿 | 只有文字（`talk.json`）＋`vo_check.py` 报告 | 人读完点头；机器 0 fail |
+| ① 口播稿 | 只有文字（`talk.json`）＋`vo_check.py` 报告 ＋ `detect.py` 前后对比 | 人读完点头；机器 0 fail；去 AI 味复测 A/B 清零 |
 | ② 画面匹配 | 每句配哪一页、大字取哪几个字、要不要推近（一张表） | 人看完这张表点头 |
 | ③ 出片 | `videopage → shot_plan → compose → build_script → make` | 上两阶段都过了才跑 |
 
 `vo_check.py` 查的是稿子层能机器判的部分：第一句必须出现主角名（不许拿"他"开场）、单句 12–38 字、每句开头要咬住上一句、数字口径必须回原文、时长估算。判不了的（讲没讲清楚、情绪对不对）会以 `NOTE` 列出来给人看——**NOTE 不是通过，是要人确认一次**。
 
-**去 AI 味交给 `skills/lieflat-less-ai-tone`，本 skill 不自建词表。** 稿子 ≥500 汉字时跑 `detect.py <稿.txt> --json` 出分级报告；60–90 秒的短稿（300–400 字）到不了它的检测门槛，就按它那 13 条规则人工过一遍、列候选给人点头，**报告出来不等于可以自己改**，按那边的「报告→等回复→改写→复测」走。
+**去 AI 味交给 `skills/lieflat-less-ai-tone`，本 skill 不自建词表。** 短稿也能跑，但**必须加 `--min-chars 0`**：
+
+```powershell
+python skills/lieflat-less-ai-tone/scripts/detect.py <稿.txt> --min-chars 0 --json > before.json
+```
+
+不加这个参数，脚本会以「汉字 <500，检测无意义」直接拒跑（60–95 秒的口播稿只有 350–450 字，永远进不去）。跑完照它那套走：改前报告 → 按白名单改 → 复测出前后对比。本产线上「等用户回复」这一环取消，但**判不了的（比喻贴切度、暗喻、案例凑数）仍然不判不改，只列人审**。
+
+两条实测口径：`detect.py` **抓不到「不是 A 是 B」的翻案腔**（规则 1 必须手查）；C 级的句长 CV、两句／三句同构默认保留——硬推参差比不改更糟。
 
 写法与去 AI 味的完整清单在 `references/voiceover.md`。
 
@@ -57,7 +65,7 @@ metadata:
 整片骨架：**片头（账号介绍 ≤5 秒）→ 01 主题＋结论 → 02 为什么 → 03 判断 → 正文取证 → 片尾（CTA 2 秒）**。结论必须落在开场 15 秒内；片头不放在结论前面，否则钩子被 5 秒账号介绍打断。
 
 **片头、片尾这类新增段落，先把文字稿交人确认，确认前不写组件、不配音、不渲染。** 文字没定就开做，做几轮都是白做。
-反例、四条硬规矩与「为什么标题可以直接当 01」见 `references/voiceover.md` 的「二·补」。
+反例、四条硬规矩与「为什么标题可以直接当 01」见 `references/voiceover.md` 的「二·补」；**正文怎么往下推（结构十条／语言三条）见同一份的「二·补二」**——那十条是跨体裁的，别把某篇文章的主题当规则。
 
 ## 一·零补二、出片这一段用 Remotion 做元素级动画（2026-11-16 定型）
 
@@ -362,7 +370,7 @@ article-video/
     make_caption_track.py  配音对齐 → 每镜 Caption[]（标点断页，见「一·零补五」）
   references/
     layouts.md         十二套手法详解、参数、三处踩过的坑
-    voiceover.md       口播稿写法（含开篇三镜）
+    voiceover.md       口播稿写法：开篇三镜 + 正文通则十条 + 去 AI 味口径
     remotion.md        元素级动画出片：16 族语法、时点口径、整片拼接、六个坑
   templates/
     example.shotplan.json  一份完整 shot plan（含 why / alt / frames）
