@@ -42,3 +42,7 @@ docs/samples/
 !skills/article2media/engine/assets/voices/*.wav
 !skills/article2media/engine/assets/voices/*.txt
 !skills/article2media/engine/assets/voices/*.json
+
+# lark-doc 的临时草稿目录不应落在 skill 里
+skills/**/draft_*/
+

@@ -16,7 +16,7 @@ video/step4-motion/
 ```
 
 - 依赖：`remotion 4.0.544` / `@remotion/cli 4.0.544` / `react 18.3.1` / `typescript 5.9.3`。
-- **工程路径里有中文就必须开一个 ASCII junction**（`E:\t2m-remotion`）。不这么做 webpack 找不到 `node_modules`，报的错跟路径无关，会白查半天。
+- **工程路径里有中文就必须开一个 ASCII junction**（现为 `项目根\tools\t2m-remotion` → `video\step4-motion`，2026-11-18 从 E 盘根搬进项目）。不这么做 webpack 找不到 `node_modules`，报的错跟路径无关，会白查半天。
 - 每个 `.tsx` 第一行必须是 `/** @jsxImportSource react */`，否则 JSX 按 classic runtime 编译，Remotion 里直接报 `React is not defined`。
 
 ## 二、一个组件的标准骨架
@@ -100,7 +100,9 @@ python video\scripts\seg_times.py video\scripts\voice\alignment.json --fps 30
 ## 五、渲染与拼接
 
 ```powershell
-Set-Location "E:\t2m-remotion"; $env:TEMP="E:\t2m-temp"; $env:TMP="E:\t2m-temp"
+$root = "项目根"                                   # 例：E:\works\New Journal\个人商业实战
+$tmp  = Join-Path $root ".tmp"; New-Item -ItemType Directory -Force -Path $tmp | Out-Null   # 必须先存在，见「六、16」
+Set-Location (Join-Path $root "tools\t2m-remotion"); $env:TEMP=$tmp; $env:TMP=$tmp
 & ".\node_modules\.bin\remotion.cmd" render src/index.ts V07 "out\seq-V07" --sequence --image-format=png `
   --browser-executable "C:\Program Files\Google\Chrome\Application\chrome.exe"
 ```
@@ -130,3 +132,6 @@ python video\step4-motion\join_full.py --audio
 13. **深底镜头的字幕必须换浅色**：`CAPTION_STYLE` 的墨色是为浅纸底备的，反白满版那一镜直接套用，字幕压成`rgba(244,245,242,0.62)`之后才看得见。凡是背景不是纸色的镜，字幕颜色都要单独给。
 14. **片尾配音会覆盖正文配音**：`voice.mjs` 的产物路径不按 script 名分目录，跑片尾那条命令会直接写掉 `voice/narration.wav` 和 `voice/alignment.json`。**跑片尾之前先把两个文件改名存好**（`tail.wav` / `tail.alignment.json`），跑完再把正文那套跑回来（不帶 `--fresh` 会命中 chunks 缓存，音频字节不变）。正文回来之后还要过一遍 `scale_alignment.py` —— `voice.mjs` 的时间轴会超出 wav 实长，不归一会让末镜落在总长之外。
 15. **字幕压在字幕区那一行时**：`CAPTION_STYLE` 从底部 62 起，画面上所有元素的下沿都要在 940 以上，否则和字幕叠字。
+16. **每次渲染都去下载 130–205MB 的 Chrome，是白等**（2026-11-18 用户当场指出）：先看 `node_modules\.remotion\chrome-headless-shell\<ver>` / `chrome-for-testing\<ver>` 是否已存在——存在就别加 `--chrome-mode`，默认直接吃缓存。非要用本机 Chrome 才加 `--browser-executable`；而本机 Chrome 正在运行时，它的默认 profile 会撞 `ProcessSingleton` 锁（报 `Lock file can not be created: 拒绝访问`），必须让 Remotion 用 TEMP 下的临时 profile，不能指向用户自己的 profile。
+17. **TEMP 指向的目录必须先存在**：目录不存在时切浏览器，报的是 `ENOENT: mkdtemp ...\puppeteer_dev_chrome_profile-XXXXXX`，外层往往只显示 `Failed to launch the browser process!`——看着像"缺浏览器"，于是又白下 200MB。开渲前先 `Test-Path`（`New-Item -ItemType Directory -Force` 兜底）。
+18. **渲染临时区固定在项目 `.tmp`，用完即删**：`$env:TEMP` 指到 `项目根\.tmp`，中间件按 slug 分子目录，收尾连目录一起删。不要在 E 盘根或 C 盘留 `t2m-temp`（2026-11-18 已从 E 盘根迁入项目，根目录只剩 `tools\t2m-remotion` 这一个 junction 入口）。
