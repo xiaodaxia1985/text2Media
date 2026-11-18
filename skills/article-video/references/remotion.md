@@ -2,6 +2,19 @@
 
 这一份是「出片」那一段的实现说明。稿子与匹配表在别处，这里只讲**一镜一族怎么落成代码、时点怎么排、整片怎么拼**。
 
+## 零、用成品版式卡（talkcraft `template/cards`）时的四条铁律
+
+卡是 960×540、固定 `durationInFrames` 的自包含组件；镜长由配音决定。两者长度不等，靠一个 `speed` 参数接，规则如下——**这四条都是实测摔出来的，不是设计偏好**：
+
+1. **先分类，再定速**。grep 卡源码有没有 `exitAt|exitDur|exitK|CONFIG.exit`：
+   - **无 exit**（约一半的卡）= 播完停在终态 → `speed = 1`，可配任意长镜；末段静止属于文字镜留白，别硬拉长。
+   - **有 exit** = 播完会退场空场 → 必须让退场**精确落在镜末**：`speed = 卡秒 / 镜秒`。不改就是"镜还在讲、画面已经白了"。
+2. **有 exit 的卡，比例别超过 1.5 倍**。`镜秒/卡秒 > 1.5` 时硬拉会让动画变成慢动作黏滞（实测 2.2 倍已经很黏）。超了换一张"无 exit 的卡"或换更长的卡，不要拉伸。
+3. **`speed` 只乘时间标尺**：`t = (useCurrentFrame() / FPS) * speed`。不要改 `CONFIG` 里的时序常量（那是卡的节奏设计），也不要改 `durationInFrames`。
+4. **人物的占位要先删**。多张主力卡自带右侧/左侧 42–47% 的灰阶剪影位（`<Host>`）。渲出来就是两个灰假人吃掉半幅。删 `<Host>` 之后**必须重排内容坐标**（容器 `left/right` 归零或居中、条目加 `flex:1` 撑满），否则内容挤在一侧、另一半全空——这一步漏掉就会"卡是对的、画面是歪的"。
+
+第 5 条：**卡内文案必须走 props**。卡默认带演示文案（"2024 全年营销费用""把手机放到另一个房间"），直接渲就是别人的稿。要么卡本身已 props 化（多数 talkcraft 卡都是），要么先把写死的常量提成 `props`（含默认值=`DEMO`），再由镜级数据填。
+
 ## 一、工程与依赖
 
 ```
@@ -132,6 +145,11 @@ python video\step4-motion\join_full.py --audio
 13. **深底镜头的字幕必须换浅色**：`CAPTION_STYLE` 的墨色是为浅纸底备的，反白满版那一镜直接套用，字幕压成`rgba(244,245,242,0.62)`之后才看得见。凡是背景不是纸色的镜，字幕颜色都要单独给。
 14. **片尾配音会覆盖正文配音**：`voice.mjs` 的产物路径不按 script 名分目录，跑片尾那条命令会直接写掉 `voice/narration.wav` 和 `voice/alignment.json`。**跑片尾之前先把两个文件改名存好**（`tail.wav` / `tail.alignment.json`），跑完再把正文那套跑回来（不帶 `--fresh` 会命中 chunks 缓存，音频字节不变）。正文回来之后还要过一遍 `scale_alignment.py` —— `voice.mjs` 的时间轴会超出 wav 实长，不归一会让末镜落在总长之外。
 15. **字幕压在字幕区那一行时**：`CAPTION_STYLE` 从底部 62 起，画面上所有元素的下沿都要在 940 以上，否则和字幕叠字。
+16. **配音慢九成是选错模型，不是流程慢**（2026-11-18 实测，6 GB 卡）：`VoxCPM2`（2B）一条 25 字台词要 ~4 分钟（76 段≈5 小时）；`VoxCPM1.5` 同一条 ~60–90 秒（76 段≈1–1.5 小时）。CUDA 上一律显式指定 1.5：`ARTICLE2MEDIA_VOXCPM_MODEL=<...>\VoxCPM1.5`。不指定时脚本可能挑到 2B，一跑就是几小时。
+17. **`voxcpm_batch.py` 必须给 `max_len`**：官方 `_generate` 默认 4096 token（≈3 分钟音频），某句不收敛会白跑 3 分钟，叠加 `retry_badcase_max_times=3` 更久。按 `max(64, len(text)*8+40)` 封顶、重试降 1。
+18. **配音期间不要看日志判断死活**：`voice.mjs` 用 `spawnSync` 起 python，batch 的逐条 stdout 被吞掉，日志永远只有「生成 N 段…」一行。判进度只数 `video\scripts\voice\chunks\*.wav` 的个数与时间戳；**中途重启会丢缓存白跑**，单条约 60–90 秒，等就是了。
+19. **Windows 上 `link-runtime.sh` 会 EPERM**：普通用户建不了 symlink。等价替代：`New-Item -ItemType Junction -Path <工程>\remotion\node_modules -Target <runtime>\node_modules`（Node 视同普通目录），`package.json` 的依赖版本照抄 `runtime/package.json`。
+20. **侧边栏/角标类的 `absolute right` 用 `P.pad`**：`right: 140` 才和左边界对称；`right: 96` 是 action-safe，不是版心。
 16. **每次渲染都去下载 130–205MB 的 Chrome，是白等**（2026-11-18 用户当场指出）：先看 `node_modules\.remotion\chrome-headless-shell\<ver>` / `chrome-for-testing\<ver>` 是否已存在——存在就别加 `--chrome-mode`，默认直接吃缓存。非要用本机 Chrome 才加 `--browser-executable`；而本机 Chrome 正在运行时，它的默认 profile 会撞 `ProcessSingleton` 锁（报 `Lock file can not be created: 拒绝访问`），必须让 Remotion 用 TEMP 下的临时 profile，不能指向用户自己的 profile。
 17. **TEMP 指向的目录必须先存在**：目录不存在时切浏览器，报的是 `ENOENT: mkdtemp ...\puppeteer_dev_chrome_profile-XXXXXX`，外层往往只显示 `Failed to launch the browser process!`——看着像"缺浏览器"，于是又白下 200MB。开渲前先 `Test-Path`（`New-Item -ItemType Directory -Force` 兜底）。
 18. **渲染临时区固定在项目 `.tmp`，用完即删**：`$env:TEMP` 指到 `项目根\.tmp`，中间件按 slug 分子目录，收尾连目录一起删。不要在 E 盘根或 C 盘留 `t2m-temp`（2026-11-18 已从 E 盘根迁入项目，根目录只剩 `tools\t2m-remotion` 这一个 junction 入口）。

@@ -151,3 +151,11 @@
 .r-9x16 .c-take { font-size: 18px; }
 .r-9x16 .c-stage li { font-size: 16.5px; }
 .r-9x16 .c-stage-h b { font-size: 22px; }
+
+/* 章节页（opener）改浅色：与正文页同一纸色，不再用黑底（2026-11-18 用户定） */
+.c-openercard.c-openercard { background: var(--bg); background-image: var(--bg-image); }
+.c-openercard.c-openercard .c-top, .c-openercard.c-openercard .c-foot { color: var(--muted); }
+.c-openercard.c-openercard .c-open-kicker { color: var(--muted); opacity: 1; }
+.c-openercard.c-openercard .c-open-h { color: var(--ink); }
+.c-openercard.c-openercard .c-open-rule { background: var(--accent-2, var(--acc)); }
+.c-openercard.c-openercard .c-open-lead { color: var(--muted); }
