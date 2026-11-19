@@ -15,7 +15,7 @@ article2media-out/<slug>/
 ├── content.json          改写稿（article-rewrite）：结构化，给长图、卡片
 ├── rewrite.md            改写稿的文章形态（article-rewrite 导出），图表在 rewrite-assets/
 ├── illustrations/        AI 插画缓存
-└── <主题>/  <主题>-3x4/  full/  full-3x4/  <主题>-wechat/  video/  whiteboard/  comic/   各产物
+└── <主题>/  <主题>-3x4/  full/  full-3x4/  <主题>-wechat/  video/  whiteboard/  comic/  figures/  series/   各产物
 ```
 
 | 文件 | 谁产出 | 谁使用 |
@@ -39,6 +39,10 @@ article2media-out/<slug>/
 | 走原文路径，但原文语言和要的输出语言不同（例如英文原文、中文读者） | **先翻译**，再原文排版 |
 | 口播视频（分镜）、白板、漫画 | 这三个能力自己写脚本（视频.json / 白板账本 / 分镜），不走上面的判断 |
 | 做成视频、出片（要卡片版） | **改写 → 卡片 → `card-video`**；已有卡片就直接用那张 `cards.html` |
+| 做成图解短片、视频版文章（16:9、分章、带审批） | **`article-video` 直接吃文章**，不先改写；口播稿 / 骨架联系表 / 静帧批三个审批点，一章一渲 |
+| 要能直接发的一组图解页 | **`article-figures`**：一张图证明一个论断，张数由论断数决定 |
+| 外文长文做成连载卡片 | **`series-reading-cards`**：先判「只讲原文」还是「原文 + 判断」，再算张数 |
+| 稿子 AI 味重 | **`lieflat-less-ai-tone`** 横切：先出分级报告，用户确认后再按白名单改 |
 
 拿不准且两种结果差别很大时（例如一篇别人的长文说"发公众号"），问一句"原文排版还是总结后再排"；其余情况按表直接做，不用确认。
 
@@ -54,13 +58,18 @@ article2media-out/<slug>/
 | `video-transcript` | 视频转文字 |
 | `article-rewrite` | 改写（总结） |
 | `article-translate` | 全文翻译 |
+| `lieflat-less-ai-tone` | 去 AI 味（横切，任何中文稿） |
 | `long-image` | 长图 |
 | `image-cards` | 卡片 |
-| `card-video` | 卡片视频（出视频走这里：卡片 → mp4） |
+| `article-figures` | 图解页（文章 → 每论断一张 HTML/PNG） |
+| `series-reading-cards` | 系列精读卡片（外文长文 → 连载卡片） |
 | `wechat-layout` | 公众号排版 |
-| `explainer-video` | 分镜口播视频（没有卡片时才用；已有卡片请走 `card-video`） |
 | `logic-whiteboard` | 白板论证 |
 | `article-comic` | 漫画 |
+| `x-article-skill` | X 长文写作（反向：产内容，不排版） |
+| `explainer-video` | 分镜口播视频（没有卡片时才用；已有卡片请走 `card-video`） |
+| `card-video` | 卡片视频（出视频走这里：卡片 → mp4） |
+| `article-video` | 图解短片（文章直入，一镜一组件，分章渲） |
 
 已经有的交接文件不要重做：目录里已有 `article.md` 就不重新抓；已有 `content.json` 换版式时只补该版式需要的字段，不重写。
 

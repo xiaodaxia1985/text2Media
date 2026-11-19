@@ -1,11 +1,11 @@
-> **仓库迁移说明**：本项目由 `article2media` 迁入 `xiaodaxia1985/text2Media`，自 2026-11-12 起**以本仓库为准**，旧仓库停止开发。
-> 目录与脚本名暂不改（仍叫 `article2media`、`ARTICLE2MEDIA_ENGINE`），避免打断已有的调用与工作目录。
+> **来源与沿革**：本仓库源于 [threerocks/article2media](https://github.com/threerocks/article2media)（MIT）。自 2026-11-12 起迁入 `xiaodaxia1985/text2Media` 继续开发，**以本仓库为准**，旧仓库停止开发。上游的贡献与致谢见文末[致谢](#致谢)。
+> 目录与脚本名沿用原名（仍叫 `article2media`、`ARTICLE2MEDIA_ENGINE`），避免打断已有的调用与工作目录。
 
 <div align="center">
 
-# article2media
+# text2Media
 
-**把一篇文章或一条视频，一键做成小红书图文、公众号排版和口播短视频。10 个能力各自独立，也能自由组合。**
+**把一篇文章或一条视频，一键做成小红书图文、公众号排版和口播短视频。16 个能力各自独立，也能自由组合。**
 
 开源 Claude Code / Codex Skills · 抓取 · 视频转文字 · 改写 · 翻译 · 杂志长图 · 小红书卡片 · 公众号排版 · 竖屏口播视频 · 原文排版 · 白板论证 · 漫画
 
@@ -20,7 +20,7 @@
 
 **article2media** 是一组开源的 Claude Code / Codex Skill，同时也是一个 Claude Code 插件。它把一篇文章或一条视频做成可以直接发布的中文视觉内容。
 
-从 2.0 起，它由 **10 个独立能力**组成：文章抓取、视频转文字、改写（总结）、全文翻译、长图、卡片、公众号排版、口播视频、白板论证、漫画。每个能力都是一个 skill，可以单独用（比如只把自己写的文章排成公众号，或者只把视频转成文字），也可以自由组合。总入口 `/article2media` 提供常用的一键组合。
+从 2.0 起，它由一组**独立能力**组成：文章抓取、视频转文字、改写（总结）、全文翻译、长图、卡片、图解页、公众号排版、口播视频、卡片视频、图解短片、白板论证、漫画、精读卡片、X 长文、去 AI 味。每个能力都是一个 skill，可以单独用（比如只把自己写的文章排成公众号，或者只把视频转成文字），也可以自由组合。总入口 `/article2media` 提供常用的一键组合。
 
 - **输入**：
   - 文章：X（Twitter）长文、网页、微信公众号文章，或本地 Markdown；
@@ -55,7 +55,7 @@ article2media 把这件事交给 AI。你给一个链接，流程分三步：
 
 | | |
 |---|---|
-| **能力独立，组合自由** | 抓取、视频转文字、改写、翻译、长图、卡片、公众号、口播、白板、漫画各是一个 skill，只靠工作目录里的文件交接。总入口给出常用组合，也可以说"先翻译，再出原文卡片"这样自己组装。 |
+| **能力独立，组合自由** | 抓取、视频转文字、改写、翻译、长图、卡片、图解页、公众号、口播、卡片视频、图解短片、白板、漫画、精读卡片、X 长文、去 AI 味各是一个 skill，只靠工作目录里的文件交接。总入口给出常用组合，也可以说"先翻译，再出原文卡片"这样自己组装。 |
 | **原文、总结、翻译三条路** | 原文路径一字不改，逐块读回比对；总结路径重组结构、配图表；翻译路径全文不删，脚本检查结构是否逐块对应。三条路都能接到长图、卡片和公众号。 |
 | **文章和视频都能当原文** | 视频先转成逐字稿文章：人工字幕优先，其次平台的原语言自动字幕，都没有时用本地 Whisper 识别。繁体转简体、专有名词纠错、时间轴都会处理好，后面的流程和文章完全一样。 |
 | **先读懂，再排版** | 不是截图，也不是机械摘要。Claude 规划结构、改写标题、挑选图表、核对数字，产出只含内容的 `content.json`。版式和主题由脚本负责，换风格不用重写内容。 |
@@ -67,7 +67,7 @@ article2media 把这件事交给 AI。你给一个链接，流程分三步：
 
 ## 快速开始
 
-**1. 安装**（推荐 Claude Code 插件，一次装好全部 11 个 skill；其他方式见[安装](#安装)）
+**1. 安装**（推荐 Claude Code 插件，一次装好全部 16 个 skill；其他方式见[安装](#安装)）
 
 ```bash
 claude plugin marketplace add threerocks/article2media
@@ -106,24 +106,65 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 
 产出写在当前目录的 `article2media-out/<slug>/` 下。Codex 里用 `$article2media`、`$wechat-layout` 这样调用。
 
-## 十个能力，自由组合
+## 十六个能力，分四层
+
+能力按「输入 → 文本 → 静态产出 → 视频产出」四层摆放：上层只把文件交给下层，同级之间不互相调用代码。
+
+### 第一层 · 输入：把外面的东西变成 `article.md`
 
 | skill | 能力 | 输入 → 产出 |
 |---|---|---|
 | `article-fetch` | 文章抓取 | X 长文 / 帖子 / 线程、网页、公众号、本地文件 → `article.md` |
-| `video-transcript` | 视频转文字 | 抖音、YouTube、B 站、本地视频 / 音频、`.srt` / `.vtt` → 逐字稿 `article.md` |
-| `article-rewrite` | 改写（总结） | `article.md` → 改写稿 `content.json`，可导出成文章 `rewrite.md` |
+| `video-transcript` | 视频转文字 | 抖音、YouTube、B 站、本地视频 / 音频、`.srt` / `.vtt` → 逐字稿 `article.md` + `transcript/segments.md` |
+
+### 第二层 · 文本：一份原文，三种加工
+
+| skill | 能力 | 输入 → 产出 |
+|---|---|---|
+| `article-rewrite` | 改写（总结） | `article.md` → `content.json`，可导出成文章 `rewrite.md` |
 | `article-translate` | 全文翻译 | `article.md` → `article.zh.md`，结构逐块对应 |
+| `lieflat-less-ai-tone` | 去 AI 味 | 任一中文稿 → 分级报告 → 按白名单规则改写 → 前后对比复测 |
+
+### 第三层 · 静态产出：文章变图、变版
+
+| skill | 能力 | 输入 → 产出 |
+|---|---|---|
 | `long-image` | 长图 | 改写稿 → 杂志长图；文章 → 一字不改的原文长图 |
 | `image-cards` | 卡片 | 改写稿 → 总结卡片；文章 → 原文卡片（3:4 / 4:5 / 1:1 / 9:16） |
-| `article-figures` | 图解 | 文章 → 张数由全文结构算出的图解页（HTML + 1080px PNG），逐页块级覆盖校验，字体全内联 |
-| `article-video` | 图解短片 | 图解页 → 配音短片（16:9 / 9:16 跟页面比例走）；每镜用哪套图文关系由文章结构推出，十二套版面轮换 |
-| `wechat-layout` | 公众号排版 | 文章（原文、译文或 `rewrite.md`）→ 可粘贴的图文 + 头图 + 封面 |
-| `explainer-video` | 口播视频 | 文章 → 1080×1920 竖屏讲解视频 |
-| `logic-whiteboard` | 白板论证 | 文章 → 纵向推理主干长图 |
-| `article-comic` | 漫画 | 文章 → 黑白漫画 + 3:4 卡片 |
+| `article-figures` | 图解页 | 文章 → 张数由全文结构算出的图解页（HTML + 1080px PNG），逐页块级覆盖校验、字体全内联 |
+| `series-reading-cards` | 精读卡片 | 外文长文 → 系列中文卡片组（固定比例 PNG + 总览图 + 画框预演 + 发帖文案） |
+| `wechat-layout` | 公众号排版 | 文章（原文、译文或 `rewrite.md`）→ 可粘贴的图文 + 2.35:1 头图 + 1:1 封面 |
+| `logic-whiteboard` | 白板论证 | 文章 → 纵向推理主干长图，每段原文都有去向 |
+| `article-comic` | 漫画 | 文章 → 黑白漫画分镜 + 3:4 卡片 |
+| `x-article-skill` | X 长文（反向） | 个人语料 + 参考材料 → 中文 X Article 内容包（标题、正文、配图、封面、导流短文） |
 
-能力之间只靠同一个工作目录里的文件交接：`article.md`（原文）、`article.zh.md`（译文）、`content.json`（改写稿）、`rewrite.md`（改写稿的文章形态）。
+### 第四层 · 视频产出：文章变片
+
+| skill | 能力 | 输入 → 产出 |
+|---|---|---|
+| `explainer-video` | 口播视频 | 文章 → 1080×1920 竖屏讲解片（分镜脚本 + 配音 + 逐字字幕 + 审片） |
+| `card-video` | 卡片视频 | `cards.html` + 口播稿 `script.json` → mp4，卡内元素按口播逐块长出来 |
+| `article-video` | 图解短片 | 文章 → 16:9 图解短片；Remotion 一镜一组件，口播稿 / 骨架联系表 / 静帧批三个审批点，分章渲染 |
+
+### 文件怎么在层与层之间流动
+
+```
+article.md（原文）
+├─ article.zh.md（译文）          ← article-translate
+├─ content.json（改写稿）         ← article-rewrite
+│   └─ rewrite.md（文章形态）
+├─ 杂志长图 / 原文长图            ← long-image
+├─ 3:4 卡片组 / 原文卡片          ← image-cards
+├─ 图解页 ──────────────────────→ 图解短片（mp4）  ← article-figures → article-video
+├─ 公众号图文 + 头图 + 封面        ← wechat-layout
+├─ 论证长图                       ← logic-whiteboard
+├─ 漫画 + 卡片                    ← article-comic
+└─ 口播竖屏片                     ← explainer-video
+
+content.json + cards.html ──────→ 卡片视频（mp4）  ← card-video
+```
+
+能力之间只靠同一个工作目录里的文件交接：`article.md`（原文）、`article.zh.md`（译文）、`content.json`（改写稿）、`rewrite.md`（改写稿的文章形态）。完整判定规则见 [`references/pipeline.md`](references/pipeline.md)——**原文 / 总结 / 翻译走哪条路，全仓只按那一张表判断**，不论你从哪个 skill 进来。
 
 ### 推荐组合
 
@@ -374,7 +415,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 - 口播短视频；
 - 原文排版、全文翻译、白板论证和漫画。
 
-2.0 起拆成 10 个可以单独使用的能力和一个提供一键组合的总入口。它在 1.5.0 之前叫 article2img。
+2.0 起拆成 10 个可以单独使用的能力和一个提供一键组合的总入口（现已扩到 16 个，见[十六个能力](#十六个能力分四层)）。它在 1.5.0 之前叫 article2img；2.0 之前叫 article2media，2026-11-12 迁入 `text2Media` 后沿用旧名做目录与引擎前缀。
 
 ### 只想排版、不想被总结，可以吗？
 
@@ -437,7 +478,7 @@ Claude 先当导演写 `video.json`，内容包括受众、开场策略、封面
 
 ## 安装
 
-11 个 skill 共用仓库根目录的 `engine/`（脚本、版式、主题、音色）。插件安装会把 `engine/`、`references/`、`skills/` 一起装好；手动安装时这三个目录要保持在同一个仓库根下，不能只拷 `skills/` 里的单个能力。
+16 个 skill 共用仓库根目录的 `engine/`（脚本、版式、主题、音色）。插件安装会把 `engine/`、`references/`、`skills/` 一起装好；手动安装时这三个目录要保持在同一个仓库根下，不能只拷 `skills/` 里的单个能力。
 
 **Claude Code 插件**（推荐，一次装好全部）
 
@@ -471,7 +512,7 @@ rsync -a ~/code/article2media/skills/ ~/.agents/skills/     # Codex
 
 只拷了某个能力、仓库根下没有 `engine/` 时，脚本会提示"找不到共享引擎"；也可以用环境变量 `ARTICLE2MEDIA_ENGINE=/path/to/engine` 指过去。
 
-在本仓库里打开 Claude Code 时，`.claude/skills/` 下 11 个 skill 都已经软链接好，可以直接使用。
+在本仓库里打开 Claude Code 时，`.claude/skills/` 下 16 个 skill 都已经软链接好，可以直接使用。
 
 **从 1.x 升级**：插件更新即可。手动或 skills CLI 安装的，把新增的 10 个 skill 一起装上；以前直接调用的 `skills/article2media/scripts/*.mjs` 现在在 `engine/scripts/`，或用各 skill 自己的入口（见下）。
 
@@ -559,7 +600,7 @@ scripts/install.sh               # 依赖检查（只提示，不下载）
 ## 开发与自测
 
 ```bash
-node tests/run-all.mjs --quick                  # 约 4 分钟：11 个 skill 的结构、CLI 行为、各能力检查、每个示例 × 6 种版式
+node tests/run-all.mjs --quick                  # 约 4 分钟：16 个 skill 的结构、CLI 行为、各能力检查、每个示例 × 6 种版式
 node tests/run-all.mjs                          # 约 20 分钟：4 个示例 × 6 种版式 × 8 个主题
 node tests/run-all.mjs --themes pop,dopamine    # 只测指定主题
 node tests/theme-sheet.mjs                      # 重新生成 docs/themes.jpg
@@ -601,6 +642,8 @@ claude plugin validate .
 
 ## 致谢
 
+- **[article2media](https://github.com/threerocks/article2media)（MIT，作者 threerocks）**：**本仓库的来源**。目录组织、`article2media-out/<slug>/` 工作目录与交接文件约定、`content.json` 的内容契约、抓取 / 改写 / 翻译 / 长图 / 卡片 / 公众号 / 口播七条链路，以及「逐块读回校验」这套自动验收纪律，都出自这个项目；2.0 把能力拆成独立 skill 的架构也由它定下。我们在它的基础上扩到 16 个能力（图解页、图解短片、卡片视频、系列精读卡片、去 AI 味、X 长文），并把 `article-video` 的渲染底座换成了 a2e 的一镜一组件模式。
+- **[anything2explainer](https://github.com/chuangtc/anything2explainer)（a2e）**：`article-video` 的渲染底座。「一镜一组件」结构（版式就是那一镜的 `.tsx`，import 进 Main 就必然出现在画面里）、版面原语与 `Root.tsx` 注册 Composition 的组织方式来自它；本项目保留它的骨架与色彩体系，镜头、章级骨架和审批流程按自己的片子重写。
 - **[ljg-skills](https://github.com/lijigang/ljg-skills)（MIT）**：`-f`、`-w`、`-c` 三种模式和它们的校验纪律都来自这里，本项目在自己的架构上重写了实现。
 - **主题灵感**：aps 主题库、lanshu-html-ppt-templates 的版式手法，以及 Canva、Pinterest Predicts、小红书 2026 年的趋势报告。这些都只借鉴思路，CSS 全部重新编写。
 - **模型与服务**：VoxCPM2、mlx-audio、Whisper（mlx-whisper）、edge-tts、yt-dlp、FxTwitter、r.jina.ai、defuddle。

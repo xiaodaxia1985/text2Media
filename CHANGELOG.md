@@ -1,5 +1,14 @@
 # 更新记录
 
+## 未发布 · 2026-11-19
+
+**仓库口径与来源说明对齐，能力清单补齐到实际 16 个。**
+
+- **README 补来源**：首屏说明改为「源于 article2media（MIT），2026-11-12 迁入 text2Media」，标题改用 `text2Media`；目录名、`article2media-out/`、`ARTICLE2MEDIA_ENGINE` 这些技术名保持不变。
+- **致谢补两条**：`article2media`（原项目，架构与验收纪律的来源）与 `anything2explainer`（`article-video` 的渲染底座）。
+- **能力表重排为四层**：输入（抓取 / 视频转文字）→ 文本（改写 / 翻译 / 去 AI 味）→ 静态产出（长图 / 卡片 / 图解页 / 精读卡片 / 公众号 / 白板 / 漫画 / X 长文）→ 视频产出（口播 / 卡片视频 / 图解短片），并补一张「文件怎么在层与层之间流动」的交接图。
+- **补齐旧口径**：README、CLAUDE.md、`plugin.json`、`marketplace.json`、`references/pipeline.md` 里残留的「10 / 11 个能力」全部改为 16；`pipeline.md` 补 `article-figures`、`series-reading-cards`、`x-article-skill`、`lieflat-less-ai-tone`、`article-video` 的条目与判定规则；`.claude/skills/` 补齐缺的 5 个链接。
+
 ## 2.0.1 · 2026-11-09
 
 用一条"内容全在两段视频里"的 X 图解帖实测 2.0 时发现并修好的问题。

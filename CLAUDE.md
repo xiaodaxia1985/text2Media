@@ -4,7 +4,7 @@ Guidance for Claude Code when working on this repository (not when using the ski
 
 ## Overview
 
-A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). It holds **11 skills**, all independent capabilities that share one engine at the repo root (`engine/`). Articles or videos → Chinese visual content (long images, fixed-ratio cards, 公众号, explainer video, card video, whiteboard, comic) with 7 themes.
+A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./skills"`). It holds **16 skills**, all independent capabilities that share one engine at the repo root (`engine/`). Articles or videos → Chinese visual content (long images, fixed-ratio cards, 图解页, 公众号, explainer video, card video, 图解短片, whiteboard, comic, 系列精读卡片, X 长文, 去 AI 味) with 7 themes.
 
 | skill | capability | input → output |
 |---|---|---|
@@ -12,13 +12,18 @@ A skills repository and Claude Code plugin (`.claude-plugin/`, `"skills": "./ski
 | `video-transcript` | video → transcript | link / media / .srt → `article.md` + `transcript/` |
 | `article-rewrite` | rewrite (summary) | `article.md` → `content.json`; `export.mjs` → `rewrite.md` + figure PNGs |
 | `article-translate` | full translation | `article.md` → `article.zh.md` (model writes; `translate.mjs check` verifies) |
+| `lieflat-less-ai-tone` | de-AI-tone | draft → graded report → whitelist rewrite → before/after check |
 | `long-image` | long images | `content.json` → magazine pages; `article.md` → verbatim long image |
 | `image-cards` | 3:4 / 4:5 / 1:1 / 9:16 cards | `content.json` → designed cards; `article.md` → verbatim cards |
+| `article-figures` | 图解页 | `article.md` → one HTML page per provable claim → 1080px PNG (16:9 or 3:4 shells) |
+| `series-reading-cards` | 系列精读卡片 | foreign long-form → fixed-ratio PNG series + overview + frame preview + post copy |
 | `wechat-layout` | 公众号排版 | article (`.md` only) → paste-ready inline-styled HTML + covers |
-| `explainer-video` | 9:16 video | article (+ `content.json`) → `video.json` → MP4 |
 | `logic-whiteboard` | argument whiteboard | `article.md` → `whiteboard.json` → PNG |
 | `article-comic` | comic | `article.md` → `comic.json` → panels + PNG + 3:4 cards |
+| `x-article-skill` | X Article writing (reverse) | corpus + references → X Article package (title, body, figures, cover, teaser) |
+| `explainer-video` | 9:16 video | article (+ `content.json`) → `video.json` → MP4 |
 | `card-video` | card → video (the default way to make a video) | `cards.html` + `content.json` → TTS → animated MP4 |
+| `article-video` | 图解短片 | `article.md` → per-chapter Remotion `pieces/` → mp4 (one shot per component, chapter-by-chapter render) |
 
 ## Repository structure
 
