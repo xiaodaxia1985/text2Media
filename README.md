@@ -51,6 +51,50 @@ article2media 把这件事交给 AI。你给一个链接，流程分三步：
 
 并不是每次都需要总结。自己写的文章只想排成公众号，或者想把全文做成小红书卡片，就直接排版，不经过改写。所以每一步都做成了独立的能力，按需要拼起来。
 
+## 两条主线（实际在跑的）
+
+16 个能力都在仓库里、都能用，但**日常真正跑的只有下面两条**。其余能力保留，按需再启用，不参与默认流程。
+
+### 一、文章生图
+
+```
+文章 / 视频链接
+   ↓ article-fetch（网页、X、公众号） 或 video-transcript（抖音、YouTube、B 站）
+article.md
+   ↓ article-rewrite（要总结时）                    ↓ 要原文就跳过
+content.json                                        article.md
+   ↓                                                  ↓
+image-cards  → 小红书 / 抖音 3:4 卡片组          long-image   → 原文长图
+long-image   → 杂志长图                           image-cards  → 原文卡片
+wechat-layout→ 公众号图文（总结稿走 rewrite.md）   wechat-layout→ 公众号原文排版
+article-figures → 每论断一张图解页（16:9 / 3:4）
+```
+
+- **默认产出**：小红书 3:4 卡片 + 抖音同套 + 公众号（按站点原文排版）。
+- 一份 `content.json` 共用：小红书和抖音吃同一份稿，公众号另按站点原文排。
+- 图卡默认脱敏（隐去厂商、域名、主机名），站点原文与公众号不脱敏。
+
+### 二、文章生视频
+
+```
+article.md
+   ↓ 按章切音频 → 逐句帧号
+一章一组镜头（一镜一组件，版式即 .tsx）
+   ↓ 静帧批 + 联系表         🚦 审批
+   ↓ 分章渲染（Remotion）
+chNN.mp4 × 章数
+```
+
+- **底座**：`article-video`，一镜一组件 + 章级骨架，一个 engine 服务所有文章。
+- **三个审批点**：口播稿 → 骨架联系表 → 静帧批；没过审不出片。
+- **产出**：16:9 分章 mp4，可直接拼整片。
+
+### 其余能力（保留，暂未启用）
+
+`article-comic`（漫画）、`logic-whiteboard`（白板论证）、`article-translate`（全文翻译）、`x-article-skill`（X 长文写作）、`series-reading-cards`（系列精读卡片）、`lieflat-less-ai-tone`（去 AI 味）、`explainer-video`（无卡片时的分镜口播）、`card-video`（卡片转视频）。
+
+需要时单独调用即可，它们不依赖上面两条主线的中间产物（`card-video` 例外，它吃 `image-cards` 产出的 `cards.html`）。
+
 ## 核心特性
 
 | | |
@@ -110,14 +154,14 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 
 能力按「输入 → 文本 → 静态产出 → 视频产出」四层摆放：上层只把文件交给下层，同级之间不互相调用代码。
 
-### 第一层 · 输入：把外面的东西变成 `article.md`
+### 第一层 · 输入：把外面的东西变成 `article.md`（在用）
 
 | skill | 能力 | 输入 → 产出 |
 |---|---|---|
 | `article-fetch` | 文章抓取 | X 长文 / 帖子 / 线程、网页、公众号、本地文件 → `article.md` |
 | `video-transcript` | 视频转文字 | 抖音、YouTube、B 站、本地视频 / 音频、`.srt` / `.vtt` → 逐字稿 `article.md` + `transcript/segments.md` |
 
-### 第二层 · 文本：一份原文，三种加工
+### 第二层 · 文本：一份原文，三种加工（改写在用，翻译 / 去 AI 味备用）
 
 | skill | 能力 | 输入 → 产出 |
 |---|---|---|
@@ -125,7 +169,7 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 | `article-translate` | 全文翻译 | `article.md` → `article.zh.md`，结构逐块对应 |
 | `lieflat-less-ai-tone` | 去 AI 味 | 任一中文稿 → 分级报告 → 按白名单规则改写 → 前后对比复测 |
 
-### 第三层 · 静态产出：文章变图、变版
+### 第三层 · 静态产出：文章变图、变版（长图、卡片、图解页、公众号在用；其余备用）
 
 | skill | 能力 | 输入 → 产出 |
 |---|---|---|
@@ -138,7 +182,7 @@ bash scripts/install.sh      # 在仓库里：Node、Chrome、字体，以及做
 | `article-comic` | 漫画 | 文章 → 黑白漫画分镜 + 3:4 卡片 |
 | `x-article-skill` | X 长文（反向） | 个人语料 + 参考材料 → 中文 X Article 内容包（标题、正文、配图、封面、导流短文） |
 
-### 第四层 · 视频产出：文章变片
+### 第四层 · 视频产出：文章变片（`article-video` 在用；其余备用）
 
 | skill | 能力 | 输入 → 产出 |
 |---|---|---|
