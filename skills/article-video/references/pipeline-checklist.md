@@ -103,12 +103,16 @@
 | 4.1 | 长句切段：>22 字先改短；改不动的交引擎（`split_long()` 单段 ≤22 字、段间 120ms） | `references/voice-splitting.md` | 切好的稿 | 没有一段撑爆显存 |
 | 4.2 | 合成旁白 | `node video/step2-voice/voice.mjs <talk.json> --backend voxcpm --voice documentary-man` | `narration.wav` + `alignment.json` | 时长与字数匹配（4.2 字/秒 ±） |
 | 4.3 | 先备份再按 wav 实长归一 | `python video/scripts/scale_alignment.py <alignment> <wav> --out <alignment>` | 归一版 | 末句 end ≤ wav 总长 |
-| 4.4 | **接进 a2e**：按章切 `public/assets/<slug>/audio.wav`；`alignment.json` 的秒值折算 30fps 帧号写进 `index.ts` 的 `from/to` | ffmpeg + 手填 | `audio.wav` + 帧号表 | 帧号合计 = 音频总帧数（误差 ≤2 帧） |
+| 4.4 | **接进 engine**：按章切 `public/assets/<slug>/chNN/audio.wav`；`alignment.json` 的秒值折算 30fps 帧号写进该章 `index.ts` 的 `from/to` | ffmpeg + 手填 | `audio.wav` + 帧号表 | 帧号合计 = 音频总帧数（误差 ≤2 帧） |
 
-**a2e 的接入契约（写死）**：
-- 输入给 a2e：`public/assets/<slug>/audio.wav` + 逐句帧号（`src/common/timeline.ts` 的 `TOTAL_FRAMES`、`shots/index.ts` 的 `from/to`）。
-- a2e 产出：`src/shots/**` 组件 + `Root.tsx` 的 Composition + `out/*.mp4`。
-- 我们怎么接：**只把它当渲染底座**，`examples/rag` 的 44 镜一律不用（那是作者为 RAG 文章手写的）；镜头全按本片稿子重画。
+**engine 的接入契约（写死，2026-11-19 收口）**：
+- 唯一底座：`engine`（一个 Remotion 工程服务所有文章，不再每篇复制一套）。
+- 篇目目录：`src/pieces/<slug>/DK1..DKn/`（一章一个目录，章级骨架为该目录的 `DK1/layout.tsx`）。
+- 登记两处：`src/pieces/index.ts` 加 4 个导出；`Root.tsx` 加一个 `<Composition id="ChNN">`。
+- 输入：`public/assets/<slug>/chNN/audio.wav` + 逐句帧号（各章 `index.ts` 的 `from/to`）。
+- 产物：`out/<slug>/chNN.mp4`、`out/<slug>/still/`、`out/<slug>/chk/sheet-chNN.png`。
+- 命令一律带参数：`render.ps1 -Comp ChNN -Slug <slug>`、`still.ps1 -Comp ChNN -Slug <slug> -Frames '<帧号>'`、`python sheet\sheet.py --ch NN --slug <slug>`。
+- 权限：`video` 目录被打 Low IL 且 ACL 拒绝修改，新目录不要建在 `video` 下；renders 能跑依赖 `node_modules` 在 `.runtime`（Medium）。
 
 ---
 
