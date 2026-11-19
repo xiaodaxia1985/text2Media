@@ -689,6 +689,7 @@ claude plugin validate .
 - **[article2media](https://github.com/threerocks/article2media)（MIT，作者 threerocks）**：**本仓库的来源**。目录组织、`article2media-out/<slug>/` 工作目录与交接文件约定、`content.json` 的内容契约、抓取 / 改写 / 翻译 / 长图 / 卡片 / 公众号 / 口播七条链路，以及「逐块读回校验」这套自动验收纪律，都出自这个项目；2.0 把能力拆成独立 skill 的架构也由它定下。我们在它的基础上扩到 16 个能力（图解页、图解短片、卡片视频、系列精读卡片、去 AI 味、X 长文），并把 `article-video` 的渲染底座换成了 a2e 的一镜一组件模式。
 - **[anything2explainer](https://github.com/chuangtc/anything2explainer)（a2e）**：`article-video` 的渲染底座。「一镜一组件」结构（版式就是那一镜的 `.tsx`，import 进 Main 就必然出现在画面里）、版面原语与 `Root.tsx` 注册 Composition 的组织方式来自它；本项目保留它的骨架与色彩体系，镜头、章级骨架和审批流程按自己的片子重写。
 - **[ljg-skills](https://github.com/lijigang/ljg-skills)（MIT）**：`-f`、`-w`、`-c` 三种模式和它们的校验纪律都来自这里，本项目在自己的架构上重写了实现。
+- **[lieflat-less-ai-tone](https://github.com/larashero3-dotcom/lieflat-less-ai-tone)（CC BY-NC 4.0，作者 shiujan）**：`skills/lieflat-less-ai-tone/` 整目录来自这个社区项目，检测脚本、规则集与两轮研究报告（1,169 篇语料、约 520 万字、100+ 项指标）原样收录，本项目未改动其实现。**许可差异须注意**：它是 CC BY-NC 4.0（禁止商业使用），与本仓库其余部分的 MIT 不同；商用前需单独取得作者许可。
 - **主题灵感**：aps 主题库、lanshu-html-ppt-templates 的版式手法，以及 Canva、Pinterest Predicts、小红书 2026 年的趋势报告。这些都只借鉴思路，CSS 全部重新编写。
 - **模型与服务**：VoxCPM2、mlx-audio、Whisper（mlx-whisper）、edge-tts、yt-dlp、FxTwitter、r.jina.ai、defuddle。
 - **繁简转换**：字表取自 [OpenCC](https://github.com/BYVoid/OpenCC)（Apache License 2.0）。
