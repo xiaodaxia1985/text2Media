@@ -223,7 +223,7 @@
 | # | 做什么 | 出口条件 |
 |---|---|---|
 | 9.1 | 产物归档 `output/<date>/<platform>/<slug>/` | 目录只有最终 mp4 + 封面 |
-| 9.2 | **清中间产物——触发点是「用户明确说这一集结束」，不是渲完那一秒**。渲完先把中间物留着：用户复看、返工、抽帧对比全靠它。用户确认后一次删干净：<br>① `engine\out\<slug>\` 整目录（`still\` 静帧批 / `chk\` 联系表与成片抽帧 / 正片中间版 `<EP>.mp4` / `_raw`.mp4 / `_raw_music`.mp4 / `SIGNnn.mp4` / `concat.txt`，单集约 26 MB）；<br>② `项目根\.tmp\` 整目录（`rt\` 是 Remotion 的 webpack 编译缓存，每渲一次多一份，单集能涨到 1.2 GB+；`<slug>\` 是迁移与联系表脚本）。<br>**不许动**：releases 交付目录、`_archive` 旧版归档、`src\pieces\<ep>` 源码、`.runtime` 的 whisper / VoxCPM 权重（那是资产不是产物，删了要重下几 GB） | `.tmp` 与 `engine\out\<slug>` 两个目录都不存在；**ffprobe 复验成片帧数与 P8 记录一致** |
+| 9.2 | **清中间产物——触发点是「用户明确说这一集结束」，不是渲完那一秒**。渲完先把中间物留着：用户复看、返工、抽帧对比全靠它。用户确认后一次删干净：<br>① `engine\out\<slug>\` 整目录（`still\` 静帧批 / `chk\` 联系表与成片抽帧 / 正片中间版 `<EP>.mp4` / `_raw`.mp4 / `_raw_music`.mp4 / `SIGNnn.mp4` / `concat.txt`，单集约 26 MB）；<br>② `项目根\.tmp\` 整目录（`rt\` 是 Remotion 的 webpack 编译缓存，每渲一次多一份，单集能涨到 1.2 GB+；`<slug>\` 是迁移与联系表脚本）。<br>**不许动**：releases 交付目录、`_archive` 旧版归档、`src\pieces\<ep>` 源码、**.runtime 的 whisper / VoxCPM 权重（那是资产不是产物，删了要重下几 GB）、以及所有 web 页构建物（`*.html` 与交互页目录）**——2026-11-21 用户定：这些页面要留作 web PPT 的交互产物，永久保留，不进任何清理清单 | `.tmp` 与 `engine\out\<slug>` 两个目录都不存在（web 页除外）；**ffprobe 复验成片帧数与 P8 记录一致** |
 | 9.3 | 写本次日志：总耗时、卡点、查了哪些文档 | 一行一条，回写本文件审批台账 |
 
 ---
