@@ -348,6 +348,8 @@ python skills/lieflat-less-ai-tone/scripts/detect.py <稿.txt> --min-chars 0 --j
 
 六条记死：**第 1 帧必须等于 `cover-vertical.png`**（坐标、字号、渐变全部照抄 `COVER.tsx`，不许用会 fitLines 缩字的 `Huge`）；**成片两段**（正片 + `SIGN12`），不拼独立封面段；**不加 sonic**，声音只有旁白 + −13dB 垫乐；**退场 1.0–1.3s**，人像最后退（用户嫌快过一次）；**柱子等人像退净才起**（半透明的脸叠柱上是一团糊）；**总纲行不下沉到柱区**（中央放长句再退 → 中间空一秒，读成空镜）。
 
+**页脚账号名固定写「个人商业创造者」**（2026-11-20 用户纠偏：之前全片写成「个人商业实战」，那是项目文件夹名，不是账号名）。改 `epbase/ed.tsx` 的 `Foot` 默认 `right` 一处即可覆盖所有不传值的镜，各 `COVER.tsx` 里写死的页脚要一并改。
+
 参数表、生成五步、六条反面教材、七条验收清单见 [`references/opening.md`](references/opening.md)。
 
 ## 一·补、一屏只能有一套大字（2026-11-16 实拍踩到）
